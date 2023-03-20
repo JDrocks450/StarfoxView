@@ -1,0 +1,34 @@
+﻿<HeaderedContentControl x:Class="StarFoxMapVisualizer.Controls.MacroTooltip"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:StarFoxMapVisualizer.Controls"
+             mc:Ignorable="d" 
+             MinHeight="100" MinWidth="200" MaxWidth="400" Background="#FF2E0069" Header="Name" FontFamily="{DynamicResource SFFont}" Foreground="White" Padding="5">
+    <HeaderedContentControl.Template>
+        <ControlTemplate TargetType="HeaderedContentControl">
+            <Button Style="{StaticResource {x:Type Button}}" Padding="{TemplateBinding Padding}" IsEnabled="False" Background="{TemplateBinding Background}" Foreground="{TemplateBinding Foreground}" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
+                <DockPanel>
+                    <ContentPresenter DockPanel.Dock="Top" ContentSource="Header"/>
+                    <ContentPresenter Margin="0,5,0,0" ContentSource="Content"/>
+                </DockPanel>
+            </Button>
+        </ControlTemplate>
+    </HeaderedContentControl.Template>
+    <StackPanel>
+        <TextBlock x:Name="SubtitleText" Style="{StaticResource BodyText}" Opacity=".75">A Starfox Macro.</TextBlock>
+        <ContentControl FontFamily="{StaticResource Atlantis}" FontSize="18">
+            <WrapPanel x:Name="ParameterStack" Orientation="Horizontal">
+                <WrapPanel.Resources>
+                    <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                        <Setter Property="Background" Value="#FF02539E"/>
+                        <Setter Property="Foreground" Value="White"/>
+                    </Style>
+                </WrapPanel.Resources>
+                <Button>PARAM</Button>
+                <Button>PARAM</Button>
+            </WrapPanel>
+        </ContentControl>
+    </StackPanel>
+</HeaderedContentControl>

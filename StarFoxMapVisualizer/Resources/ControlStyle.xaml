@@ -1,0 +1,113 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <FontFamily x:Key="SFFont">/Resources/#Star Fox/Starwing</FontFamily>
+    <FontFamily x:Key="Atlantis">/Resources/#Atlantis International</FontFamily>
+
+    <Style x:Key="SFRadioButton" TargetType="RadioButton" BasedOn="{StaticResource {x:Type RadioButton}}">
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="FontSize" Value="22"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="FontFamily" Value="{StaticResource Atlantis}"/>
+    </Style>
+    <Style TargetType="RadioButton" BasedOn="{StaticResource SFRadioButton}"/>
+    <Style x:Key="TitleText" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource SFFont}"/>
+        <Setter Property="RenderOptions.EdgeMode" Value="Aliased"/>
+    </Style>
+    <Style x:Key="BodyText" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Atlantis}"/>
+        <Setter Property="FontSize" Value="22"/>
+        <Setter Property="RenderOptions.EdgeMode" Value="Aliased"/>
+    </Style>
+    <Style x:Key="SFButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="Padding" Value="10,0"/>
+        <Setter Property="FontFamily" Value="{DynamicResource Atlantis}"/>
+        <Setter Property="FontSize" Value="22"/>
+    </Style>
+    <Style x:Key="SFToggleButton" TargetType="ToggleButton" BasedOn="{StaticResource {x:Type ToggleButton}}">
+        <Setter Property="Padding" Value="10,0"/>
+        <Setter Property="FontFamily" Value="{DynamicResource Atlantis}"/>
+        <Setter Property="FontSize" Value="22"/>
+    </Style>
+    <Style x:Key="SFContentBorder" TargetType="ContentControl">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContentControl">
+                    <Grid Margin="{TemplateBinding Padding}">
+                        <Rectangle Fill="{TemplateBinding Background}" Margin="5"/>
+                        <Border Width="10" HorizontalAlignment="Left" Margin="0,10,0,10">
+                            <Border.Background>
+                                <ImageBrush ImageSource="/Resources/Image/sf_frame.png" TileMode="Tile" />
+                            </Border.Background>
+                        </Border>
+                        <Border Width="10" HorizontalAlignment="Right" Margin="0,10,0,10" RenderOptions.BitmapScalingMode="NearestNeighbor">
+                            <Border.Background>
+                                <ImageBrush ImageSource="/Resources/Image/sf_frame.png" TileMode="Tile" />
+                            </Border.Background>
+                        </Border>
+                        <Border Height="10" VerticalAlignment="Top" Margin="10,0,10,0" RenderOptions.BitmapScalingMode="NearestNeighbor">
+                            <Border.Background>
+                                <ImageBrush ImageSource="/Resources/Image/sf_frame.png" TileMode="Tile">
+                                    <ImageBrush.RelativeTransform>
+                                        <TransformGroup>
+                                            <ScaleTransform CenterY="0.5" CenterX="0.5"/>
+                                            <SkewTransform CenterX="0.5" CenterY="0.5"/>
+                                            <RotateTransform Angle="90" CenterX="0.5" CenterY="0.5"/>
+                                            <TranslateTransform/>
+                                        </TransformGroup>
+                                    </ImageBrush.RelativeTransform>
+                                </ImageBrush>
+                            </Border.Background>
+                        </Border>
+                        <Border Height="10" VerticalAlignment="Bottom" Margin="10,0,10,0" RenderOptions.BitmapScalingMode="NearestNeighbor">
+                            <Border.Background>
+                                <ImageBrush ImageSource="/Resources/Image/sf_frame.png" TileMode="Tile" >
+                                    <ImageBrush.RelativeTransform>
+                                        <TransformGroup>
+                                            <ScaleTransform CenterY="0.5" CenterX="0.5"/>
+                                            <SkewTransform CenterX="0.5" CenterY="0.5"/>
+                                            <RotateTransform Angle="90" CenterX="0.5" CenterY="0.5"/>
+                                            <TranslateTransform/>
+                                        </TransformGroup>
+                                    </ImageBrush.RelativeTransform>
+                                </ImageBrush>
+                            </Border.Background>
+                        </Border>
+                        <Image RenderOptions.BitmapScalingMode="NearestNeighbor" Source="/Resources/Image/sf_frame_cn.png" VerticalAlignment="Top" HorizontalAlignment="Left" Width="10" Height="10" Stretch="Fill"/>
+                        <Image RenderOptions.BitmapScalingMode="NearestNeighbor" Source="/Resources/Image/sf_frame_cn.png" VerticalAlignment="Top" HorizontalAlignment="Right" Width="10" Height="10" Stretch="Fill" RenderTransformOrigin="0.5,0.5">
+                            <Image.RenderTransform>
+                                <TransformGroup>
+                                    <ScaleTransform ScaleX="-1"/>
+                                    <SkewTransform/>
+                                    <RotateTransform Angle="0"/>
+                                    <TranslateTransform/>
+                                </TransformGroup>
+                            </Image.RenderTransform>
+                        </Image>
+                        <Image RenderOptions.BitmapScalingMode="NearestNeighbor" Source="/Resources/Image/sf_frame_cn.png" VerticalAlignment="Bottom" HorizontalAlignment="Left" Width="10" Height="10" Stretch="Fill" RenderTransformOrigin="0.5,0.5">
+                            <Image.RenderTransform>
+                                <TransformGroup>
+                                    <ScaleTransform ScaleY="-1"/>
+                                    <SkewTransform/>
+                                    <RotateTransform Angle="0"/>
+                                    <TranslateTransform/>
+                                </TransformGroup>
+                            </Image.RenderTransform>
+                        </Image>
+                        <Image RenderOptions.BitmapScalingMode="NearestNeighbor" Source="/Resources/Image/sf_frame_cn.png" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="10" Height="10" Stretch="Fill" RenderTransformOrigin="0.5,0.5">
+                            <Image.RenderTransform>
+                                <TransformGroup>
+                                    <ScaleTransform ScaleY="-1" ScaleX="-1"/>
+                                    <SkewTransform/>
+                                    <RotateTransform/>
+                                    <TranslateTransform/>
+                                </TransformGroup>
+                            </Image.RenderTransform>
+                        </Image>
+                        <ContentPresenter Margin="10"/>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>

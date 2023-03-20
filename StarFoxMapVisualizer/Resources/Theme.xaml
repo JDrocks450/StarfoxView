@@ -1,0 +1,10 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <SolidColorBrush Color="DarkOrange" x:Key="ProjectNodeColor"/>
+    <SolidColorBrush Color="Orange" x:Key="FolderNodeColor"/>
+    <SolidColorBrush Color="#FFFFDA2C" x:Key="FileNodeColor"/>
+    <SolidColorBrush Color="DeepSkyBlue" x:Key="MacroColor"/>
+    <SolidColorBrush Color="#FFB686FF" x:Key="DefineColor"/>
+    <SolidColorBrush Color="Orange" x:Key="MacroInvokeColor"/>
+    <SolidColorBrush Color="Pink" x:Key="MacroInvokeParameterColor"/>
+</ResourceDictionary>

@@ -1,0 +1,62 @@
+COLOUR PALETTE FOR ID_0_C
+|============|
+|FX FOR FACES|
+|FE FOR EDGES|
+|============|
+VVVVV BRIGHTNESS CHANGE WHEN MOVING [DIFFUSE] VVVVV
+0  = FX0  = #E7E7E7 = Solid Dark Grey               
+1  = FX1  = #AAAAAA = Solid Darker Grey
+2  = FX2  = #BA392A = Shaded Bright Red/Dark Red
+3  = FX3  = #5144D4 = Shaded Blue/Bright Blue
+4  = FX4  = #D8A950 = Shaded Bright Orange/Black
+5  = FX5  = #190646 = Shaded Turquoise/Black
+6  = FX6  = #801009 = Solid Dark Red
+7  = FX7  = #2411A3 = Solid Blue
+8  = FX8  = #7C11A3 = Shaded Red/blue (Purple)
+9  = FX9  = #2F9E28 = Shaded Green/Dark Green
+VVVVV NO BRIGHTNESS CHANGE WHEN MOVING [EMISSION] VVVVV
+10 = FX10 = #192419 = Solid Black                                    	
+11 = FX11 = #223022 = Shaded Black/Dark Grey
+12 = FX12 = #334933 = Solid Dark Grey
+13 = FX13 = #415D41 = Shaded Dark Grey/Darker Grey
+14 = FX14 = #4F724F = Solid Darker Grey
+15 = FX15 = #99B2A4 = Shaded Darker Grey/Brighter Grey
+16 = FX16 = #A4B4A4 = Solid Brighter Grey
+17 = FX17 = #B1C1B1 = Shaded Brighter Grey/Bright Grey
+18 = FX18 = #D0E2D2 = Solid Bright Grey
+19 = FX19 = #DDEAE1 = Shaded Bright Grey/White
+20 = FX20 = #FFFFFF = Solid White
+21 = FX21 = #801009 = Solid Dark Red (identical to 6)
+22 = FX22 = #D54437 = Shaded Bright Red/Dark Red (identical to 2)
+23 = FX23 = #D14025 = Solid Bright Red
+24 = FX24 = #C75821 = Shaded Bright Red/Orange
+25 = FX25 = #EDA33A = Solid Orange
+26 = FX26 = #FFA624 = Shaded Bright Orange/Orange
+27 = FX27 = #FFD961 = Solid Bright Orange
+28 = FX28 = #2411A3 = Solid Blue
+29 = FX29 = #2813B5 = Shaded Blue/Dark Turquoise
+30 = FX30 = #5041DA = Solid Dark Turquoise
+31 = FX31 = #7D82FF = Shaded Bright Blue/Dark Turquoise
+32 = FX32 = #709AFF = Solid Bright Blue
+33 = FX33 = #2BBCAE = Shaded Turquoise/Dark Turquoise
+34 = FX34 = #3ED9C9 = Solid Turquoise
+35 = FX35 = #61216C = Shaded Dark Red/Bright Blue
+36 = FX36 = #782985 = Shaded Bright Red/Bright Blue
+37 = FX37 = #8D5694 = Shaded Bright Orange/Bright Blue
+38 = FX38 = #B094A4 = Shaded Orange/Bright Blue
+39 = FX39 = #2D4F3D = Shaded Dark Green/Dark Grey
+40 = FX40 = #1A2E23 = Solid Dark Green
+41 = FX41 = #24405A = Shaded Dark Green/Bright Turquoise
+42 = FX42 = #A6C0FF = Flashing (White/Turquoise/Bright Red/Green)
+43 = FX43 = #D14025 = Jet Fire (Bright Orange/Orange/Bright Red/Red)
+44 = FX44 = #AEEBFF = Blaster  (Bright Turquoise/Turquoise/Bright Blue/Blue)
+45 = FX45 = #D0E2D4 = Flashing (White/Light Grey/Grey/Dark Grey)
+46 = FX46 = #D0E2FF = Flashing (Orange/Yellow/Turquoise/White)
+47 = FX47 = #010101 = Invisible
+48 = FX48 = #5E5010 = Rock Texture
+49 = FX49 = #FF2D25 = Wire Texture
+50 = FX50 =     	"
+51 = FX51 =      	"
+52 = FX52 = #952D25 = Fading   (Solid Red/Orange/Turquoise/Blue)
+
+***CREDIT TO CoolK FOR ASSEMBLING DESCRIPTIONS***

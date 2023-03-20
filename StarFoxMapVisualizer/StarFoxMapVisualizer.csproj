@@ -1,0 +1,54 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net6.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Resources\AtlantisInternational-jen0.ttf" />
+    <None Remove="Resources\Image\folder_empty.png" />
+    <None Remove="Resources\Image\folder_full.png" />
+    <None Remove="Resources\Image\macro.png" />
+    <None Remove="Resources\Image\page.png" />
+    <None Remove="Resources\Image\SectorY.png" />
+    <None Remove="Resources\Image\sflogo.png" />
+    <None Remove="Resources\Image\sf_frame.png" />
+    <None Remove="Resources\Image\sf_frame_cn.png" />
+    <None Remove="Resources\Image\sf_small.png" />
+    <None Remove="Resources\Model\Arwing.fbx" />
+    <None Remove="Resources\Star-Fox-Starwing.ttf" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\ControlExtensions\WPF.UI.Extensions\WPF.UI.Extensions.csproj" />
+    <ProjectReference Include="..\Starfox.Editor\Starfox.Editor.csproj" />
+    <ProjectReference Include="..\StarFox.Interop\StarFox.Interop.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Pages\" />
+    <Folder Include="Resources\Model\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="WindowsAPICodePack-Shell" Version="1.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\AtlantisInternational-jen0.ttf" />
+    <Resource Include="Resources\Image\folder_empty.png" />
+    <Resource Include="Resources\Image\folder_full.png" />
+    <Resource Include="Resources\Image\macro.png" />
+    <Resource Include="Resources\Image\page.png" />
+    <Resource Include="Resources\Image\SectorY.png" />
+    <Resource Include="Resources\Image\sflogo.png" />
+    <Resource Include="Resources\Image\sf_frame.png" />
+    <Resource Include="Resources\Image\sf_frame_cn.png" />
+    <Resource Include="Resources\Image\sf_small.png" />
+    <Resource Include="Resources\Star-Fox-Starwing.ttf" />
+  </ItemGroup>
+
+</Project>

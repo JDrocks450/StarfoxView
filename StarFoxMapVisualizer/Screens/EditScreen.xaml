@@ -1,0 +1,149 @@
+﻿<Page x:Class="StarFoxMapVisualizer.Screens.EditScreen"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:StarFoxMapVisualizer.Screens" xmlns:controls="clr-namespace:StarFoxMapVisualizer.Controls"
+      mc:Ignorable="d" 
+      d:DesignHeight="768" d:DesignWidth="1024"
+      Title="EditScreen" Background="#FF344559" Foreground="White">
+    <Page.Resources>
+        <Style TargetType="TreeViewItem" x:Key="BaseTreeStyle">
+            <Setter Property="Margin" Value="0,5"/>
+        </Style>
+        <Style TargetType="TreeViewItem" x:Key="ProjectTreeStyle" BasedOn="{StaticResource BaseTreeStyle}">
+            <Setter Property="Foreground" Value="{StaticResource ProjectNodeColor}"/>
+            <Setter Property="HeaderTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <Image Margin="0,0,10,0" Source="/Resources/Image/sf_small.png" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+                            <TextBlock Text="{Binding}"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Header" Value="Project"/>
+        </Style>
+        <Style TargetType="TreeViewItem" x:Key="FolderTreeStyle" BasedOn="{StaticResource BaseTreeStyle}">
+            <Setter Property="Foreground" Value="{StaticResource FolderNodeColor}"/>
+            <Setter Property="HeaderTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <Image Margin="0,0,10,0" Source="/Resources/Image/folder_empty.png" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+                            <TextBlock Text="{Binding}"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style TargetType="TreeViewItem" x:Key="FileTreeStyle" BasedOn="{StaticResource BaseTreeStyle}">
+            <Setter Property="Foreground" Value="{StaticResource FileNodeColor}"/>
+            <Setter Property="HeaderTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <Image Margin="0,0,10,0" Source="/Resources/Image/page.png" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+                            <TextBlock Text="{Binding}"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style TargetType="TreeViewItem" x:Key="FileImportTreeStyle" BasedOn="{StaticResource BaseTreeStyle}">
+            <Setter Property="Foreground" Value="{StaticResource DefineColor}"/>
+            <Setter Property="HeaderTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <Image Margin="0,0,10,0" Source="/Resources/Image/macro.png" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+                            <TextBlock Text="{Binding}"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Page.Resources>
+    
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition MinWidth="250"/>
+            <ColumnDefinition Width="4*"/>
+            <ColumnDefinition Width="2*" MaxWidth="400" MinWidth="250"/>
+        </Grid.ColumnDefinitions>
+        <Grid Background="#3F000000">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" MinHeight="100"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*" MinHeight="100"/>
+            </Grid.RowDefinitions>
+            <Border Grid.RowSpan="3" BorderThickness="0,0,1,0" BorderBrush="White"/>
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Top" Margin="10,10,0,0" Style="{StaticResource TitleText}" Foreground="White">Source Files:</TextBlock>
+                <ContentControl DockPanel.Dock="Top" Style="{StaticResource SFContentBorder}" Margin="10,10,10,10" Background="Black">
+                    <TreeView FontSize="22" x:Name="SolutionExplorerView" BorderThickness="0" Background="{x:Null}" FontFamily="{StaticResource Atlantis}">
+                        <TreeViewItem IsExpanded="True" Style="{StaticResource ProjectTreeStyle}" FontWeight="Bold">
+                            <TreeViewItem Header="Folder" Style="{StaticResource FolderTreeStyle}">
+                                
+                            </TreeViewItem>
+                            <TreeViewItem Header="File" Style="{StaticResource FileTreeStyle}">
+
+                            </TreeViewItem>
+                            <TreeViewItem Header="Import" Style="{StaticResource FileImportTreeStyle}">
+
+                            </TreeViewItem>
+                        </TreeViewItem>
+                    </TreeView>
+                </ContentControl>
+            </DockPanel>
+            <GridSplitter Height="2" Grid.Row="1" HorizontalAlignment="Stretch" Background="#FF465D79" ResizeDirection="Rows"/>
+            <DockPanel Grid.Row="2">
+                <TextBlock DockPanel.Dock="Top" Margin="10,10,0,0" Style="{StaticResource TitleText}" Foreground="White" Text="Symbols:"/>
+                <GroupBox Header="VIEW OPTIONS" FontFamily="{StaticResource Atlantis}" FontSize="18" DockPanel.Dock="Top" Margin="10,10,10,0">
+                    <StackPanel>
+                        <ComboBox x:Name="MacroFileCombo"  Margin="10" SelectionChanged="MacroFileCombo_SelectionChanged"/>
+                        <WrapPanel Margin="20,0,10,0" DockPanel.Dock="Top"  Orientation="Horizontal">
+                            <RadioButton IsChecked="True" Foreground="{StaticResource MacroColor}" Style="{StaticResource SFRadioButton}">MACROS</RadioButton>
+                            <RadioButton Foreground="{StaticResource DefineColor}" Style="{StaticResource SFRadioButton}" Margin="10,0,0,0">DEFINES</RadioButton>
+                        </WrapPanel>
+                    </StackPanel>
+                </GroupBox>
+                <ContentControl DockPanel.Dock="Top" Style="{StaticResource SFContentBorder}" Margin="10,10,10,10" Background="Black">
+                    <ListBox x:Name="MacroExplorerView" Margin="5,0" Background="{x:Null}" Foreground="{StaticResource MacroColor}" FontFamily="{StaticResource Atlantis}" FontSize="22" BorderThickness="0" SelectionChanged="MacroExplorerView_SelectionChanged">
+                        <ListBoxItem>MACRO</ListBoxItem>
+                    </ListBox>
+                </ContentControl>
+            </DockPanel>
+        </Grid>
+        <GridSplitter Width="2" Grid.Column="1" HorizontalAlignment="Left" ResizeDirection="Columns" Background="#FFA5A5A5"/>
+        <Grid Grid.Column="1" Grid.ColumnSpan="2">
+            <DockPanel Margin="10,0,0,0">
+                <StackPanel DockPanel.Dock="Top" Margin="10,20,10,10" Orientation="Horizontal">
+                    <TextBlock Style="{DynamicResource BodyText}" VerticalAlignment="Center" Margin="0,0,10,0">VIEW MODE: </TextBlock>
+                    <ToggleButton Padding="10,0" FontFamily="{StaticResource Atlantis}" FontSize="22" Background="#FF57708E" Foreground="White">
+                        MAP VIEWER
+                    </ToggleButton>
+                    <ToggleButton x:Name="ViewASMButton" Padding="10,0" FontFamily="{StaticResource Atlantis}" FontSize="22" Background="#FF57708E" Foreground="White">
+                        ASM VIEWER
+                    </ToggleButton>
+                </StackPanel>
+                <Grid DockPanel.Dock="Top" Margin="0,10,0,0">
+                    <Rectangle Height="2" VerticalAlignment="Center" Fill="White"/>
+                    <TextBlock Padding="10,0" Style="{StaticResource TitleText}" Foreground="White" FontSize="18" Text="ASSEMBLY VIEWER" HorizontalAlignment="Center" Background="#FF344559"/>
+                </Grid>
+                <ContentControl DockPanel.Dock="Top" Style="{StaticResource SFContentBorder}" Margin="10,10,10,10" Background="Black">
+                    <controls:ASMControl x:Name="ASMViewer"/>
+                </ContentControl>
+            </DockPanel>
+        </Grid>
+        <Border x:Name="LoadingSpan" Background="#3F000000" Grid.ColumnSpan="5" Visibility="Collapsed">
+            <Button FontFamily="{StaticResource SFFont}" IsEnabled="False" VerticalAlignment="Center" HorizontalAlignment="Center" Padding="10">
+                <StackPanel Width="212">
+                    <TextBlock>LOADING...</TextBlock>
+                    <ProgressBar Margin="0,5,0,0" IsIndeterminate="True" Height="20"/>
+                </StackPanel>
+            </Button>
+        </Border>
+    </Grid>
+</Page>
