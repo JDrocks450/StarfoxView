@@ -1,5 +1,6 @@
 ﻿using Starfox.Editor;
 using StarFox.Interop.ASM;
+using StarFox.Interop.MAP;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -7,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using static StarFoxMapVisualizer.Controls.ASMControl;
 
 namespace StarFoxMapVisualizer
 {
@@ -15,7 +17,15 @@ namespace StarFoxMapVisualizer
     /// </summary>
     internal static class AppResources
     {
+        /// <summary>
+        /// Files that are marked as *include files, as in containing symbol information
+        /// </summary>
         public static HashSet<ASMFile> Includes { get; } = new();
+        /// <summary>
+        /// All files that have been imported by the <see cref="ASMImporter"/>
+        /// </summary>
+        public static HashSet<ASMFile> OpenFiles { get; } = new();
+        public static IEnumerable<MAPFile> OpenMAPFiles => OpenFiles.OfType<MAPFile>();
         public static bool IsFileIncluded(FileInfo File) => AppResources.Includes.Any(x => x.OriginalFilePath == File.FullName);
         /// <summary>
         /// The project imported by the user, if one has been imported already

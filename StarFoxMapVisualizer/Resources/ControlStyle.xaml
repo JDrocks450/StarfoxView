@@ -29,6 +29,21 @@
         <Setter Property="FontFamily" Value="{DynamicResource Atlantis}"/>
         <Setter Property="FontSize" Value="22"/>
     </Style>
+    <Style x:Key="SFTabItemKey" TargetType="TabItem" BasedOn="{StaticResource {x:Type TabItem}}">
+        <Setter Property="Background" Value="#FF212121"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="Padding" Value="10,0"/>
+        <Setter Property="ClipToBounds" Value="True"/>
+    </Style>
+    <Style x:Key="SFTabViewerKey" TargetType="TabControl" BasedOn="{StaticResource {x:Type TabControl}}">
+        <Style.Resources>
+            <Style TargetType="TabItem" BasedOn="{StaticResource SFTabItemKey}"/>
+        </Style.Resources>
+        <Setter Property="Background" Value="#FF212121"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="FontFamily" Value="{StaticResource Atlantis}"/>
+        <Setter Property="FontSize" Value="22"/>
+    </Style>
     <Style x:Key="SFContentBorder" TargetType="ContentControl">
         <Setter Property="Template">
             <Setter.Value>

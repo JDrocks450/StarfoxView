@@ -21,7 +21,7 @@ namespace StarFox.Interop.ASM
     /// <summary>
     /// A custom-written basic ASM code object importer
     /// </summary>
-    public class ASMImporter : IImporter<ASMFile>
+    public class ASMImporter : CodeImporter<ASMFile>
     {
         private ASMImporterContext _context;
 
@@ -39,6 +39,16 @@ namespace StarFox.Interop.ASM
             SetImports(Imports);
             _ = ImportAsync(FilePath);
         }
+        /// <summary>
+        /// Warns if MAP file.
+        /// </summary>
+        /// <param name="FilePath"></param>
+        public override void CheckWarningMessage(string FilePath)
+        {
+            if (Path.GetExtension(FilePath).ToUpper().EndsWith("MAP"))
+                throw new InvalidOperationException("You're using the ASMImporter on a MAP file, it is recommended" +
+                    " to use the MAPImporter for these files for all the cool features.");
+        }
 
         /// <summary>
         /// You can import other ASM files that have symbol definitions in them to have those symbols linked.
@@ -47,11 +57,9 @@ namespace StarFox.Interop.ASM
         public void SetImports(params ASMFile[] Imports)
         {
             _context.Includes = Imports;
-        }
+        }      
 
-        public ASMFile ImportedObject { get; private set; }
-
-        public async Task<ASMFile> ImportAsync(string FilePath)
+        public override async Task<ASMFile> ImportAsync(string FilePath)
         {
             _context.CurrentFilePath = FilePath;  
             ASMFile newFile = _context.CurrentFile = new(FilePath);
@@ -94,7 +102,7 @@ namespace StarFox.Interop.ASM
                     chunk.Parse(fs);                    
                     break;
                 case ASMChunks.Macro:
-                    chunk = new ASMMacro(FileName, position, Context)
+                    chunk = new ASMMacro(position, Context)
                     {
                         Line = Context.CurrentLine
                     };
@@ -103,7 +111,7 @@ namespace StarFox.Interop.ASM
                 default:
                 case ASMChunks.Unknown:
                 case ASMChunks.Line:
-                    chunk = new ASMLine(FileName, position, Context)
+                    chunk = new ASMLine(position, Context)
                     {
                         IsUnknownType = type is ASMChunks.Unknown,
                         Line = Context.CurrentLine

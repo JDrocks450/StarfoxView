@@ -24,6 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\ControlExtensions\WPF.UI.Extensions\WPF.UI.Extensions.csproj" />
+    <ProjectReference Include="..\PanCanvas\WpfPanAndZoom.csproj" />
     <ProjectReference Include="..\Starfox.Editor\Starfox.Editor.csproj" />
     <ProjectReference Include="..\StarFox.Interop\StarFox.Interop.csproj" />
   </ItemGroup>

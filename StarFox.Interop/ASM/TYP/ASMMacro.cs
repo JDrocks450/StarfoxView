@@ -10,7 +10,7 @@ namespace StarFox.Interop.ASM.TYP
     /// <summary>
     /// A comment in an <see cref="ASMFile"/>
     /// </summary>
-    public class ASMMacro : ASMChunk
+    public class ASMMacro : ASMChunk, IASMNamedSymbol
     {
         private readonly ASMImporterContext context;
 
@@ -22,9 +22,9 @@ namespace StarFox.Interop.ASM.TYP
         public string[] Parameters { get; private set; } = new string[0];
         public ASMChunk[] Lines { get; private set; } = { };
 
-        internal ASMMacro(string FileName, long Position, ASMImporterContext Context) 
+        internal ASMMacro(long Position, ASMImporterContext Context) 
         {
-            OriginalFileName = FileName;
+            OriginalFileName = Context.CurrentFilePath;
             this.Position = Position;
             this.Length = 0;
             context = Context;

@@ -1,0 +1,24 @@
+﻿<UserControl x:Class="StarFoxMapVisualizer.Controls.MAPControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:StarFoxMapVisualizer.Controls" xmlns:customcontrols="clr-namespace:WpfPanAndZoom.CustomControls;assembly=WpfPanAndZoom"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800" Background="Black">
+    <Grid ClipToBounds="True">
+        <TabControl Name="MAPTabViewer" Style="{StaticResource SFTabViewerKey}">
+            <TabControl.Resources>
+                <Style TargetType="customcontrols:PanAndZoomCanvas">
+                    <Setter Property="Background" Value="Black"/>
+                    <Setter Property="ClipToBounds" Value="True"/>
+                </Style>
+            </TabControl.Resources>
+            <TabItem Header="TEST">
+                <customcontrols:PanAndZoomCanvas>
+                    <local:MapEventNodeControl Canvas.Left="100" Canvas.Top="50"/>
+                </customcontrols:PanAndZoomCanvas>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>

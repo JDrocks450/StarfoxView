@@ -1,0 +1,57 @@
+﻿<HeaderedContentControl x:Class="StarFoxMapVisualizer.Controls.MapEventNodeControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:StarFoxMapVisualizer.Controls"
+             mc:Ignorable="d" Name="HOST"
+             MinWidth="200" Header="mapobj" Foreground="#FFFFEA00" BorderBrush="Orange" Background="#FF7B7B7B">
+    <HeaderedContentControl.Resources>
+        <Style TargetType="HeaderedContentControl" x:Key="ContentStyle">
+            <Setter Property="Background" Value="{Binding Background, ElementName=HOST}"/>
+            <Setter Property="Foreground" Value="{Binding Foreground, ElementName=HOST}"/>
+            <Setter Property="Padding" Value="10"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="HeaderedContentControl">
+                        <Grid>
+                            <Button Background="{TemplateBinding Background}"/>
+                            <DockPanel Margin="{TemplateBinding Padding}">
+                                <ContentControl Foreground="{Binding Foreground, ElementName=HOST}" DockPanel.Dock="Top" FontFamily="Corbel">
+                                    <ContentPresenter ContentSource="Header"/>
+                                </ContentControl>
+                                <ContentPresenter/>
+                            </DockPanel>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </HeaderedContentControl.Resources>
+    <HeaderedContentControl.Template>
+        <ControlTemplate TargetType="HeaderedContentControl">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition MinWidth="175"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                    <RowDefinition Height="10"/>
+                </Grid.RowDefinitions>
+                <Button Grid.Row="1" Grid.ColumnSpan="2" Background="{TemplateBinding BorderBrush}"/>
+                <HeaderedContentControl Foreground="White" FontFamily="{StaticResource SFFont}" Header="EVENT NAME" Content="{TemplateBinding Header}" Style="{StaticResource ContentStyle}"/>
+                <ContentPresenter Grid.Column="1"/>
+            </Grid>
+        </ControlTemplate>
+    </HeaderedContentControl.Template>
+    <StackPanel Orientation="Horizontal" Name="ComponentsStack">
+        <StackPanel.Resources>
+            <Style TargetType="HeaderedContentControl" BasedOn="{StaticResource ContentStyle}">
+                <Setter Property="FontFamily" Value="{StaticResource SFFont}"/>
+                <Setter Property="Foreground" Value="White"/>
+            </Style>
+        </StackPanel.Resources>
+        <HeaderedContentControl Header="DELAY" Content="1000"/>
+    </StackPanel>
+</HeaderedContentControl>

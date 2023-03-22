@@ -1,8 +1,15 @@
 ﻿namespace StarFox.Interop
 {
-    public interface IImporter<T> where T : IImporterObject
+    public abstract class CodeImporter<T> where T : IImporterObject
     {
-        T? ImportedObject { get; }
-        Task<T> ImportAsync(string FilePath);
+        public T? ImportedObject { get; protected set; }
+        public abstract Task<T> ImportAsync(string FilePath);
+        /// <summary>
+        /// Will throw an exception containing a warning message if the given file has warnings before import.
+        /// </summary>
+        public virtual void CheckWarningMessage(string FilePath)
+        {
+            ; // override in child
+        }
     }
 }

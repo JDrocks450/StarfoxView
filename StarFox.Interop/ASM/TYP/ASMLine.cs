@@ -41,8 +41,18 @@ namespace StarFox.Interop.ASM.TYP
             Name = name;
             Value = value;
         }
-
+        /// <summary>
+        /// An importer, such as <see cref="ASMLine.Parse(StreamReader)"/> will set this if/when it creates an accompanying
+        /// <see cref="ASMConstant"/> definition for this line.
+        /// </summary>
+        public ASMConstant Constant { get; internal set; }
+        /// <summary>
+        /// The name given to this Constant
+        /// </summary>
         public string Name { get; private set; }
+        /// <summary>
+        /// The text found at the callsite
+        /// </summary>
         public string Value { get; private set; }
 
         /// <summary>
@@ -86,6 +96,7 @@ namespace StarFox.Interop.ASM.TYP
         /// The parameters passed if applicable
         /// </summary>
         public ASMMacroInvokeParameter[] Parameters { get; }
+        public ASMMacroInvokeParameter? TryGetParameter(int index) => Parameters.ElementAtOrDefault(index);
 
         /// <summary>
         /// Tries to parse this line as a macro invokation
@@ -134,8 +145,7 @@ namespace StarFox.Interop.ASM.TYP
         /// </summary>
         public bool IsUnknownType { get; set; }
         public string Text { get; private set; } = "";
-        public int Line { get; internal set; } = 0;
-        public override ASMChunks ChunkType => ASMChunks.Line;
+        public override ASMChunks ChunkType => ASMChunks.Line;        
 
         /// <summary>
         /// If the structure of this line is recognized and well formatted, this will be populated, otherwise null.
@@ -151,9 +161,9 @@ namespace StarFox.Interop.ASM.TYP
         /// <param name="FileName"></param>
         /// <param name="Position"></param>
         /// <param name="Imports"></param>
-        internal ASMLine(string FileName, long Position, ASMImporterContext context)
+        internal ASMLine(long Position, ASMImporterContext context)
         {
-            OriginalFileName= FileName;
+            OriginalFileName = context.CurrentFilePath;
             this.Position = Position;
             this.context = context;
             imports = context.Includes;
@@ -167,7 +177,12 @@ namespace StarFox.Interop.ASM.TYP
             var line = FileStream.ReadLine().RemoveEscapes();
             var newPosition = FileStream.GetActualPosition();
             if (ASMDefineLineStructure.TryParse(line, out var result))
+            {
                 Structure = result;
+                var constant = new ASMConstant(this);
+                result.Constant = constant;
+                context.CurrentFile.Constants.Add(constant);
+            }
             else if (ASMMacroInvokeLineStructure.TryParse(line, out var mresult, imports))
                 Structure = mresult;
             Text = line;

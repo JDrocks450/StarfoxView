@@ -13,15 +13,6 @@
             <Setter Property="Background" Value="#FF0888FF"/>
             <Setter Property="Foreground" Value="White"/>
         </Style>
-        <Style TargetType="RichTextBox" BasedOn="{StaticResource {x:Type RichTextBox}}">
-            <Setter Property="Background" Value="{x:Null}"/>
-            <Setter Property="BorderBrush" Value="{x:Null}"/>
-            <Setter Property="FontFamily" Value="Consolas"/>
-            <Setter Property="CaretBrush" Value="#FF13FF00"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="HorizontalScrollBarVisibility" Value="Auto"/>
-            <Setter Property="VerticalScrollBarVisibility" Value="Visible"/>
-        </Style>
     </UserControl.Resources>
     <DockPanel>
         <StackPanel DockPanel.Dock="Top" Margin="10" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
@@ -41,16 +32,9 @@
                 <TextBlock Margin="10,0" Name="FilePathBlock" VerticalAlignment="Center" FontFamily="Consolas">FILE BLOCK</TextBlock>
             </DockPanel>
         </Border>
-        <TabControl Background="#FF212121" Foreground="White" Name="FileBrowserTabView" FontFamily="{StaticResource Atlantis}" FontSize="22">
-            <TabControl.Resources>
-                <Style TargetType="TabItem" BasedOn="{StaticResource {x:Type TabItem}}">
-                    <Setter Property="Background" Value="{Binding Background, ElementName=FileBrowserTabView}"/>
-                    <Setter Property="Foreground" Value="White"/>
-                    <Setter Property="Padding" Value="10,0"/>
-                </Style>
-            </TabControl.Resources>
+        <TabControl Name="FileBrowserTabView" Style="{StaticResource SFTabViewerKey}">
             <TabItem Header="File">
-
+                
             </TabItem>
         </TabControl>
     </DockPanel>

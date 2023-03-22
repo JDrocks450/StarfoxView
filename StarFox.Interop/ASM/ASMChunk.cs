@@ -13,7 +13,12 @@ namespace StarFox.Interop.ASM
         Unknown,
         Comment,
         Macro,
-        Line
+        Line,
+        Constant
+    }
+    public interface IASMNamedSymbol
+    {
+        string Name { get; }
     }
     /// <summary>
     /// A block of ASM code
@@ -26,7 +31,7 @@ namespace StarFox.Interop.ASM
         public string OriginalFileName { get; internal set; }
         public abstract ASMChunks ChunkType { get; }
         public long Position { get; internal set; }
-        public long Line { get; internal set; }
+        public virtual long Line { get; internal set; }
         public long Length { get; internal set; }
 
         /// <summary>

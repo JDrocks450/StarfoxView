@@ -6,9 +6,10 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/PresentationFramework.Classic;component/themes/classic.xaml" />
                 <ResourceDictionary Source="/Resources/ControlStyle.xaml"/>
                 <ResourceDictionary Source="/Resources/Theme.xaml"/>
-                <ResourceDictionary Source="/PresentationFramework.Classic;component/themes/classic.xaml" />
+                <ResourceDictionary Source="/Resources/ControlOverride.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>
