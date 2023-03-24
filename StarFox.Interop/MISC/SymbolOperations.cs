@@ -17,13 +17,13 @@ namespace StarFox.Interop.MISC
         }
         public static ASMMacro? MatchMacro(IEnumerable<ASMMacro> SymbolNameList, string SymbolName)
         {
-            var macroNames = SymbolNameList.Select(x => x.Name);
+            var macroNames = SymbolNameList.Select(x => x.Name.ToLower());
             var block = SymbolName;
             var macros = SymbolNameList; 
             if (macroNames.Contains(block.ToLower())) // macro found
             {
                 var macroName = block;
-                return macros.Where(x => x.Name == macroName).FirstOrDefault();
+                return macros.Where(x => x.Name.ToLower() == macroName.ToLower()).FirstOrDefault();
             }
             return null;
         }

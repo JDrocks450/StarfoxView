@@ -9,6 +9,7 @@
         /// The type of file object this node represents
         /// </summary>
         public SFCodeProjectNodeTypes Type { get; internal set; }
+        public SFCodeProjectFileTypes RecognizedFileType { get; private set; }
         /// <summary>
         /// The path to this Code Object in the host file system
         /// <para>This is a path RELATIVE to the <see cref="SFCodeProject"/>'s base project directory path</para>
@@ -28,6 +29,8 @@
         {
             Type = type;
             this.FilePath = FilePath;
+            if (Type is SFCodeProjectNodeTypes.File)
+                RecognizedFileType = SFCodeProjectFileExtensions.GetSFFileType(FilePath);
         }
         /// <summary>
         /// Adds a folder to this project node

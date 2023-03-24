@@ -1,0 +1,74 @@
+﻿<UserControl x:Class="StarFoxMapVisualizer.Controls.SHAPEControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:StarFoxMapVisualizer.Controls"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800" Background="Black" PreviewKeyDown="Window_PreviewKeyDown" PreviewMouseMove="Window_PreviewMouseMove">
+    <Grid>
+        <Canvas Name="LineWorkCanvas" Opacity=".5">
+
+        </Canvas>
+        <DockPanel>
+            <Grid DockPanel.Dock="Top" Background="Gainsboro">
+                <Grid Margin="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Right" FontWeight="Bold">X:</TextBlock>
+                    <TextBox Grid.Column="1" Text="{Binding Position.X, ElementName=Camera}" VerticalContentAlignment="Center"/>
+                    <TextBlock Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right" FontWeight="Bold">Y:</TextBlock>
+                    <TextBox Grid.Column="3"  Text="{Binding Position.Y, ElementName=Camera}" VerticalContentAlignment="Center"/>
+                    <TextBlock Grid.Column="4" VerticalAlignment="Center" HorizontalAlignment="Right" FontWeight="Bold">Z:</TextBlock>
+                    <TextBox Grid.Column="5" Text="{Binding Position.Z, ElementName=Camera}" VerticalContentAlignment="Center"/>
+                    <TextBlock Grid.Column="6" VerticalAlignment="Center" FontWeight="Bold" HorizontalAlignment="Right">SHAPE:</TextBlock>
+                    <ComboBox Grid.Column="7" Name="ShapeSelector" SelectionChanged="ShapeSelector_SelectionChanged"/>
+                    <TextBlock Grid.Column="8" VerticalAlignment="Center" FontWeight="Bold" HorizontalAlignment="Right">FRAME:</TextBlock>
+                    <ComboBox Grid.Column="9" Name="FrameSelector" SelectionChanged="FrameSelector_SelectionChanged"/>
+                </Grid>
+            </Grid>
+            <Viewport3D Name="ThreeDViewer">
+                <Viewport3D.Resources>
+                    <DiffuseMaterial x:Key="DefaultBrush">
+                        <DiffuseMaterial.Brush>
+                            <SolidColorBrush Color="Gainsboro"/>
+                        </DiffuseMaterial.Brush>
+                    </DiffuseMaterial>
+                </Viewport3D.Resources>
+                <Viewport3D.Camera>
+                    <PerspectiveCamera x:Name="Camera" 
+                        FarPlaneDistance="1000" 
+                        LookDirection="0,0,1" 
+                        UpDirection="0,1,0" 
+                        NearPlaneDistance="1" 
+                        Position="0,-0,-200" 
+                        FieldOfView="40" />
+                </Viewport3D.Camera>
+                <Viewport3D.Children>
+                    <ModelVisual3D>
+                        <ModelVisual3D.Content>
+                            <Model3DGroup x:Name="MainSceneGroup">
+                                <!-- Lights, MeshGeometry3D and DiffuseMaterial objects are added to the ModelVisual3D. -->
+                                <AmbientLight x:Name="MainLight" Color="#FFFFFFFF" />
+                            </Model3DGroup>
+                        </ModelVisual3D.Content>
+                    </ModelVisual3D>
+                </Viewport3D.Children>
+            </Viewport3D>
+        </DockPanel>
+        <StackPanel Width="150" HorizontalAlignment="Right" Margin="0,55,0,0">
+            <Button x:Name="CapKeyboard" Click="CapKeyboard_Click">Capture Keyboard</Button>
+            <Button x:Name="ResetCam" Margin="0,5" Click="ResetCam_Click">Reset Camera</Button>
+        </StackPanel>
+    </Grid>
+</UserControl>

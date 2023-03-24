@@ -1,4 +1,5 @@
 ﻿using StarFox.Interop.ASM.TYP;
+using StarFox.Interop.ASM.TYP.STRUCT;
 
 namespace StarFox.Interop.MAP.EVT
 {

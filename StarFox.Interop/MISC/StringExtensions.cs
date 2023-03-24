@@ -15,7 +15,7 @@ namespace StarFox.Interop.MISC
             {
                 var cur = input[i];
                 if(cur == 9) {  // \t
-                    output += ' ';
+                    output += "  ";
                 }
                 else
                 {

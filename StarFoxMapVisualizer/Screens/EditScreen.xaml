@@ -18,12 +18,11 @@
                     <DataTemplate>
                         <StackPanel Orientation="Horizontal">
                             <Image Margin="0,0,10,0" Source="/Resources/Image/sf_small.png" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
-                            <TextBlock Text="{Binding}"/>
+                            <TextBlock Text="Project"/>
                         </StackPanel>
                     </DataTemplate>
                 </Setter.Value>
             </Setter>
-            <Setter Property="Header" Value="Project"/>
         </Style>
         <Style TargetType="TreeViewItem" x:Key="FolderTreeStyle" BasedOn="{StaticResource BaseTreeStyle}">
             <Setter Property="Foreground" Value="{StaticResource FolderNodeColor}"/>
@@ -64,6 +63,32 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        <Style TargetType="TreeViewItem" x:Key="PaletteTreeStyle" BasedOn="{StaticResource BaseTreeStyle}">
+            <Setter Property="Foreground" Value="{StaticResource PaletteNodeColor}"/>
+            <Setter Property="HeaderTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <Image Margin="0,0,10,0" Source="/Resources/Image/palette.png" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+                            <TextBlock Text="{Binding}"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style TargetType="TreeViewItem" x:Key="ColorTableTreeStyle" BasedOn="{StaticResource BaseTreeStyle}">
+            <Setter Property="Foreground" Value="{StaticResource ColorTableNodeColor}"/>
+            <Setter Property="HeaderTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <Image Margin="0,0,10,0" Source="/Resources/Image/colTable.png" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+                            <TextBlock Text="{Binding}"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Page.Resources>
     
     <Grid ClipToBounds="True">
@@ -91,6 +116,12 @@
 
                             </TreeViewItem>
                             <TreeViewItem Header="Import" Style="{StaticResource FileImportTreeStyle}">
+
+                            </TreeViewItem>
+                            <TreeViewItem Header="Palette" Style="{StaticResource PaletteTreeStyle}">
+
+                            </TreeViewItem>
+                            <TreeViewItem Header="Color Table" Style="{StaticResource ColorTableTreeStyle}">
 
                             </TreeViewItem>
                         </TreeViewItem>
@@ -123,9 +154,12 @@
         <Grid Grid.Column="1" Grid.ColumnSpan="2">
             <DockPanel Margin="10,0,0,0">
                 <Grid DockPanel.Dock="Top">
-                    <TextBlock DockPanel.Dock="Top" Margin="20,10,0,0" Style="{StaticResource TitleText}" Foreground="White" HorizontalAlignment="Left" VerticalAlignment="Bottom" FontSize="16" Text="Assembly Viewer"/>
+                    <TextBlock x:Name="TitleBlock" DockPanel.Dock="Top" Margin="20,10,0,0" Style="{StaticResource TitleText}" Foreground="White" HorizontalAlignment="Left" VerticalAlignment="Bottom" FontSize="16" Text="Assembly Viewer"/>
                     <StackPanel x:Name="ViewModeStrip" Margin="10,20,10,10" Orientation="Horizontal" HorizontalAlignment="Right">
                         <TextBlock Style="{DynamicResource BodyText}" VerticalAlignment="Center" Margin="0,0,10,0">VIEW MODE:</TextBlock>
+                        <ToggleButton x:Name="ViewBSTButton" Padding="10,0" FontFamily="{StaticResource Atlantis}" FontSize="22" Background="#FF57708E" Foreground="White" Checked="ViewBSTButton_Checked">
+                            OBJECT VIEWER
+                        </ToggleButton>
                         <ToggleButton x:Name="ViewMapButton" Padding="10,0" FontFamily="{StaticResource Atlantis}" FontSize="22" Background="#FF57708E" Foreground="White" Checked="ViewMapButton_Checked">
                             MAP VIEWER
                         </ToggleButton>
@@ -141,6 +175,9 @@
                         </TabItem>
                         <TabItem Name="MAPTab">
                             <controls:MAPControl x:Name="MAPViewer"/>
+                        </TabItem>
+                        <TabItem Name="OBJTab">
+                            <controls:SHAPEControl x:Name="OBJViewer"/>
                         </TabItem>
                     </TabControl>
                 </ContentControl>

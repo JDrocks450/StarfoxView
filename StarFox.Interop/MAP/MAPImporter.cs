@@ -1,5 +1,6 @@
 ﻿using StarFox.Interop.ASM;
 using StarFox.Interop.ASM.TYP;
+using StarFox.Interop.ASM.TYP.STRUCT;
 using StarFox.Interop.MAP.EVT;
 using System;
 using System.Collections.Generic;
@@ -8,13 +9,13 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace StarFox.Interop.MAP
-{    
+{
     public class MAPImporter : CodeImporter<MAPFile>
     {
-        /// <summary>
-        /// The MAP file imported using the <see cref="ImportAsync(string)"/> function
-        /// </summary>
-        public MAPFile? ImportedObject { get; private set; } = default;
+        public override string[] ExpectedIncludes => new string[]
+        {
+            "MAPMACS.INC" // MAPMACS.INC is expected
+        };
         private ASMImporter baseImporter = new();
         public MAPImporter()
         {
@@ -24,12 +25,14 @@ namespace StarFox.Interop.MAP
         {
             _ = ImportAsync(FilePath).Result;
         }
-
-        public void SetImports(params ASMFile[] Imports)
+        /// <summary>
+        /// Sets the currently included symbol definitions files.
+        /// </summary>
+        /// <param name="Imports"></param>
+        public override void SetImports(params ASMFile[] Imports)
         {
             baseImporter.SetImports(Imports);
         }
-
         /// <summary>
         /// Attempts to import the given file and interpret the code as a MAP file
         /// </summary>
@@ -68,6 +71,11 @@ namespace StarFox.Interop.MAP
                 file.Events.Add(new MAPUnknownEvent(line)); // default add unknown map event
             }
             return ImportedObject;
+        }
+
+        internal override ImporterContext<IncludeType>? GetCurrentContext<IncludeType>()
+        {
+            return baseImporter.Context as ImporterContext<IncludeType>;
         }
     }
 }

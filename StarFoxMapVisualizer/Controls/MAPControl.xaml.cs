@@ -18,10 +18,16 @@ using WpfPanAndZoom.CustomControls;
 
 namespace StarFoxMapVisualizer.Controls
 {
+    public interface IPausable
+    {
+        bool Paused { get; }
+        void Pause();
+        void Unpause();
+    }
     /// <summary>
     /// Interaction logic for MAPControl.xaml
     /// </summary>
-    public partial class MAPControl : UserControl
+    public partial class MAPControl : UserControl, IPausable
     {
         public bool Paused { get; private set; }
 

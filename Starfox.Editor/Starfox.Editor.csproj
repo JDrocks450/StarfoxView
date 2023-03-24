@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\StarFox.Interop\StarFox.Interop.csproj" />
+  </ItemGroup>
+
 </Project>

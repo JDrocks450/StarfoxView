@@ -6,9 +6,9 @@
       xmlns:local="clr-namespace:StarFoxMapVisualizer.Screens" xmlns:backgrounds="clr-namespace:WPF.UI.Extensions.Backgrounds;assembly=WPF.UI.Extensions"
       mc:Ignorable="d" 
       d:DesignHeight="768" d:DesignWidth="1024"
-      Title="Landing Screen" >
+      Title="Landing Screen" RenderOptions.BitmapScalingMode="NearestNeighbor">
     <Page.Background>
-        <ImageBrush ImageSource="/Resources/Image/SectorY.png" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+        <ImageBrush ImageSource="/Resources/Image/SectorY.png" Stretch="UniformToFill" />
     </Page.Background>
 
     <Grid>

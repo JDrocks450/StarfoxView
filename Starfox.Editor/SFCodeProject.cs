@@ -1,8 +1,11 @@
-﻿using System;
+﻿using StarFox.Interop.ASM;
+using StarFox.Interop.MAP;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static StarFox.Interop.GFX.CAD;
 
 namespace Starfox.Editor
 {
@@ -11,6 +14,39 @@ namespace Starfox.Editor
     /// </summary>
     public class SFCodeProject
     {
+        /// <summary>
+        /// Palettes that have been included in this project
+        /// <para>FilePath, COL</para>
+        /// </summary>
+        public Dictionary<string, COL> Palettes { get; } = new();
+        /// <summary>
+        /// Files that are marked as *include files, as in containing symbol information
+        /// </summary>
+        public HashSet<ASMFile> Includes { get; } = new();
+        /// <summary>
+        /// All files that have been imported by the <see cref="ASMImporter"/>
+        /// </summary>
+        public HashSet<ASMFile> OpenFiles { get; } = new();
+        public IEnumerable<MAPFile> OpenMAPFiles => OpenFiles.OfType<MAPFile>();
+        /// <summary>
+        /// Looks for the specified file (or palette) to see if it's included
+        /// </summary>
+        /// <param name="File"></param>
+        /// <returns></returns>
+        public bool IsFileIncluded(FileInfo File)
+        {
+            var value = Includes.Any(x => x.OriginalFilePath == File.FullName);
+            if (value) return value;
+            value = IsPaletteIncluded(File.FullName);
+            return value;
+        }
+        public ASMFile? GetInclude(FileInfo File) => Includes.FirstOrDefault(x => x.OriginalFilePath == File.FullName);
+        /// <summary>
+        /// Looks to see if that palette has been referenced already
+        /// </summary>
+        /// <param name="FilePath"></param>
+        /// <returns></returns>
+        public bool IsPaletteIncluded(string FilePath) => Palettes.Any(x => x.Key.ToLower() == FilePath.ToLower());
         /// <summary>
         /// The path to the base directory of this <see cref="SFCodeProject"/> instance
         /// </summary>

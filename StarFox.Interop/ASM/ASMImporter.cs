@@ -8,13 +8,15 @@ using System.Threading.Tasks;
 
 namespace StarFox.Interop.ASM
 {
-    internal class ASMImporterContext
+    public abstract class ImporterContext<T> where T : IImporterObject
     {
-        public ASMFile[] Includes { get; set; }
-        public ASMFile CurrentFile { get; set; }
+        public T[] Includes { get; set; }
+        public T CurrentFile { get; set; }
         public string CurrentFilePath { get; set; }
         public int CurrentLine { get; set; }
-
+    }
+    public class ASMImporterContext : ImporterContext<ASMFile>
+    {       
         public ASMImporterContext() { }
     }
 
@@ -24,6 +26,7 @@ namespace StarFox.Interop.ASM
     public class ASMImporter : CodeImporter<ASMFile>
     {
         private ASMImporterContext _context;
+        internal ASMImporterContext Context => _context;
 
         public ASMImporter()
         {
@@ -39,22 +42,12 @@ namespace StarFox.Interop.ASM
             SetImports(Imports);
             _ = ImportAsync(FilePath);
         }
-        /// <summary>
-        /// Warns if MAP file.
-        /// </summary>
-        /// <param name="FilePath"></param>
-        public override void CheckWarningMessage(string FilePath)
-        {
-            if (Path.GetExtension(FilePath).ToUpper().EndsWith("MAP"))
-                throw new InvalidOperationException("You're using the ASMImporter on a MAP file, it is recommended" +
-                    " to use the MAPImporter for these files for all the cool features.");
-        }
 
         /// <summary>
         /// You can import other ASM files that have symbol definitions in them to have those symbols linked.
         /// </summary>
         /// <param name="Imports"></param>
-        public void SetImports(params ASMFile[] Imports)
+        public override void SetImports(params ASMFile[] Imports)
         {
             _context.Includes = Imports;
         }      
@@ -125,6 +118,11 @@ namespace StarFox.Interop.ASM
                     return null; // return nothing if this isn't useful.
             }                        
             return chunk;
+        }
+
+        internal override ImporterContext<IncludeType>? GetCurrentContext<IncludeType>()
+        {
+            return Context as ImporterContext<IncludeType>;
         }
     }
 }

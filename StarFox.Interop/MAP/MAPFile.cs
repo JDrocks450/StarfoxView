@@ -28,10 +28,9 @@ namespace StarFox.Interop.MAP
         internal MAPFile(string OriginalFilePath) : base(OriginalFilePath) {
             
         }
-        internal MAPFile(ASMFile From) : this(From.OriginalFilePath)
-        {
-            this.Chunks = From.Chunks;
-            this.Constants= From.Constants;            
+        internal MAPFile(ASMFile From) : base(From)
+        { 
+            
         }
     }
 }

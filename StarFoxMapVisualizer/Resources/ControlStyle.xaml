@@ -35,6 +35,29 @@
         <Setter Property="Padding" Value="10,0"/>
         <Setter Property="ClipToBounds" Value="True"/>
     </Style>
+    <Style TargetType="Window" x:Key="SFDialogModalStyle">
+        <Setter Property="Background" Value="{DynamicResource WindowColor}"/>
+        <Setter Property="WindowStyle" Value="None"/>
+        <Setter Property="ResizeMode" Value="NoResize"/>
+        <Setter Property="Padding" Value="10"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Window">
+                    <Grid>
+                        <Button Width="{Binding ActualWidth, ElementName=HOST}" IsEnabled="False" Background="{TemplateBinding Background}" HorizontalAlignment="Stretch"/>
+                        <DockPanel Margin="{TemplateBinding Padding}">
+                            <DockPanel DockPanel.Dock="Top" >
+                                <Image Width="25" Height="25" Source="{TemplateBinding Icon}" DockPanel.Dock="Left" Margin="0,0,10,0" Stretch="Fill"/>
+                                <TextBlock VerticalAlignment="Center" Text="{TemplateBinding Title}" FontFamily="{StaticResource SFFont}" FontSize="12"/>
+                            </DockPanel>
+                            <Separator Margin="0,10" DockPanel.Dock="Top" Background="{TemplateBinding Background}"/>
+                            <ContentPresenter/>
+                        </DockPanel>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
     <Style x:Key="SFTabViewerKey" TargetType="TabControl" BasedOn="{StaticResource {x:Type TabControl}}">
         <Style.Resources>
             <Style TargetType="TabItem" BasedOn="{StaticResource SFTabItemKey}"/>

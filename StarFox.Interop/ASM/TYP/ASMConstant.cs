@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using StarFox.Interop.ASM.TYP.STRUCT;
 
 namespace StarFox.Interop.ASM.TYP
 {

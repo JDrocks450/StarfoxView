@@ -20,13 +20,13 @@ namespace StarFoxMapVisualizer
         /// <summary>
         /// Files that are marked as *include files, as in containing symbol information
         /// </summary>
-        public static HashSet<ASMFile> Includes { get; } = new();
+        public static HashSet<ASMFile>? Includes => ImportedProject?.Includes;
         /// <summary>
         /// All files that have been imported by the <see cref="ASMImporter"/>
         /// </summary>
-        public static HashSet<ASMFile> OpenFiles { get; } = new();
-        public static IEnumerable<MAPFile> OpenMAPFiles => OpenFiles.OfType<MAPFile>();
-        public static bool IsFileIncluded(FileInfo File) => AppResources.Includes.Any(x => x.OriginalFilePath == File.FullName);
+        public static HashSet<ASMFile>? OpenFiles => ImportedProject?.OpenFiles;
+        public static IEnumerable<MAPFile>? OpenMAPFiles => ImportedProject?.OpenMAPFiles;
+        public static bool IsFileIncluded(FileInfo File) => ImportedProject?.IsFileIncluded(File) ?? false;
         /// <summary>
         /// The project imported by the user, if one has been imported already
         /// <para>See: </para>

@@ -144,6 +144,11 @@ namespace StarFoxMapVisualizer.Controls.Subcontrols
 
                     //HIGHLIGHTING ROUTINE
                     _ = ProcessLine(textParagraph, line, lineNumber);
+                    if (lineNumber % 75 == 0)
+                    {
+                        textParagraph = new();
+                        newASMDoc.Blocks.Add(textParagraph);
+                    }
                 }
             }
         }
@@ -218,7 +223,7 @@ namespace StarFoxMapVisualizer.Controls.Subcontrols
         /// <summary>
         /// Represents a Highlighting tip
         /// </summary>
-        struct HighlightDesc
+        class HighlightDesc
         {
             public string Word;
             public Brush highlightKey;
@@ -254,7 +259,7 @@ namespace StarFoxMapVisualizer.Controls.Subcontrols
             void doHighlight(in string currentText, HighlightDesc desc, out string remainingText)
             {
                 int occurance = desc.Index.HasValue ? // IS INDEX MODE?
-                                    currentText.IndexOf(desc.Index.Value) : currentText.IndexOf(desc.Word);
+                                    currentText.IndexOf(desc.Index.Value) : currentText.ToLower().IndexOf(desc.Word.ToLower());
                 if (occurance < 0)
                 {
                     remainingText = "";
@@ -312,16 +317,16 @@ namespace StarFoxMapVisualizer.Controls.Subcontrols
                 }
                 remainingText = currentText.Substring(occurance + desc.Word.Length);
             }
-            var fooWords = HighlightedWords.ToArray();
+            var fooWords = HighlightedWords.ToList();
             string remainingText = line;
             for (int i = 0; i < HighlightedWords.Count(); i++)
             {
                 HighlightDesc? nextWord = fooWords.OrderBy(x => x.Index.HasValue ? // IS INDEX MODE?
                                             remainingText.IndexOf(x.Index.Value) : remainingText.IndexOf(x.Word)
                                           ).FirstOrDefault(); // order first to last based on remaining text
-                if (!nextWord.HasValue) break; // ?????
-                fooWords = fooWords.Skip(1).ToArray(); // make new list of remaining highlights
-                doHighlight(in remainingText, nextWord.Value, out remainingText);
+                if (nextWord == null) continue; // ?????
+                fooWords.Remove(nextWord); // make new list of remaining highlights
+                doHighlight(in remainingText, nextWord, out remainingText);
                 if (string.IsNullOrWhiteSpace(remainingText)) break;
             }
             if (!string.IsNullOrEmpty(remainingText)) // more text exists after all inline highlights!!

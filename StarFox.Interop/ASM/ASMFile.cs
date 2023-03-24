@@ -1,4 +1,5 @@
 ﻿using StarFox.Interop.ASM.TYP;
+using StarFox.Interop.ASM.TYP.STRUCT;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,6 +28,16 @@ namespace StarFox.Interop.ASM
         internal ASMFile(string OriginalFilePath)
         {
             this.OriginalFilePath = OriginalFilePath;
+        }
+        /// <summary>
+        /// Shallow copy of One <see cref="ASMFile"/> to another
+        /// </summary>
+        /// <param name="From"></param>
+        internal ASMFile(ASMFile From)
+        {
+            this.Chunks = From.Chunks;
+            this.Constants = From.Constants;
+            OriginalFilePath = From.OriginalFilePath;
         }
     }
 }
