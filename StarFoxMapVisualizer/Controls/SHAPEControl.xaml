@@ -11,7 +11,7 @@
             <RowDefinition Height="3*"/>
             <RowDefinition/>
         </Grid.RowDefinitions>
-        <Canvas Name="LineWorkCanvas" Opacity=".75" Grid.RowSpan="2">
+        <Canvas Name="LineWorkCanvas" Grid.RowSpan="2">
 
         </Canvas>
         <DockPanel Grid.RowSpan="2">
