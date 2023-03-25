@@ -34,7 +34,8 @@ namespace StarFox.Interop.BSP
             PointsXw
         }
 
-        //*** BSP VARS                        
+        //*** BSP VARS
+        internal BSPFile? CurrentFile;
         internal BSPShape? CurrentShape = default; // the currently parsing shape
         internal int currentFrame = -1, currentFrameDefinition = 0;
         internal int pointIndex = 0, pointActualIndex = 0, framePointIndexStart = 0, framePointActualIndexStart = 0;
@@ -60,6 +61,7 @@ namespace StarFox.Interop.BSP
         internal bool facesLocked = false;
         internal int frames = 0;
         //***
+        public StringBuilder? ErrorList => CurrentFile?.ImportErrors;
 
         /// <summary>
         /// Resets variables to default values
@@ -84,10 +86,14 @@ namespace StarFox.Interop.BSP
         /// <param name="NumberOfFrames"></param>
         public void BeginFramesRegion(int NumberOfFrames)
         {
-            frames = NumberOfFrames;
+            bool firstDefine = frames == 0;
+            frames += NumberOfFrames;
             currentFrame = 0;
-            framePointIndexStart = pointIndex;
-            framePointActualIndexStart = pointActualIndex;
+            if (firstDefine)
+            {
+                framePointIndexStart = pointIndex;
+                framePointActualIndexStart = pointActualIndex;
+            }
         }
         /// <summary>
         /// This function will push a new frame onto the object's <see cref="BSPShape.Frames"/> stack
@@ -148,6 +154,7 @@ namespace StarFox.Interop.BSP
         public override string[] ExpectedIncludes => new string[] {
             "SHMACS.INC"
         };
+        BSPImporterContext asmContext;        
 
         /// <summary>
         /// Initializes a new <see cref="BSPImporter"/>
@@ -209,7 +216,10 @@ namespace StarFox.Interop.BSP
             if (baseImport == default) throw new InvalidOperationException("That file could not be parsed.");            
             var file = ImportedObject = new BSPFile(baseImport); // from ASM file
             int currentLineIndex = -1; // the current line of assembly we're reading
-            var asmContext = new BSPImporterContext(); // create a new context
+            asmContext = new BSPImporterContext() // create a new context
+            {
+                CurrentFile = file,
+            };
             asmContext.ResetVars();
             foreach(var chunk in file.Chunks)
             {
@@ -281,8 +291,15 @@ namespace StarFox.Interop.BSP
                         }
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
+                    asmContext?.ErrorList?.AppendLine("****");
+                    asmContext?.ErrorList?.AppendLine($"SHAPE: {asmContext.CurrentShape}");
+                    asmContext?.ErrorList?.AppendLine($"CHUNK: {chunk}");
+                    asmContext?.ErrorList?.AppendLine($"FRAME: {asmContext.currentFrame}");
+                    asmContext?.ErrorList?.AppendLine($"ERROR: ");
+                    asmContext?.ErrorList?.AppendLine(ex.ToString());
+                    asmContext?.ErrorList?.AppendLine("****");
                     asmContext.ResetVars();
                 }
             }

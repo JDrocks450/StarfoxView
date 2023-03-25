@@ -121,7 +121,7 @@ namespace StarFox.Interop.BSP.SHAPE
         /// <summary>
         /// A set of faces that reference points with this shape.
         /// </summary>
-        public HashSet<BSPFace> Faces { get; } = new();
+        public HashSet<BSPFace> Faces { get; } = new();       
 
         internal BSPShape() { 
             

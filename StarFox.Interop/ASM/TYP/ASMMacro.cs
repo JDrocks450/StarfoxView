@@ -104,5 +104,10 @@ namespace StarFox.Interop.ASM.TYP
             Lines = lines;
             Length = runningLength;
         }
+
+        public override string ToString()
+        {
+            return $"MACRO: {Name}, P: {Parameters.Length}";
+        }
     }
 }

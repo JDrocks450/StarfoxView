@@ -20,8 +20,12 @@ namespace StarFox.Interop.ASM.TYP.STRUCT
         /// The parameters passed if applicable
         /// </summary>
         public ASMMacroInvokeParameter[] Parameters { get; }
+        /// <summary>
+        /// Tries to find the given parameter by index.
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns></returns>
         public ASMMacroInvokeParameter? TryGetParameter(int index) => Parameters.ElementAtOrDefault(index);
-
         /// <summary>
         /// Tries to parse this line as a macro invokation
         /// </summary>

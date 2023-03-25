@@ -15,6 +15,11 @@ namespace StarFox.Interop.BSP
         /// <para>Usually shapes come in large files with many other shapes defined along side them.</para>
         /// </summary>
         public HashSet<BSPShape> Shapes { get; internal set; } = new();
+        /// <summary>
+        /// Errors that happened while exporting are dumped here
+        /// </summary>
+        public StringBuilder ImportErrors { get; } = new();
+
         internal BSPFile(string OriginalFilePath) : base(OriginalFilePath)
         {
 

@@ -29,6 +29,10 @@ namespace Starfox.Editor
         public HashSet<ASMFile> OpenFiles { get; } = new();
         public IEnumerable<MAPFile> OpenMAPFiles => OpenFiles.OfType<MAPFile>();
         /// <summary>
+        /// A map of all file nodes by their file name
+        /// </summary>
+        public Dictionary<string, SFCodeProjectNode> FileNodes = new();
+        /// <summary>
         /// Looks for the specified file (or palette) to see if it's included
         /// </summary>
         /// <param name="File"></param>
@@ -65,8 +69,14 @@ namespace Starfox.Editor
             if (!dirInfo.Exists) throw new ArgumentException("The given directory doesn't actually exist.");
             WorkspaceDirectory = dirInfo;
             ParentNode = new(SFCodeProjectNodeTypes.Project, workspaceDirectory);            
-        }        
-
+        }
+        /// <summary>
+        /// Searches for all files with matching filename (not fullpath)
+        /// </summary>
+        /// <param name="FileName"></param>
+        /// <returns></returns>
+        public IEnumerable<SFCodeProjectNode> SearchFile(string FileName) => 
+            FileNodes.Where(x => Path.GetFileName(x.Key).ToLower() == FileName.ToLower()).Select(y => y.Value);
         /// <summary>
         /// When called will populate the project file with all directories and files from the given project directory.
         /// <para>Dictated by the <see cref="WorkspaceDirectory"/></para>
@@ -74,7 +84,12 @@ namespace Starfox.Editor
         /// <returns></returns>
         public Task EnumerateAsync()
         { 
-            SFCodeProjectNode processFile(FileInfo File, SFCodeProjectNode ParentNode) => ParentNode.AddFile(File); // make a new node that represents this file in the parent node                                       
+            SFCodeProjectNode processFile(FileInfo File, SFCodeProjectNode ParentNode)
+            {// make a new node that represents this file in the parent node   
+                var node = ParentNode.AddFile(File);
+                FileNodes.Add(File.FullName, node);
+                return node;
+            }                                    
             SFCodeProjectNode processDirectory(DirectoryInfo Directory, SFCodeProjectNode? ParentNode)
             {
                 SFCodeProjectNode? newNode = new SFCodeProjectNode(SFCodeProjectNodeTypes.Directory, Directory.FullName);
@@ -85,7 +100,8 @@ namespace Starfox.Editor
                 foreach (var file in Directory.EnumerateFiles()) // find every file inside this one
                     processFile(file, newNode); // add the file to this node
                 return newNode;
-            }              
+            }
+            FileNodes.Clear();
             return Task.Run(delegate // do this work on a background thread
             {
                 ParentNode = processDirectory(WorkspaceDirectory, null);

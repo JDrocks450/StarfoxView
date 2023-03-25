@@ -93,5 +93,10 @@ namespace StarFox.Interop.ASM.TYP
             Text = line;
             Length = newPosition - Position;
         }
+
+        public override string ToString()
+        {
+            return Text;
+        }
     }
 }

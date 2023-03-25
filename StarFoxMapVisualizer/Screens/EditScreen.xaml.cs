@@ -1,8 +1,9 @@
 ﻿using Starfox.Editor;
+using StarFox.Interop;
 using StarFox.Interop.ASM;
 using StarFox.Interop.ASM.TYP;
 using StarFox.Interop.BSP;
-using StarFox.Interop.GFX.COL;
+using StarFox.Interop.GFX.COLTAB;
 using StarFox.Interop.MAP;
 using StarFoxMapVisualizer.Controls;
 using StarFoxMapVisualizer.Controls.Subcontrols;
@@ -40,6 +41,8 @@ namespace StarFoxMapVisualizer.Screens
         private ASMImporter ASMImport = new();
         private MAPImporter MAPImport = new();
         private BSPImporter BSPImport = new();
+        private COLTABImporter COLTImport = new();
+
         internal static EditScreen Current { get; private set; }
         public ViewMode CurrentMode { get; set; }
 
@@ -225,6 +228,7 @@ namespace StarFoxMapVisualizer.Screens
 
         private void ReadyImporters()
         {
+            COLTImport.SetImports(AppResources.Includes.ToArray());
             ASMImport.SetImports(AppResources.Includes.ToArray());
             MAPImport.SetImports(AppResources.Includes.ToArray());
             BSPImport.SetImports(AppResources.Includes.ToArray());
@@ -280,35 +284,72 @@ namespace StarFoxMapVisualizer.Screens
             ViewASMButton.Checked += ViewASMButton_Checked;
             ViewMapButton.Checked += ViewMapButton_Checked;
             ViewBSTButton.Checked += ViewBSTButton_Checked;
-        });       
+        });
+
+        private bool SearchProjectForFile(string FileName, out FileInfo? File)
+        {
+            File = null;
+            var results = AppResources.ImportedProject.SearchFile(FileName);
+            if (results.Count() == 0) return false;
+            if (results.Count() > 1) // ambiguous
+                return false;
+            File = new FileInfo(results.First().FilePath);
+            return true;
+        }
+
+        private async Task<bool> HandleImportMessages<T>(FileInfo File, CodeImporter<T> importer) where T : IImporterObject
+        {
+            async Task AutoIncludeNow(string message, IEnumerable<string> ExpectedIncludes)
+            {
+                //**AUTO INCLUDE
+                List<string> autoIncluded = new List<string>();
+                if (!string.IsNullOrWhiteSpace(message))
+                { // attempt to silence the warning
+                    var includes = ExpectedIncludes;
+                    foreach (var include in includes)
+                    {
+                        if (!SearchProjectForFile(include, out var file)) continue;
+                        await IncludeFile(file);
+                        autoIncluded.Add(file.Name);
+                    }
+                }
+                if (autoIncluded.Any())
+                    MessageBox.Show($"Auto-Include included these files to the project:\n" +
+                        $" {string.Join(", ", autoIncluded)}");
+                //** END AUTO INCLUDE
+            }
+            var message = importer.CheckWarningMessage(File.FullName);
+            await AutoIncludeNow(message, importer.ExpectedIncludes);
+            ReadyImporters();
+            message = BSPImport.CheckWarningMessage(File.FullName);
+            if (!string.IsNullOrWhiteSpace(message))
+            {
+                if (MessageBox.Show(message, "Continue?", MessageBoxButton.OKCancel) == MessageBoxResult.Cancel)
+                    return false;
+            }
+            return true;
+        }
 
         public async Task<ASMFile?> ParseFile(FileInfo File)
-        {
+        {                        
             //MAP IMPORT LOGIC
             async Task<ASMFile?> doMAPImport()
             {
-                var message = MAPImport.CheckWarningMessage(File.FullName);
-                if (!string.IsNullOrWhiteSpace(message))
-                {
-                    if (MessageBox.Show(message, "Continue?", MessageBoxButton.OKCancel) == MessageBoxResult.Cancel)
-                        return default;
-                }
+                if (!await HandleImportMessages(File, MAPImport)) return default;
                 return await MAPImport.ImportAsync(File.FullName);
             }
             //3D IMPORT LOGIC
             async Task<ASMFile?> doBSPImport()
             {
-                var message = BSPImport.CheckWarningMessage(File.FullName);
-                if (!string.IsNullOrWhiteSpace(message))
-                {
-                    if (MessageBox.Show(message, "Continue?", MessageBoxButton.OKCancel) == MessageBoxResult.Cancel)
-                        return default;
-                }
+                if (!await HandleImportMessages(File, BSPImport)) return default;
+                //**AUTO-INCLUDE COLTABS.ASM
+                if (SearchProjectForFile("coltabs.asm", out var projFile))                
+                    await TryIncludeColorTable(projFile);                
+                //**
                 var file = await BSPImport.ImportAsync(File.FullName);               
             skipTree:
                 return file;
             }
-
             //GET IMPORTS SET
             ReadyImporters();
             //DO FILE PARSE NOW            
@@ -346,19 +387,18 @@ namespace StarFoxMapVisualizer.Screens
         {
             if (!AppResources.IsFileIncluded(File))
             {
-                var importer = new COLTABImporter();
-                importer.SetImports(AppResources.Includes.ToArray());
-                var message = importer.CheckWarningMessage(File.FullName);
-                if (!string.IsNullOrWhiteSpace(message))
-                {
-                    if (MessageBox.Show(message, "Continue?", MessageBoxButton.OKCancel) == MessageBoxResult.Cancel)
-                        return default;
-                }
-                var result = await importer.ImportAsync(File.FullName);
+                ReadyImporters();
+                if (!await HandleImportMessages(File, COLTImport)) return false;
+                var result = await COLTImport.ImportAsync(File.FullName);
                 if (result == default) return false;
                 AppResources.Includes.Add(result); // INCLUDE FILE FOR SYMBOL LINKING
                 var msg = string.Join(Environment.NewLine, result.Groups);
                 MessageBox.Show(msg, "Success!", MessageBoxButton.OKCancel);
+                if (!AppResources.ImportedProject.Palettes.Any())
+                {
+                    if (!SearchProjectForFile("night.col", out var file)) return false;
+                    await IncludeFile(file);
+                }
             }
             return true;
         }

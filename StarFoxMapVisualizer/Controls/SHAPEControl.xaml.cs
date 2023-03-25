@@ -1,6 +1,8 @@
 ﻿using StarFox.Interop.BSP;
 using StarFox.Interop.BSP.SHAPE;
-using StarFox.Interop.GFX.COL;
+using StarFox.Interop.GFX;
+using StarFox.Interop.GFX.COLTAB;
+using StarFox.Interop.GFX.COLTAB.DEF;
 using StarFox.Interop.MAP;
 using StarFoxMapVisualizer.Misc;
 using System;
@@ -31,36 +33,109 @@ namespace StarFoxMapVisualizer.Controls
     {        
         public int SelectedFrame { get; private set; } = 0;
         public int SelectedShape { get; private set; } = 0;
+
+        /// <summary>
+        /// The currently animating shape
+        /// </summary>
         private BSPShape? animatingShape;
+        /// <summary>
+        /// The currently open BSPFile
+        /// </summary>
         private BSPFile CurrentFile;
+        /// <summary>
+        /// Invokes the model to update positions
+        /// </summary>
         private Timer? animationClock;
         private bool animating = false;
+        /// <summary>
+        /// Blocks invokes to update the model
+        /// </summary>
         private bool canShowShape = true;
+        SFPalette? currentSFPalette;
+        COLGroup? currentGroup;
 
+        /// <summary>
+        /// Gets the Color Table defined in this project
+        /// </summary>
         private COLTABFile? ColTabs => AppResources.Includes?.OfType<COLTABFile>().FirstOrDefault();
 
         public SHAPEControl()
         {
             InitializeComponent();
             RedoLineWork();
+            SetRotation3DAnimation();
+        }
 
+        /// <summary>
+        /// Tries to create a new palette using the COLTABFile added and a ColorPalettePtr
+        /// </summary>
+        /// <param name="ColorPaletteName"></param>
+        /// <returns></returns>
+        private bool CreateSFPalette(string ColorPaletteName)
+        {
+            if (currentGroup != null && currentGroup.Name == ColorPaletteName) return true;            
+            try
+            {
+                if (ColorPaletteName.ToUpper() != "ID_0_C")
+                    throw new Exception($"Any palettes that aren't ID_0_C have been disabled in this build. This one is: {ColorPaletteName}");
+                COL? palette = AppResources.ImportedProject.Palettes.Values.FirstOrDefault();
+                var group = default(COLGroup);
+                if (ColTabs != null)
+                    ColTabs.TryGetGroup(ColorPaletteName, out group);
+                if (palette == null || group == null)
+                    throw new Exception("There was a problem loading the palette and/or color table group.");
+                SFPalette sfPalette = new SFPalette(in palette, in group);
+                sfPalette.GetPalette();
+                currentSFPalette = sfPalette;
+                currentGroup= group;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"While trying to make a SFPalette, this error occured: \n{ex.ToString()}\n" +
+                    $" Execution cannot proceed.", "Palette Parse Procedure");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Applies a rotation animation to the main scene
+        /// </summary>
+        private void SetRotation3DAnimation()
+        {
             var rotation = new AxisAngleRotation3D(new Vector3D(0, 1, 0), 0);
-            var transform = new RotateTransform3D()
+            var transformGroup = new Transform3DGroup();
+            transformGroup.Children.Add(new RotateTransform3D()
             {
                 Rotation = rotation
-            };
+            });
+            transformGroup.Children.Add(new ScaleTransform3D()
+            {
+                ScaleX = 1,
+                ScaleY = -1,
+                ScaleZ = 1
+            });
             rotation.BeginAnimation(AxisAngleRotation3D.AngleProperty,
                 new DoubleAnimation(0, 360, TimeSpan.FromSeconds(30))
                 {
                     RepeatBehavior = RepeatBehavior.Forever
                 });
-            MainSceneGroup.Transform = transform;
+            MainSceneGroup.Transform = transformGroup;
         }
-
+        /// <summary>
+        /// Event pump when key is pressed for 3D camera movement
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e) =>
             Camera.MoveBy(e.Key,10).RotateBy(e.Key,3);
 
         Point from;
+        /// <summary>
+        /// 3D camera movement with mouse
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void Window_PreviewMouseMove(object sender, MouseEventArgs e)
         {
             var till = e.GetPosition(sender as IInputElement);
@@ -78,7 +153,10 @@ namespace StarFoxMapVisualizer.Controls
                 Camera.Rotate(new(dy, -dx, 0d), angle);
             }
         }
-
+        /// <summary>
+        /// Updates the model to show the next frame of animation
+        /// </summary>
+        /// <param name="state"></param>
         public void ChangeFrame(object? state)
         {
             void Show()
@@ -93,7 +171,10 @@ namespace StarFoxMapVisualizer.Controls
                 Show();
             });
         }
-
+        /// <summary>
+        /// Start animating this object
+        /// </summary>
+        /// <param name="shape"></param>
         private void StartAnimationFrames(BSPShape shape)
         {
             if (shape.Frames.Count <= 0) return;
@@ -103,14 +184,18 @@ namespace StarFoxMapVisualizer.Controls
             animatingShape = shape;
             animationClock = new Timer(ChangeFrame, null, 1000 / 30, 1000);
         }
-
+        /// <summary>
+        /// Stop animating this object
+        /// </summary>
         private void EndAnimatingFrames()
         {
             animating = false;
             animationClock?.Dispose();
             animationClock = null;
         }
-
+        /// <summary>
+        /// Draws lines behind the main 3D canvas
+        /// </summary>
         private void RedoLineWork()
         {
             int MX_X = 1000, MX_Y = 1000, STEP = 50;
@@ -166,7 +251,10 @@ namespace StarFoxMapVisualizer.Controls
             foreach (var file in AppResources.OpenFiles.OfType<BSPFile>())
                 OpenFile(file);
         }
-
+        /// <summary>
+        /// Opens a file to view the models inside
+        /// </summary>
+        /// <param name="file"></param>
         private void OpenFile(BSPFile file)
         {
             CurrentFile = file;
@@ -176,45 +264,52 @@ namespace StarFoxMapVisualizer.Controls
             ShapeSelector.SelectedIndex = SelectedShape;                    
         }
 
+        private void Clear3DScreen()
+        {
+            MainSceneGroup.Children.Clear();
+            //MainSceneGroup.Children.Add(MainLight);
+        }
+
+        /// <summary>
+        /// Invokes the control to draw a model with the current frame
+        /// </summary>
+        /// <param name="shape"></param>
+        /// <param name="Frame"></param>
         private void ShowShape(BSPShape? shape, int Frame = -1)
         {           
-            if (!canShowShape) return;
-            if (shape == null) return;
+            if (!canShowShape) return; // showing shapes is blocked rn
+            if (shape == null) return; // there is no shape to speak of            
+            // our palette hasn't been rendered or we're forced to update it
+            if (!CreateSFPalette(shape.Header.ColorPalettePtr)) return;
             
-            var colors = new System.Drawing.Color[0];
-            Color GetColor(int colIndex)
-            {
-                if (colIndex >= colors.Length)
-                    ;
-                var fooColor = colors.ElementAtOrDefault(colIndex);
-                return new System.Windows.Media.Color()
+            Color GetColor(COLDefinition.CallTypes Type, int colIndex)
+            { // Get a color for a COLDefinition from the sfPalette
+                var fooColor = System.Drawing.Color.Pink;
+                switch (Type)
                 {
-                    A = fooColor.A,
+                    case COLDefinition.CallTypes.Collite:
+                        fooColor = currentSFPalette.Collites[colIndex];
+                        break;
+                    case COLDefinition.CallTypes.Coldepth:
+                        fooColor = currentSFPalette.Coldepths.ElementAtOrDefault(colIndex).Value;
+                        break;
+                }
+                return new System.Windows.Media.Color() //to media color
+                {
+                    A = 255,
                     B = fooColor.B,
                     G = fooColor.G,
                     R = fooColor.R,
                 };
             }
-            COL? palette = AppResources.ImportedProject.Palettes.Values.FirstOrDefault();
-            if (palette != null)            
-                colors = palette.GetPalette(0,0);                  
-            var colTable = AppResources.Includes.OfType<COLTABFile>().FirstOrDefault();
-            var group = default(COLGroup);
-            if (colTable != null)
-                colTable.TryGetGroup(shape.Header.ColorPalettePtr, out group);                
-            if(palette == null || group == null)
-            {
-                MessageBox.Show("The palette or the color table were not imported correctly. Execution cannot proceed.");
-                return;
-            }
-
+            //Block additional calls to render
             canShowShape = false;
-
+            //Stop animating, please
             EndAnimatingFrames();
+            //can we use persistant data?
+            Clear3DScreen();
 
-            MainSceneGroup.Children.Clear();
-            MainSceneGroup.Children.Add(MainLight);
-
+            var group = currentGroup;
             var models = new List<GeometryModel3D>();
 
             //foreach (BSPPoint point in shape.GetPoints(Frame).OrderBy(x => x.ActualIndex))
@@ -223,66 +318,33 @@ namespace StarFoxMapVisualizer.Controls
             {
                 if (face.PointIndices.Count() < 3) // this is a line                
                     continue;
+
                 MeshGeometry3D geom = new();                
                 Material material = new DiffuseMaterial()
                 {
                     Brush = new SolidColorBrush(Colors.Blue),
                 };
-                if (palette!= null)
+                var definition = group.Definitions.ElementAtOrDefault(face.Color);
+                if (definition != default)
                 {
-                    var definition = group.Definitions.ElementAtOrDefault(face.Color);
-                    if (definition != default)
+                    int colIndex = 0;
+                    switch (definition.CallType)
                     {
-                        int colIndex = 0;
-                        switch (definition.CallType)
-                        {
-                            case COLDefinition.CallTypes.Collite:
+                        case COLDefinition.CallTypes.Collite:
+                        case COLDefinition.CallTypes.Coldepth:
+                        case COLDefinition.CallTypes.Colnorm:
+                        case COLDefinition.CallTypes.Colsmooth:
+                            {
+                                colIndex = ((ICOLColorIndexDefinition)definition).ColorByte;
+                                var color = GetColor(definition.CallType, colIndex);
+                                material = new DiffuseMaterial()
                                 {
-                                    colIndex = ((COLLite)definition).ColorByte;
-                                    var color = GetColor(colIndex);
-                                    material = new DiffuseMaterial()
-                                    {
-                                        Brush = new SolidColorBrush(color),
-                                        Color = color
-                                    };
-                                }
-                                break;
-                            case COLDefinition.CallTypes.Coldepth:
-                                {
-                                    colIndex = ((COLDepth)definition).ColorByte;
-                                    var color = GetColor(colIndex);
-                                    material = new EmissiveMaterial()
-                                    {
-                                        Brush = new SolidColorBrush(color),
-                                        Color = color
-                                    };
-                                }
-                                break;
-                            case COLDefinition.CallTypes.Colnorm:
-                                {
-                                    colIndex = ((COLNorm)definition).ColorByte;
-                                    var color = GetColor(colIndex);
-                                    material = new DiffuseMaterial()
-                                    {
-                                        Brush = new SolidColorBrush(color),
-                                        Color = color
-                                    };
-                                }
-                                break;
-                            case COLDefinition.CallTypes.Colsmooth:
-                                {
-                                    colIndex = ((COLSmooth)definition).ColorByte;
-                                    var color = GetColor(colIndex);
-                                    material = new EmissiveMaterial()
-                                    {
-                                        Brush = new SolidColorBrush(color),
-                                        Color = color
-                                    };
-                                }
-                                break;
-                        }                        
+                                    Brush = new SolidColorBrush(color),
+                                };
+                            }
+                            break;
                     }
-                }
+                }                
                 GeometryModel3D model = new()
                 {
                     Material = material,
@@ -305,9 +367,20 @@ namespace StarFoxMapVisualizer.Controls
                 for (int i = 0; i < face.PointIndices.Count(); i++)
                 {
                     var pointRefd = orderedIndicies[i];
-                    var point = shape.GetPoint(pointRefd.PointIndex, Frame);
-                    geom.Positions.Add(new Point3D(point.X, point.Y, point.Z));
-                    geom.TriangleIndices.Add(i);
+                    try
+                    {
+                        var point = shape.GetPoint(pointRefd.PointIndex, Frame);
+                        geom.Positions.Add(new Point3D(point.X, point.Y, point.Z));
+                        geom.TriangleIndices.Add(i);
+                    }
+                    catch(Exception ex)
+                    {                        
+                        MessageBox.Show($"Reticulating Splines resulted in: \n" +
+                            $"{ex.Message}\nEnding preview.", "Error Occured");
+                        EndAnimatingFrames();
+                        canShowShape = true;
+                        return;
+                    }
                 }
             }
             if (shape.Frames.Count > 0)
@@ -335,6 +408,7 @@ namespace StarFoxMapVisualizer.Controls
                 FrameSelector.SelectedIndex = selectedShape.Frames.Any() ? 0 : -1;
                 if (!selectedShape.Frames.Any())
                     ShowShape(selectedShape);
+                ErrorText.Text = (CurrentFile as BSPFile).ImportErrors.ToString();
             }
         }
 
@@ -345,7 +419,7 @@ namespace StarFoxMapVisualizer.Controls
             {
                 var selectedShape = shapes.ElementAtOrDefault(ShapeSelector.SelectedIndex);
                 var currentFrame = FrameSelector.SelectedIndex;
-                ShowShape(selectedShape, currentFrame);
+                ShowShape(selectedShape, currentFrame);                
             }
         }
 

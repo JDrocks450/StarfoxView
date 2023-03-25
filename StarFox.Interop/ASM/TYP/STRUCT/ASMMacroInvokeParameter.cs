@@ -19,7 +19,11 @@
             ParameterName = parameterName;
             ParameterContent = parameterContent;
         }
-
+        /// <summary>
+        /// Will attempt to parse the content of this parameter as an integer.
+        /// <para>If the content contains a $, it is assumed to be hex.</para>
+        /// </summary>
+        /// <returns></returns>
         public int TryParseOrDefault()
         {
             var content = ParameterContent;
@@ -28,7 +32,10 @@
             if (int.TryParse(content, out int result)) { return result; }
             return 0;
         }
-
+        /// <summary>
+        /// See: <see cref="TryParseOrDefault"/>
+        /// </summary>
+        /// <returns></returns>
         internal int TryParseHexOrDefault()
         {
             var content = ParameterContent;

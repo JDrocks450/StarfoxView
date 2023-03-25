@@ -7,10 +7,14 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800" Background="Black" PreviewKeyDown="Window_PreviewKeyDown" PreviewMouseMove="Window_PreviewMouseMove">
     <Grid>
-        <Canvas Name="LineWorkCanvas" Opacity=".5">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="3*"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <Canvas Name="LineWorkCanvas" Opacity=".75" Grid.RowSpan="2">
 
         </Canvas>
-        <DockPanel>
+        <DockPanel Grid.RowSpan="2">
             <Grid DockPanel.Dock="Top" Background="Gainsboro">
                 <Grid Margin="10">
                     <Grid.ColumnDefinitions>
@@ -51,22 +55,26 @@
                         LookDirection="0,0,1" 
                         UpDirection="0,1,0" 
                         NearPlaneDistance="1" 
-                        Position="0,-0,-200" 
+                        Position="0,25,-200" 
                         FieldOfView="40" />
                 </Viewport3D.Camera>
                 <Viewport3D.Children>
                     <ModelVisual3D>
                         <ModelVisual3D.Content>
-                            <Model3DGroup x:Name="MainSceneGroup">
+                            <Model3DGroup>
                                 <!-- Lights, MeshGeometry3D and DiffuseMaterial objects are added to the ModelVisual3D. -->
-                                <AmbientLight x:Name="MainLight" Color="#FFFFFFFF" />
+                                <AmbientLight x:Name="MainLight" Color="#FFFFFFFF"/>
+                                <Model3DGroup x:Name="MainSceneGroup"/>
                             </Model3DGroup>
                         </ModelVisual3D.Content>
                     </ModelVisual3D>
                 </Viewport3D.Children>
             </Viewport3D>
         </DockPanel>
-        <StackPanel Width="150" HorizontalAlignment="Right" Margin="0,55,0,0">
+        <TextBox Name="ErrorText" FontFamily="Consolas" Foreground="Red" IsReadOnly="True" VerticalScrollBarVisibility="Auto" Margin="0,2,0,0" Background="{x:Null}" Grid.Row="1" BorderThickness="0">
+
+        </TextBox>
+        <StackPanel Width="150" HorizontalAlignment="Right" Margin="0,55,0,0" Grid.RowSpan="2">
             <Button x:Name="CapKeyboard" Click="CapKeyboard_Click">Capture Keyboard</Button>
             <Button x:Name="ResetCam" Margin="0,5" Click="ResetCam_Click">Reset Camera</Button>
         </StackPanel>
