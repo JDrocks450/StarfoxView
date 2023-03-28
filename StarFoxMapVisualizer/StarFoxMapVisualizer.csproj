@@ -15,11 +15,14 @@
     <None Remove="Resources\Image\macro.png" />
     <None Remove="Resources\Image\page.png" />
     <None Remove="Resources\Image\palette.png" />
+    <None Remove="Resources\Image\screenIcon.png" />
     <None Remove="Resources\Image\SectorY.png" />
     <None Remove="Resources\Image\sflogo.png" />
     <None Remove="Resources\Image\sf_frame.png" />
     <None Remove="Resources\Image\sf_frame_cn.png" />
     <None Remove="Resources\Image\sf_small.png" />
+    <None Remove="Resources\Image\spriteicon.png" />
+    <None Remove="Resources\Image\transparent.png" />
     <None Remove="Resources\Model\Arwing.fbx" />
     <None Remove="Resources\Star-Fox-Starwing.ttf" />
   </ItemGroup>
@@ -49,12 +52,24 @@
     <Resource Include="Resources\Image\macro.png" />
     <Resource Include="Resources\Image\page.png" />
     <Resource Include="Resources\Image\palette.png" />
+    <Resource Include="Resources\Image\screenIcon.png" />
     <Resource Include="Resources\Image\SectorY.png" />
     <Resource Include="Resources\Image\sflogo.png" />
     <Resource Include="Resources\Image\sf_frame.png" />
     <Resource Include="Resources\Image\sf_frame_cn.png" />
     <Resource Include="Resources\Image\sf_small.png" />
+    <Resource Include="Resources\Image\spriteicon.png" />
+    <Resource Include="Resources\Image\transparent.png" />
     <Resource Include="Resources\Star-Fox-Starwing.ttf" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Controls\Subcontrols\PCRImportMenu.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="Controls\Subcontrols\BPPDepthMenu.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
 
 </Project>

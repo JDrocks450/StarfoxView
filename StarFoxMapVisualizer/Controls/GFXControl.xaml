@@ -1,0 +1,92 @@
+﻿<UserControl x:Class="StarFoxMapVisualizer.Controls.GFXControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:StarFoxMapVisualizer.Controls" xmlns:customcontrols="clr-namespace:WpfPanAndZoom.CustomControls;assembly=WpfPanAndZoom"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800" Background="{DynamicResource WindowBackgroundColor}" Foreground="White">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="35"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*" MinWidth="200"/>
+            <ColumnDefinition Width="4*"/>
+        </Grid.ColumnDefinitions>
+        <Grid Background="Black" ColumnSpan="2">
+            <TabControl Name="FileSelectorTabViewer" Style="{StaticResource SFTabViewerKey}">
+                <TabItem Header="Test"/>
+            </TabControl>
+        </Grid>
+        <Grid Grid.Row="1" ClipToBounds="True">
+            <ContentControl Style="{StaticResource SFContentBorder}" Margin="-10,0,0,-10" Background="Black">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="1*"/>
+                    </Grid.RowDefinitions>
+                    <DockPanel Margin="10,10,5,10">
+                        <TextBlock DockPanel.Dock="Top" Style="{StaticResource TitleText}">Selected Palette</TextBlock>
+                        <Image DockPanel.Dock="Top" Margin="0,10" Name="PaletteViewImage" RenderOptions.BitmapScalingMode="NearestNeighbor" Grid.RowSpan="2"/>
+                    </DockPanel>
+                    <ScrollViewer Margin="10,0,0,0" Grid.Row="1">
+                        <DockPanel Margin="0,0,5,0">
+                            <TextBlock DockPanel.Dock="Top" Style="{StaticResource TitleText}">Available</TextBlock>
+                            <ListView FontFamily="Courier New" Name="PaletteSelection" SelectedIndex="1">
+                                <ListView.Template>
+                                    <ControlTemplate TargetType="ListView">
+                                        <WrapPanel IsItemsHost="True" Orientation="Horizontal"/>
+                                    </ControlTemplate>
+                                </ListView.Template>
+                                <ListView.Resources>
+                                    <Style TargetType="ListViewItem">
+                                        <Style.Triggers>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter Property="Foreground" Value="Black"/>
+                                                <Setter Property="Background" Value="{DynamicResource PaletteNodeColor}"/>
+                                            </Trigger>
+                                            <Trigger Property="IsSelected" Value="False">
+                                                <Setter Property="Background" Value="Transparent"/>
+                                                <Setter Property="Foreground" Value="{DynamicResource PaletteNodeColor}"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                        <Setter Property="Margin" Value="10"/>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="ListViewItem">
+                                                    <DockPanel>
+                                                        <Border HorizontalAlignment="Center" DockPanel.Dock="Bottom" Background="{TemplateBinding Background}" Padding="5,2">
+                                                            <ContentPresenter />
+                                                        </Border>
+                                                        <Image Width="50" Source="/Resources/Image/palette.png" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+                                                    </DockPanel>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </ListView.Resources>
+                                <ListViewItem Content="HELLO"/>
+                                <ListViewItem Content="HELLO"/>
+                            </ListView>
+                        </DockPanel>
+                    </ScrollViewer>
+                </Grid>
+            </ContentControl>
+        </Grid>
+        <GridSplitter Grid.Column="1" Grid.Row="1" HorizontalAlignment="Left" Width="2"/>
+        <Border Grid.Row="1" Grid.Column="1" Margin="2,0,0,0">
+            <Border.Background>
+                <ImageBrush TileMode="Tile" Stretch="None" ImageSource="/Resources/Image/transparent.png" Viewport="0,0,6,6" Opacity=".1"  ViewportUnits="Absolute"/>
+            </Border.Background>
+            <customcontrols:PanAndZoomCanvas Background="#02FFFFFF" x:Name="GraphicDragView" ClipToBounds="True">
+                <customcontrols:PanAndZoomCanvas.Resources>
+                    <Style TargetType="Image">
+                        <Setter Property="RenderOptions.BitmapScalingMode" Value="NearestNeighbor"/>
+                    </Style>
+                </customcontrols:PanAndZoomCanvas.Resources>
+            </customcontrols:PanAndZoomCanvas>
+        </Border>
+    </Grid>
+</UserControl>

@@ -248,5 +248,13 @@ namespace WpfPanAndZoom.CustomControls
             }
             ZoomOnce(scaleFactor);
         }
+
+        public void Reset()
+        {
+            foreach (UIElement child in this.Children)
+            {
+                child.RenderTransform = null;
+            }
+        }
     }
 }

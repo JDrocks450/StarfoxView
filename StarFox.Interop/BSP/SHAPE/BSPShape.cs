@@ -114,10 +114,22 @@ namespace StarFox.Interop.BSP.SHAPE
         /// </summary>
         public HashSet<BSPPoint> Points { get; } = new();
         /// <summary>
+        /// True if this model has BSP Entries added to it's <see cref="BSPEntries"/> collection.
+        /// </summary>
+        public bool HasBSPProperties => BSPEntries.Count > 0;
+        /// <summary>
+        /// In BSP-Enabled geometry, this is the BSP table.
+        /// </summary>
+        public Dictionary<int, BSPEntry> BSPEntries { get; } = new();
+        /// <summary>
         /// The set of points associated with this shape
         /// <para>Points are handled based on FRAME, this collection should be accessed using: <see cref=""/></para>
         /// </summary>
-        public Dictionary<int, BSPFrame> Frames { get; } = new();
+        public Dictionary<string, BSPFrame> FrameData { get; } = new();
+        /// <summary>
+        /// The keyframes associated with this model, in chronological order
+        /// </summary>
+        public Dictionary<int, string> Frames { get; } = new();
         /// <summary>
         /// A set of faces that reference points with this shape.
         /// </summary>
@@ -135,11 +147,11 @@ namespace StarFox.Interop.BSP.SHAPE
             this.Header = Header;
         }
         /// <summary>
-        /// Get points for a given frame
+        /// Get points for a given keyframe
         /// </summary>
         /// <param name="Frame">The index of the frame</param>
         /// <returns></returns>
-        public BSPFrame GetFrame(int Frame = 0) => Frames[Frame];
+        public BSPFrame GetFrame(int Frame = 0) => FrameData[Frames[Frame]];
         public IEnumerable<BSPPoint> GetPoints(int Frame = -1)
         {
             var returnList = new List<BSPPoint>(Points);
@@ -147,6 +159,18 @@ namespace StarFox.Interop.BSP.SHAPE
             if (Frame >= 0)
                 returnList.AddRange(GetFrame(Frame).Points);
             return returnList;
+        }
+        /// <summary>
+        /// Gets the faces from the specified BSPEntry by ID, if this model does not <see cref="HasBSPProperties"/>,
+        /// then BSPIndex is assumed as -1.
+        /// </summary>
+        /// <param name="BSPIndex">The index of the BSP entry.</param>
+        /// <returns></returns>
+        public IEnumerable<BSPFace> GetFaces(int BSPIndex = -1)
+        {
+            if (!HasBSPProperties) BSPIndex = -1;
+            if (BSPIndex == -1) return Faces;
+            return default; // BSPEntries[BSPIndex].Faces;
         }
         /// <summary>
         /// Gets the point at the specified index, optionally you can supply a frame number
@@ -161,8 +185,8 @@ namespace StarFox.Interop.BSP.SHAPE
                 return Points.First(x => x.Index == Index);
             if (Frame < Frames.Count && Frame > -1)
             {
-                if (Frames[Frame].Points.Any(x => x.Index == Index))
-                    return Frames[Frame].Points.First(x => x.Index == Index);
+                if (GetFrame(Frame).Points.Any(x => x.Index == Index))
+                    return GetFrame(Frame).Points.First(x => x.Index == Index);
                 else return GetPoint(Index-1, Frame);
             }
             else if (Index > 0) return GetPoint(Index - 1, Frame);
@@ -174,10 +198,16 @@ namespace StarFox.Interop.BSP.SHAPE
         /// <param name="Frame">The index of the new frame to add</param>
         /// <param name="Points">The points on the given frame</param>
         /// <returns></returns>
-        public bool PushFrame(int Frame, BSPFrame FrameData)
+        public bool PushFrame(string KeyframeName, params BSPPoint[] Data)
         {
-            if (Frames.ContainsKey(Frame)) return false;
-            Frames.Add(Frame, FrameData);
+            int currentIndex = Frames.Count;
+            if (!FrameData.ContainsKey(KeyframeName)) // not yet added
+                FrameData.Add(KeyframeName, new BSPFrame()
+                {
+                    Name = KeyframeName,
+                    Points = new(Data)
+                });
+            Frames.Add(currentIndex, KeyframeName);
             return true;
         }
 

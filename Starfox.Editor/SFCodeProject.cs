@@ -1,4 +1,5 @@
-﻿using StarFox.Interop.ASM;
+﻿using StarFox.Interop;
+using StarFox.Interop.ASM;
 using StarFox.Interop.MAP;
 using System;
 using System.Collections.Generic;
@@ -24,10 +25,10 @@ namespace Starfox.Editor
         /// </summary>
         public HashSet<ASMFile> Includes { get; } = new();
         /// <summary>
-        /// All files that have been imported by the <see cref="ASMImporter"/>
+        /// All files that have been imported by a <see cref="CodeImporter"/>
         /// </summary>
-        public HashSet<ASMFile> OpenFiles { get; } = new();
-        public IEnumerable<MAPFile> OpenMAPFiles => OpenFiles.OfType<MAPFile>();
+        public Dictionary<string,IImporterObject> OpenFiles { get; } = new();
+        public IEnumerable<MAPFile> OpenMAPFiles => OpenFiles.Values.OfType<MAPFile>();
         /// <summary>
         /// A map of all file nodes by their file name
         /// </summary>

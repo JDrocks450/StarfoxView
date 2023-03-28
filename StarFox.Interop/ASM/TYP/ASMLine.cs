@@ -31,9 +31,9 @@ namespace StarFox.Interop.ASM.TYP
         public ASMMacroInvokeLineStructure StructureAsMacroInvokeStructure => Structure as ASMMacroInvokeLineStructure;
         public ASMDefineLineStructure StructureAsDefineStructure => Structure as ASMDefineLineStructure;
         public ASMLabelStructure StructureAsLabelStructure => Structure as ASMLabelStructure;
-        
-        public string? InlineLabel { get; private set; }
-        public bool HasInlineLabel => InlineLabel == default;
+
+        public string? InlineLabel { get; private set; } = null;
+        public bool HasInlineLabel => InlineLabel != default;
 
         /// <summary>
         /// Creates a new ASMLine instance and references the Current file being imported and any imports for symbol linking
@@ -59,7 +59,7 @@ namespace StarFox.Interop.ASM.TYP
             if (parseLine.Contains(';')) parseLine = parseLine.Substring(0, parseLine.IndexOf(';'));
             if (parseLine.NormalizeFormatting().StartsWith('.')) // looks like a label
             {//label
-                var inlineStart = parseLine.IndexOf(';') + 1;
+                var inlineStart = parseLine.IndexOf('.') + 1;
                 if (inlineStart != -1) // literally what
                 {
                     var inlineEnd = parseLine.IndexOf(' '); // find next space
@@ -73,6 +73,7 @@ namespace StarFox.Interop.ASM.TYP
                         InlineLabel = parseLine.Substring(inlineStart);
                         parseLine = "";
                     }
+                    InlineLabel = InlineLabel.TrimEnd();
                 }
             }            
             var newPosition = FileStream.GetActualPosition();

@@ -3,6 +3,7 @@ using StarFox.Interop;
 using StarFox.Interop.ASM;
 using StarFox.Interop.ASM.TYP;
 using StarFox.Interop.BSP;
+using StarFox.Interop.GFX;
 using StarFox.Interop.GFX.COLTAB;
 using StarFox.Interop.MAP;
 using StarFoxMapVisualizer.Controls;
@@ -35,7 +36,8 @@ namespace StarFoxMapVisualizer.Screens
     {
         public enum ViewMode
         {
-            NONE,ASM,MAP,OBJ
+            NONE,ASM,MAP,OBJ,
+            GFX
         }
 
         private ASMImporter ASMImport = new();
@@ -71,9 +73,13 @@ namespace StarFoxMapVisualizer.Screens
 
         }
 
-        private void ImportCodeProject()
-        {
+        private async Task ImportCodeProject(bool Flush = false)
+        {            
             var currentProject = AppResources.ImportedProject;
+            if (currentProject == null)
+                throw new InvalidDataException("No project loaded.");
+            if (Flush)
+                await currentProject.EnumerateAsync();
             var expandedHeaders = new List<string>();
             void CheckNode(in TreeViewItem Node)
             {
@@ -181,43 +187,62 @@ namespace StarFoxMapVisualizer.Screens
                     Tag = FileNode,
                     ContextMenu= contextMenu
                 };
-                if (FileNode.RecognizedFileType is SFCodeProjectFileTypes.Palette)
+                switch (FileNode.RecognizedFileType)
                 {
-                    item.SetResourceReference(StyleProperty, "PaletteTreeStyle");
-                    if (!AppResources.IsFileIncluded(fileInfo))
-                    {
-                        CreateINCContextMenu(FileNode, in contextMenu);
-                        item.Foreground = Brushes.White; // Indicate with white that it isn't included yet
-                    }
-                }
-                else if (FileNode.RecognizedFileType is SFCodeProjectFileTypes.Include)
-                {
-                    if (!AppResources.IsFileIncluded(fileInfo))
-                    {
-                        item.SetResourceReference(StyleProperty, "FileTreeStyle");
-                        CreateINCContextMenu(FileNode, in contextMenu);
-                    }
-                    else item.SetResourceReference(StyleProperty, "FileImportTreeStyle");
-                }
-                else
-                { // allow other files to be included under certain circumstances
-                    var include = AppResources.ImportedProject?.GetInclude(fileInfo);
-                    if (include != default) // file is included
-                    {
-                        if (include is COLTABFile) // color tables
-                            item.SetResourceReference(StyleProperty, "ColorTableTreeStyle");
-                        else // all other files
-                            item.SetResourceReference(StyleProperty, "FileImportTreeStyle");
-                    }
-                    else
-                    {
-                        CreateCOLTABContextMenu(FileNode, in contextMenu);
-                        item.SetResourceReference(StyleProperty, "FileTreeStyle");
-                    }
+                    case SFCodeProjectFileTypes.Palette:
+                        item.SetResourceReference(StyleProperty, "PaletteTreeStyle");
+                        if (!AppResources.IsFileIncluded(fileInfo))
+                        {
+                            CreateINCContextMenu(FileNode, in contextMenu);
+                            item.Foreground = Brushes.White; // Indicate with white that it isn't included yet
+                        }
+                        break;
+                    case SFCodeProjectFileTypes.SCR:
+                    case SFCodeProjectFileTypes.CGX:
+                        item.SetResourceReference(StyleProperty, "SpriteTreeStyle");
+                        break;
+                    case SFCodeProjectFileTypes.Include:
+                        if (!AppResources.IsFileIncluded(fileInfo))
+                        {
+                            item.SetResourceReference(StyleProperty, "FileTreeStyle");
+                            CreateINCContextMenu(FileNode, in contextMenu);
+                        }
+                        else item.SetResourceReference(StyleProperty, "FileImportTreeStyle");
+                        break;
+                    default:
+                        // allow other files to be included under certain circumstances
+                        var include = AppResources.ImportedProject?.GetInclude(fileInfo);
+                        if (include != default) // file is included
+                        {
+                            if (include is COLTABFile) // color tables
+                                item.SetResourceReference(StyleProperty, "ColorTableTreeStyle");
+                            else // all other files
+                                item.SetResourceReference(StyleProperty, "FileImportTreeStyle");
+                        }
+                        else
+                        {
+                            CreateCOLTABContextMenu(FileNode, in contextMenu);
+                            item.SetResourceReference(StyleProperty, "FileTreeStyle");
+                        }
+                        break;
                 }
                 item.Selected += async delegate
                 {
-                    await FileSelected(fileInfo);
+                    try
+                    {
+                        await FileSelected(fileInfo);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"The importer responsible for this type of file says: \n" +
+                            $"{ex}\n" +
+                            $"Sorry!", "Error Loading File");
+                        return;
+                    }
+                    finally
+                    {
+                        LoadingSpan.Visibility = Visibility.Collapsed;
+                    }
                 };
                 if (selectedItemHeader != default && selectedItemHeader.FilePath == FileNode.FilePath)// was selected
                     item.BringIntoView();
@@ -239,6 +264,8 @@ namespace StarFoxMapVisualizer.Screens
             ViewASMButton.Checked -= ViewASMButton_Checked;
             ViewMapButton.Checked -= ViewMapButton_Checked;
             ViewBSTButton.Checked -= ViewBSTButton_Checked;
+            ViewGFXButton.Checked -= ViewGFXButton_Checked;
+            ViewGFXButton.IsChecked = false;
             ViewASMButton.IsChecked = false;
             ViewMapButton.IsChecked = false;
             ViewBSTButton.IsChecked = false;
@@ -280,10 +307,20 @@ namespace StarFoxMapVisualizer.Screens
                     ViewBSTButton.IsChecked = true;
                     TitleBlock.Text = "Shape Viewer";
                     break;
+                case ViewMode.GFX:
+                    MAPViewer.Pause();
+                    ASMViewer.Pause();
+                    OBJViewer.Pause();
+                    GFXViewer.RefreshFiles();
+                    ViewModeHost.SelectedItem = GFXTab;
+                    ViewGFXButton.IsChecked = true;
+                    TitleBlock.Text = "Graphics Viewer";
+                    break;
             }
             ViewASMButton.Checked += ViewASMButton_Checked;
             ViewMapButton.Checked += ViewMapButton_Checked;
             ViewBSTButton.Checked += ViewBSTButton_Checked;
+            ViewGFXButton.Checked += ViewGFXButton_Checked;
         });
 
         private bool SearchProjectForFile(string FileName, out FileInfo? File)
@@ -380,7 +417,7 @@ namespace StarFoxMapVisualizer.Screens
             asmfile = await ASMImport.ImportAsync(File.FullName);
         import:
             if (asmfile == default) return default;
-            AppResources.OpenFiles.Add(asmfile);
+            AppResources.OpenFiles.Add(File.FullName,asmfile);
             return asmfile;
         }
         private async Task<bool> TryIncludeColorTable(FileInfo File)
@@ -455,13 +492,84 @@ namespace StarFoxMapVisualizer.Screens
         private async Task FileSelected(FileInfo File)
         {                        
             LoadingSpan.Visibility = Visibility.Visible;
-            //IS THIS A PALETTE
-            if (File.GetSFFileType() is SFCodeProjectFileTypes.Palette)
-            { // YEAH!
-                await OpenPalette(File); // GOOD, OPEN IT
-                LoadingSpan.Visibility = Visibility.Collapsed;
-                return;
-            }        
+            //CHECK IF ITS A KNOWN FILE
+            switch (File.GetSFFileType())
+            { // YEAH?
+                case SFCodeProjectFileTypes.Palette: // HANDLE PALETTE
+                    await OpenPalette(File);
+                    LoadingSpan.Visibility = Visibility.Collapsed;
+                    UpdateInterface();
+                    return;
+                case SFCodeProjectFileTypes.BINFile: // EXTRACT BIN
+                    await SFGFXInterface.TranslateDATFile(File.FullName);            
+                    LoadingSpan.Visibility = Visibility.Collapsed;
+                    UpdateInterface(true); // Files changed!
+                    return;
+                case SFCodeProjectFileTypes.CCR: // EXTRACT COMPRESSED GRAPHICS
+                    {
+                        BPPDepthMenu menu = new()
+                        {
+                            Owner = Application.Current.MainWindow
+                        };
+                        if (!menu.ShowDialog() ?? true) return;
+                        await SFGFXInterface.TranslateCompressedCCR(File.FullName, menu.FileType);
+                        LoadingSpan.Visibility = Visibility.Collapsed;
+                        UpdateInterface(true); // Files changed!
+                    }
+                    return;
+                case SFCodeProjectFileTypes.PCR: // EXTRACT COMPRESSED GRAPHICS
+                    {
+                        await SFGFXInterface.TranslateCompressedPCR(File.FullName);
+                        LoadingSpan.Visibility = Visibility.Collapsed;
+                        UpdateInterface(true); // Files changed!
+                    }
+                    return;
+                case SFCodeProjectFileTypes.SCR: // screens
+                    //OPEN THE SCR FILE
+                    if (!AppResources.OpenFiles.ContainsKey(File.FullName))
+                    {
+                        //ATTEMPT TO OPEN THE FILE AS WELL-FORMED
+                        var fxGFX = await SFGFXInterface.OpenSCR(File.FullName);
+                        if (fxGFX == null)
+                        { // NOPE CAN'T DO THAT
+                            //OKAY, TRY TO IMPORT IT
+                            fxGFX = await SFGFXInterface.ImportSCR(File.FullName);
+                        }
+                        if (fxGFX == null) throw new Exception("That file cannot be opened or imported."); // GIVE UP
+                        //ADD IT AS AN OPEN FILE
+                        AppResources.OpenFiles.Add(File.FullName, fxGFX);
+                    }
+                    LoadingSpan.Visibility = Visibility.Collapsed;
+                    UpdateInterface();
+                    CurrentMode = ViewMode.GFX;
+                    await HandleViewModes();
+                    return;
+                case SFCodeProjectFileTypes.CGX: // graphics
+                    //OPEN THE CGX FILE
+                    if (!AppResources.OpenFiles.ContainsKey(File.FullName))
+                    {                        
+                        //ATTEMPT TO OPEN THE FILE AS WELL-FORMED
+                        var fxGFX = await SFGFXInterface.OpenCGX(File.FullName);
+                        if (fxGFX == null)
+                        { // NOPE CAN'T DO THAT
+                            BPPDepthMenu menu = new()
+                            {
+                                Owner = Application.Current.MainWindow
+                            };
+                            if (!menu.ShowDialog() ?? true) return; // USER CANCELLED!
+                            //OKAY, TRY TO IMPORT IT WITH THE SPECIFIED BITDEPTH
+                            fxGFX = await SFGFXInterface.ImportCGX(File.FullName, menu.FileType);
+                        }
+                        if (fxGFX == null) throw new Exception("That file cannot be opened or imported."); // GIVE UP
+                        //ADD IT AS AN OPEN FILE
+                        AppResources.OpenFiles.Add(File.FullName, fxGFX);
+                    }
+                    LoadingSpan.Visibility = Visibility.Collapsed;
+                    UpdateInterface();
+                    CurrentMode = ViewMode.GFX;
+                    await HandleViewModes();
+                    return;
+            }
             //SWITCH TO ASM VIEWER IF WE HAVEN'T ALREADY
             CurrentMode = ViewMode.ASM;
             //HANDLE VIEW MODES -- PAUSE / ENABLE VIEW MODE CONTROLS
@@ -501,14 +609,15 @@ namespace StarFoxMapVisualizer.Screens
             MacroFileCombo.SelectedValue = System.IO.Path.GetFileNameWithoutExtension(File.Name);
         }
 
-        private void UpdateInterface()
+        private async void UpdateInterface(bool FlushFiles = false)
         {
             //update explorer
-            ImportCodeProject();
+            await ImportCodeProject(FlushFiles);
             //UPDATE INCLUDES
             MacroFileCombo.ItemsSource = AppResources.Includes.Select(x => System.IO.Path.GetFileNameWithoutExtension(x.OriginalFilePath));
             //VIEW MODE
             if (CurrentMode is ViewMode.MAP) MAPViewer.InvalidateFiles();
+            if (CurrentMode is ViewMode.GFX) GFXViewer.RefreshFiles();
         }
 
         private void ShowMacrosForFile(ASMFile file)
@@ -592,6 +701,13 @@ namespace StarFoxMapVisualizer.Screens
         private void ViewBSTButton_Checked(object sender, RoutedEventArgs e)
         {
             CurrentMode = ViewMode.OBJ;
+            HandleViewModes();
+            UpdateInterface();
+        }
+
+        private void ViewGFXButton_Checked(object sender, RoutedEventArgs e)
+        {
+            CurrentMode = ViewMode.GFX;
             HandleViewModes();
             UpdateInterface();
         }

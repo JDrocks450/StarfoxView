@@ -248,7 +248,7 @@ namespace StarFoxMapVisualizer.Controls
         /// </summary>
         public void InvalidateFiles()
         {
-            foreach (var file in AppResources.OpenFiles.OfType<BSPFile>())
+            foreach (var file in AppResources.OpenFiles.Values.OfType<BSPFile>())
                 OpenFile(file);
         }
         /// <summary>
@@ -403,7 +403,7 @@ namespace StarFoxMapVisualizer.Controls
                 var selectedShape = shapes.ElementAtOrDefault(ShapeSelector.SelectedIndex);
                 FrameSelector.SelectionChanged -= FrameSelector_SelectionChanged;
                 FrameSelector.SelectedIndex = -1;
-                FrameSelector.ItemsSource = selectedShape.Frames.Select(x => x.Value.Name);
+                FrameSelector.ItemsSource = selectedShape.Frames.Select(x => x.Value);
                 FrameSelector.SelectionChanged += FrameSelector_SelectionChanged;
                 FrameSelector.SelectedIndex = selectedShape.Frames.Any() ? 0 : -1;
                 if (!selectedShape.Frames.Any())

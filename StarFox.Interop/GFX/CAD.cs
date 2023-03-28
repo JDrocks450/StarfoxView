@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Drawing;
 using StarFox.Interop.MISC;
+using System.Runtime.Intrinsics.X86;
 
 // ********************************
 // THANK YOU LUIGIBLOOD!
@@ -20,11 +21,21 @@ namespace StarFox.Interop.GFX
 {
     public class CAD
     {
+        /// <summary>
+        /// The available formats this tool can support
+        /// </summary>
+        public enum BitDepthFormats : int
+        {
+            BPP_2 = 0,
+            BPP_4 = 1,
+            BPP_8 = 2
+        }
+
         public class Extra
         {
-            string magic;   //"NAK1989 S-CG-CAD"
-            string ver;     //"VerX.XX "
-            string date;    //"YYMMDD  " / "YYMMDD F"
+            public string magic;   //"NAK1989 S-CG-CAD"
+            public string ver;     //"VerX.XX "
+            public string date;    //"YYMMDD  " / "YYMMDD F"
 
             public Extra(string ext)
             {
@@ -36,12 +47,12 @@ namespace StarFox.Interop.GFX
 
         public class CGX
         {
-            byte[] chr;     //Graphics Data
-            Extra ext;
-            byte col_bank;  //Color Bank
-            byte col_half;  //Color (high, low)
-            byte col_cell;  //Color Cell
-            byte[] attr;    //Attribute Data
+            protected byte[] chr;     //Graphics Data
+            protected Extra ext;
+            protected byte col_bank;  //Color Bank
+            protected byte col_half;  //Color (high, low)
+            protected byte col_cell;  //Color Cell
+            protected byte[] attr;    //Attribute Data
 
             public CGX(byte[] dat)
             {
@@ -187,7 +198,35 @@ namespace StarFox.Interop.GFX
                 return output;
             }
 
-            public static CGX Load(FileStream file)
+            internal static byte[] GetRAWCGXDataArray(Stream file, BitDepthFormats fmt = BitDepthFormats.BPP_4)
+            {
+                byte[] dat;
+                int maxlen;
+                if (fmt == 0)
+                {
+                    dat = new byte[0x4500];
+                    maxlen = 0x4000;
+                }
+                else if (fmt == BitDepthFormats.BPP_4)
+                {
+                    dat = new byte[0x8500];
+                    maxlen = 0x8000;
+                }
+                else //if (fmt == 2)
+                {
+                    dat = new byte[0x10100];
+                    maxlen = 0x10000;
+                }
+
+                //Generate File
+                file.Read(dat, 0, Math.Min(maxlen, (int)file.Length));
+                System.Text.Encoding.ASCII.GetBytes("NAK1989 S-CG-CAD").CopyTo(dat, maxlen);
+                System.Text.Encoding.ASCII.GetBytes("Ver0.00 ").CopyTo(dat, maxlen + 0x10);
+                System.Text.Encoding.ASCII.GetBytes("010101  ").CopyTo(dat, maxlen + 0x18);
+                return dat;
+            }
+
+            internal static byte[]? GetROMCGXDataArray(Stream file)
             {
                 //CGX
                 file.Seek(0, SeekOrigin.Begin);
@@ -214,38 +253,12 @@ namespace StarFox.Interop.GFX
                 string footer_string = System.Text.Encoding.ASCII.GetString(Utility.Subarray(cgx_t, off_hdr, 0x10));
                 if (!footer_string.Equals("NAK1989 S-CG-CAD"))
                     return null;
-
-                return new CGX(cgx_t);
+                return cgx_t;
             }
 
-            public static CGX Import(FileStream file, int fmt)
-            {
-                byte[] dat;
-                int maxlen;
-                if (fmt == 0)
-                {
-                    dat = new byte[0x4500];
-                    maxlen = 0x4000;
-                }
-                else if (fmt == 1)
-                {
-                    dat = new byte[0x8500];
-                    maxlen = 0x8000;
-                }
-                else //if (fmt == 2)
-                {
-                    dat = new byte[0x10100];
-                    maxlen = 0x10000;
-                }
+            public static CGX Load(Stream file) => new CGX(GetROMCGXDataArray(file));
 
-                //Generate File
-                file.Read(dat, 0, Math.Min(maxlen, (int)file.Length));
-                System.Text.Encoding.ASCII.GetBytes("NAK1989 S-CG-CAD").CopyTo(dat, maxlen);
-                System.Text.Encoding.ASCII.GetBytes("Ver0.00 ").CopyTo(dat, maxlen + 0x10);
-                System.Text.Encoding.ASCII.GetBytes("010101  ").CopyTo(dat, maxlen + 0x18);
-
-                return new CGX(dat);
-            }
+            public static CGX Import(Stream file, BitDepthFormats fmt) => new CGX(GetRAWCGXDataArray(file, fmt));
 #endif
         }
 
@@ -348,16 +361,16 @@ namespace StarFox.Interop.GFX
 
         public class SCR
         {
-            byte[][] cell;  //Screen Data (4 screens of 32x32)
-            Extra ext;
-            bool mode7;     //Mode 7 Flag
-            byte scr_mode;  //Screen Mode: 0 = 8x8 Tiles, 1 = 16x16 Tiles
-            byte chr_bank;  //CHR BANK
-            byte col_bank;  //Color Bank
-            byte col_half;  //Color (high, low)
-            byte col_cell;  //Color Cell
-            byte unk1;
-            byte unk2;
+            protected byte[][] cell;  //Screen Data (4 screens of 32x32)
+            protected Extra ext;
+            protected bool mode7;     //Mode 7 Flag
+            protected byte scr_mode;  //Screen Mode: 0 = 8x8 Tiles, 1 = 16x16 Tiles
+            protected byte chr_bank;  //CHR BANK
+            protected byte col_bank;  //Color Bank
+            protected byte col_half;  //Color (high, low)
+            protected byte col_cell;  //Color Cell
+            protected byte unk1;
+            protected byte unk2;
 
             bool[][] clear; //Clear Code (4 screens of 32x32, false = invisible tile, true = visible tile)
 
@@ -447,7 +460,7 @@ namespace StarFox.Interop.GFX
             }
 #endif
 
-            public static SCR Load(FileStream file)
+            internal static byte[] GetROMSCRDataArray(Stream file)
             {
                 file.Seek(0, SeekOrigin.Begin);
 
@@ -462,11 +475,15 @@ namespace StarFox.Interop.GFX
                 string footer_string = System.Text.Encoding.ASCII.GetString(Utility.Subarray(scr_t, 0x2000, 0x10));
                 if (!footer_string.Equals("NAK1989 S-CG-CAD"))
                     return null;
-
-                return new SCR(scr_t);
+                return scr_t;
             }
 
-            public static SCR Import(FileStream file, byte scr_mode = 0)
+            public static SCR Load(Stream file)
+            {                
+                return new SCR(GetROMSCRDataArray(file));
+            }
+
+            internal static byte[] GetRAWSCRDataArray(Stream file, byte scr_mode = 0)
             {
                 byte[] dat = new byte[0x2300];
                 int maxlen = 0x2000;
@@ -479,7 +496,12 @@ namespace StarFox.Interop.GFX
                 dat[0x2042] = scr_mode;
                 Utility.Subarray(new byte[] { 0xFF }, 0, 0x200).CopyTo(dat, 0x2100);
 
-                return new SCR(dat);
+                return dat;
+            }
+
+            public static SCR Import(Stream file, byte scr_mode = 0)
+            {               
+                return new SCR(GetRAWSCRDataArray(file, scr_mode));
             }
         }
 

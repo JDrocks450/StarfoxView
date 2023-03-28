@@ -1,4 +1,5 @@
 ﻿using Starfox.Editor;
+using StarFox.Interop;
 using StarFox.Interop.ASM;
 using StarFox.Interop.MAP;
 using System;
@@ -24,7 +25,7 @@ namespace StarFoxMapVisualizer
         /// <summary>
         /// All files that have been imported by the <see cref="ASMImporter"/>
         /// </summary>
-        public static HashSet<ASMFile>? OpenFiles => ImportedProject?.OpenFiles;
+        public static Dictionary<string, IImporterObject>? OpenFiles => ImportedProject?.OpenFiles;
         public static IEnumerable<MAPFile>? OpenMAPFiles => ImportedProject?.OpenMAPFiles;
         public static bool IsFileIncluded(FileInfo File) => ImportedProject?.IsFileIncluded(File) ?? false;
         /// <summary>

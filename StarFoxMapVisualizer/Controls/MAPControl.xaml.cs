@@ -52,7 +52,7 @@ namespace StarFoxMapVisualizer.Controls
         /// </summary>
         public void InvalidateFiles()
         {
-            foreach (var file in AppResources.OpenFiles.OfType<MAPFile>())
+            foreach (var file in AppResources.OpenMAPFiles)
                 OpenFile(file);
         }
 

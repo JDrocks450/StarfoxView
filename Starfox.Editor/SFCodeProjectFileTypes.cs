@@ -11,7 +11,12 @@ namespace Starfox.Editor
         Unknown, 
         Include, 
         Palette,
-        Assembly
+        Assembly,
+        BINFile,
+        CCR,
+        PCR,
+        CGX,
+        SCR
     }
     
     public static class SFCodeProjectFileExtensions
@@ -23,12 +28,23 @@ namespace Starfox.Editor
         /// <returns></returns>
         public static SFCodeProjectFileTypes GetSFFileType(string FilePath)
         {
-            if (Path.GetExtension(FilePath).ToUpper().EndsWith("ASM"))
+            var path = Path.GetExtension(FilePath).ToUpper();
+            if (path.EndsWith("ASM"))
                 return SFCodeProjectFileTypes.Assembly;
-            else if (Path.GetExtension(FilePath).ToUpper().EndsWith("INC"))
+            else if (path.EndsWith("INC"))
                 return SFCodeProjectFileTypes.Include;
-            else if (Path.GetExtension(FilePath).ToUpper().EndsWith("COL"))
+            else if (path.EndsWith("COL"))
                 return SFCodeProjectFileTypes.Palette;
+            else if (path.EndsWith("BIN"))
+                return SFCodeProjectFileTypes.BINFile;
+            else if (path.EndsWith("CCR"))                
+                return SFCodeProjectFileTypes.CCR;
+            else if (path.EndsWith("PCR"))
+                return SFCodeProjectFileTypes.PCR;
+            else if (path.EndsWith("CGX"))
+                return SFCodeProjectFileTypes.CGX;
+            else if (path.EndsWith("SCR"))
+                return SFCodeProjectFileTypes.SCR;
             return SFCodeProjectFileTypes.Unknown;
         }
         /// <summary>

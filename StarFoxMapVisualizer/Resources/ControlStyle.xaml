@@ -148,4 +148,32 @@
             </Setter.Value>
         </Setter>
     </Style>
+    <Style TargetType="Window" x:Key="SFDialogModalMenuStyle" BasedOn="{StaticResource SFDialogModalStyle}">
+        <Style.Resources>
+            <Style TargetType="MenuItem">
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="MenuItem">
+                                <Button Background="{Binding Background, ElementName=HOST}" Foreground="{Binding Foreground, ElementName=HOST}" FontFamily="{StaticResource Atlantis}" FontSize="18">
+                                    <ContentPresenter ContentSource="Header"/>
+                                </Button>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            <Style TargetType="Menu">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Menu">
+                            <Grid>
+                                <StackPanel IsItemsHost="True">
+
+                                </StackPanel>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </Style.Resources>
+    </Style>
 </ResourceDictionary>

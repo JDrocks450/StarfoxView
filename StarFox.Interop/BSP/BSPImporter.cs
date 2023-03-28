@@ -37,8 +37,11 @@ namespace StarFox.Interop.BSP
         //*** BSP VARS
         internal BSPFile? CurrentFile;
         internal BSPShape? CurrentShape = default; // the currently parsing shape
-        internal int currentFrame = -1, currentFrameDefinition = 0;
+        internal int currentFrame = -1;
+        internal string? currentFrameDefinition = default;
         internal int pointIndex = 0, pointActualIndex = 0, framePointIndexStart = 0, framePointActualIndexStart = 0;
+        internal bool BSPMode = false;
+        internal string? BSPEndLabel;
         /// <summary>
         /// Describes the current point parsing mode
         /// </summary>
@@ -69,11 +72,11 @@ namespace StarFox.Interop.BSP
         public void ResetVars()
         {
             currentFrame = -1;
+            currentFrameDefinition = null;
             PointsMode = PointsModes.None;
             facesLocked = false;
             pointIndex = 0;
             pointActualIndex = 0;
-            currentFrameDefinition = 0;
             framePointIndexStart = framePointActualIndexStart = 0;
             frames = 0;
         }
@@ -100,18 +103,24 @@ namespace StarFox.Interop.BSP
         /// <para>Generally call this when you see:</para>
         /// <code>jumptab</code>
         /// </summary>
-        /// <param name="Name"></param>
+        /// <param name="KeyframeName"></param>
         /// <exception cref="InvalidOperationException"></exception>
-        public void BeginFrameDataDefine(string? Name = default)
+        public void BeginFrameDataDefine(string KeyframeName)
         {
+            KeyframeName = KeyframeName.TrimStart('.'); // trim the period we don't need it
             if (CurrentShape == null) throw new InvalidOperationException("CurrentShape is null");
-            if (currentFrameDefinition + 1 > frames) throw new InvalidOperationException("You're above the amount of frames defined.");
-            CurrentShape.PushFrame(currentFrameDefinition, new()
-            {
-                Name = Name ?? $"FRAME_{currentFrameDefinition}",
-                Points = new()
-            });
-            currentFrameDefinition++;
+            if (KeyframeName == null) throw new InvalidDataException("The keyframe has to have a name.");
+            CurrentShape.PushFrame(KeyframeName);
+        }
+        /// <summary>
+        /// Begins BSP Mode
+        /// <code>BSPInit end_label</code>
+        /// </summary>
+        /// <param name="EndLabel"></param>
+        public void BeginBSPRegion(string EndLabel)
+        {
+            BSPMode = true;
+            BSPEndLabel = EndLabel;
         }
         /// <summary>
         /// When the frame data is read, this will reset values in this context to values before the frames were read.
@@ -122,7 +131,42 @@ namespace StarFox.Interop.BSP
             pointIndex = framePointIndexStart;
             pointActualIndex = framePointActualIndexStart;
         }
-        public void PushPoint(PointsModes PointType, int x, int y, int z)
+        /// <summary>
+        /// Will create a point.
+        /// PointType is important, as the width of the point is determined by its type.
+        /// <code>pb, pw [etc.] x,y,z</code>
+        /// Note that some macro functions will apply math to the result, like the following:
+        /// <code>pbd2 x,y,z</code>
+        /// Will divide each component by two and store that.
+        /// </summary>
+        /// <param name="PointType">The width of the point being added, determined by the Points line.</param>
+        /// <param name="x">X</param>
+        /// <param name="y">Y</param>
+        /// <param name="z">Z</param>
+        /// <param name="divisor">Divide components by this divisor</param>
+        public BSPPoint MakePoint(PointsModes PointType, int x, int y, int z, float divisor = 1)
+        {
+            var point = new BSPPoint(pointIndex, pointActualIndex, (int)(x / divisor), (int)(y / divisor), (int)(z / divisor)); // make point
+            pointIndex += PointsDataWidth;
+            pointActualIndex++;
+            return point;
+        }
+        /// <summary>
+        /// Will push a point to the base shape, not a keyframe.
+        /// PointType is important, as the width of the point is determined by its type.
+        /// <code>pb, pw [etc.] x,y,z</code>
+        /// Note that some macro functions will apply math to the result, like the following:
+        /// <code>pbd2 x,y,z</code>
+        /// Will divide each component by two and store that.
+        /// </summary>
+        /// <param name="PointType">The width of the point being added, determined by the Points line.</param>
+        /// <param name="x">X</param>
+        /// <param name="y">Y</param>
+        /// <param name="z">Z</param>
+        /// <param name="divisor">Divide components by this divisor</param>
+        /// <exception cref="InvalidDataException"></exception>
+        /// <exception cref="InvalidOperationException"></exception>
+        public void PushPoint(PointsModes PointType, int x, int y, int z, float divisor = 1)
         {
             if (pointsLocked) // has endpoints been called?
                 throw new InvalidDataException($"You're not in POINTS mode."); // yikes!
@@ -136,12 +180,22 @@ namespace StarFox.Interop.BSP
             };
             if (!compatible)
                 throw new InvalidOperationException($"You're not in the correct mode to define a point like that. M: {PointsMode} T: {PointType}");
-            var point = new BSPPoint(pointIndex, pointActualIndex, x, y, z); // make point
-            pointIndex += PointsDataWidth;
-            pointActualIndex++;
-            if (currentFrame >= 0)
-                CurrentShape.GetFrame(currentFrame).Points.Add(point); // push to current frame
+            var point = MakePoint(PointType, x, y, z, divisor);
+            if (currentFrameDefinition != null)
+                CurrentShape.FrameData[currentFrameDefinition].Points.Add(point);
             else CurrentShape.Points.Add(point);
+        }
+        /// <summary>
+        /// Pushes a BSP definition to the BSP jump table.
+        /// <code>BSP id,faces_ptr,.bsp-</code>
+        /// </summary>
+        /// <param name="ID">The id of this BSP.</param>
+        /// <param name="FacesPtr">The faces table indicating where to find the data in this BSP.</param>
+        /// <param name="JumpPtr">The ptr to the next BSP.</param>
+        internal void PushBSP(int ID, string FacesPtr, string JumpPtr)
+        {
+            if (CurrentShape == null) throw new NullReferenceException("There is no current shape to add this to.");
+            CurrentShape.BSPEntries.Add(ID, new BSPEntry(ID, FacesPtr, JumpPtr));
         }
     }
     /// <summary>
@@ -182,7 +236,7 @@ namespace StarFox.Interop.BSP
             if (BSPFaceStructureConverter.TryParse(in line, out var Face))
             { // this line is a face call
                 if (Face.PointIndices.Length > 3)
-                {
+                { // make into a TRI instead of an any sided shape
                     var points = Face.PointIndices.Select(x => Context.CurrentShape.GetPoint(x.PointIndex)).ToArray();
                     var newVerts = BSPTriangulate.TriangulateVertices(points);
                     BSPPointRef[] refs = new BSPPointRef[newVerts.Count];
@@ -234,16 +288,38 @@ namespace StarFox.Interop.BSP
                         {
                             if (asmContext.CurrentShape == default) // looking for a shape header...
                             {
-                                _ = LookForShapeHeader(line, asmContext);
+                                if(LookForShapeHeader(line, asmContext))
+                                {
+                                    var name = asmContext.CurrentShape.Header.Name;
+                                    ;
+                                }
                                 continue;
+                            }
+                            if (line.HasInlineLabel)
+                            {
+                                if (asmContext.CurrentShape.FrameData.ContainsKey(line.InlineLabel))
+                                    asmContext.currentFrameDefinition = line.InlineLabel; // we're now defining a keyframe
                             }
                             //looking for model stuff
                             //** advanced function calls first
                             if (LookForFaceDefinition(line, asmContext)) continue;
                             BSPImporterContext.PointsModes mode = BSPImporterContext.PointsModes.Pointsb;
                             //** then basic function calls
+                            float pbDivisor = 1, yFactor = 1; // point-specific macro math operations
                             switch (macroInvoke.MacroReference.Name.ToLower())
                             {
+                                //***BSP
+                                case "bspinit": // indicates we're defining a BSP Region
+                                    asmContext.BeginBSPRegion(macroInvoke.TryGetParameter(0).ParameterContent);
+                                    continue;
+                                case "bsp":
+                                    asmContext.PushBSP(
+                                        macroInvoke.TryGetParameter(0).TryParseOrDefault(), 
+                                        macroInvoke.TryGetParameter(1).ParameterContent,
+                                        macroInvoke.TryGetParameter(2).ParameterContent
+                                    );
+                                    continue;
+                                //**END BSP
                                 case "frames": // indicates we're changing to frames
                                     asmContext.BeginFramesRegion(macroInvoke.TryGetParameter(0)?.TryParseOrDefault() ?? 0);
                                     continue;
@@ -281,11 +357,17 @@ namespace StarFox.Interop.BSP
                                 case "pw":
                                     mode = BSPImporterContext.PointsModes.Pointsw;
                                     goto case "pb";
+                                case "pbd2": // point definition, divide by 2
+                                    pbDivisor = 2;
+                                    goto case "pb";
+                                case "pby2": // point definition, multiply Y component by two
+                                    yFactor = 2;
+                                    goto case "pb";
                                 case "pb": // point definition
                                     var x = macroInvoke.TryGetParameter(0)?.TryParseOrDefault() ?? 0; //x
                                     var y = macroInvoke.TryGetParameter(1)?.TryParseOrDefault() ?? 0;//y
                                     var z = macroInvoke.TryGetParameter(2)?.TryParseOrDefault() ?? 0;//z
-                                    asmContext.PushPoint(mode, x, y, z);
+                                    asmContext.PushPoint(mode, x, (int)(y*yFactor), z, pbDivisor);
                                     break;
                             }
                         }
