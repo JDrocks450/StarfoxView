@@ -243,6 +243,9 @@ namespace StarFox.Interop.GFX.DAT
             dest = new byte[0x10000]; // destination buffer
             s = 0; // source pointer
             b = 0; // buffer bit offset
+            d = 0; // destination pointer
+            d_length = 0; // length of decrunched data
+            buffer = 0; // 32-bit buffer
         }
 
         internal static byte[] Decompress(in string FilePath, in byte[] CCRFile)

@@ -15,6 +15,8 @@
     <None Remove="Resources\Image\macro.png" />
     <None Remove="Resources\Image\page.png" />
     <None Remove="Resources\Image\palette.png" />
+    <None Remove="Resources\Image\pause.png" />
+    <None Remove="Resources\Image\play.png" />
     <None Remove="Resources\Image\screenIcon.png" />
     <None Remove="Resources\Image\SectorY.png" />
     <None Remove="Resources\Image\sflogo.png" />
@@ -52,6 +54,8 @@
     <Resource Include="Resources\Image\macro.png" />
     <Resource Include="Resources\Image\page.png" />
     <Resource Include="Resources\Image\palette.png" />
+    <Resource Include="Resources\Image\pause.png" />
+    <Resource Include="Resources\Image\play.png" />
     <Resource Include="Resources\Image\screenIcon.png" />
     <Resource Include="Resources\Image\SectorY.png" />
     <Resource Include="Resources\Image\sflogo.png" />

@@ -1,4 +1,5 @@
-﻿using Starfox.Editor;
+﻿using Microsoft.WindowsAPICodePack.Dialogs;
+using Starfox.Editor;
 using StarFox.Interop;
 using StarFox.Interop.ASM;
 using StarFox.Interop.ASM.TYP;
@@ -18,14 +19,8 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.Windows.Threading;
-using System.Xml.Serialization;
 
 namespace StarFoxMapVisualizer.Screens
 {
@@ -93,6 +88,25 @@ namespace StarFoxMapVisualizer.Screens
             var selectedItemHeader = (SolutionExplorerView.SelectedItem as TreeViewItem)?.Tag as SFCodeProjectNode;
             SolutionExplorerView.Items.Clear();
             if (currentProject == null) return;
+            void CreateClosableContextMenu(SFCodeProjectNode FileNode, in ContextMenu contextMenu, string Message = "Close File")
+            {
+                //INCLUDE FILE ITEM
+                var importItem = new MenuItem()
+                {
+                    Header = Message
+                };
+                importItem.Click += async delegate
+                {
+                    //DO INCLUDE
+                    var result = AppResources.ImportedProject.CloseFile(FileNode.FilePath);
+                    if (!result)
+                    {
+                        MessageBox.Show("That file could not be closed at this time.", "File Close Error");
+                    }
+                    UpdateInterface();
+                };
+                contextMenu.Items.Add(importItem);
+            }
             void CreateINCContextMenu(SFCodeProjectNode FileNode, in ContextMenu contextMenu, string Message = "Include File")
             {
                 //INCLUDE FILE ITEM
@@ -131,7 +145,7 @@ namespace StarFoxMapVisualizer.Screens
                 };
                 contextMenu.Items.Add(importItem);
             }
-            TreeViewItem AddProjectNode(SFCodeProjectNode Node)
+            async Task<TreeViewItem> AddProjectNode(SFCodeProjectNode Node)
             {
                 TreeViewItem node = new()
                 {
@@ -144,16 +158,16 @@ namespace StarFoxMapVisualizer.Screens
                     switch (child.Type)
                     {
                         case SFCodeProjectNodeTypes.Directory:
-                            AddDirectory(in node, child);
+                            await AddDirectory(node, child);
                             break;
                         case SFCodeProjectNodeTypes.File:
-                            AddFile(in node, child);
+                            await AddFile(node, child);
                             break;
                     }
                 }
                 return node;
             }
-            void AddDirectory(in TreeViewItem Parent, SFCodeProjectNode DirNode)
+            async Task AddDirectory(TreeViewItem Parent, SFCodeProjectNode DirNode)
             {
                 TreeViewItem thisTreeNode = new()
                 {
@@ -166,10 +180,10 @@ namespace StarFoxMapVisualizer.Screens
                     switch (child.Type)
                     {
                         case SFCodeProjectNodeTypes.Directory:
-                            AddDirectory(in thisTreeNode, child);
+                            await AddDirectory(thisTreeNode, child);
                             break;
                         case SFCodeProjectNodeTypes.File:
-                            AddFile(in thisTreeNode, child);
+                            await AddFile(thisTreeNode, child);
                             break;
                     }
                 }
@@ -177,7 +191,7 @@ namespace StarFoxMapVisualizer.Screens
                     thisTreeNode.IsExpanded = true;
                 Parent.Items.Add(thisTreeNode);
             }
-            void AddFile(in TreeViewItem Parent, SFCodeProjectNode FileNode)
+            async Task AddFile(TreeViewItem Parent, SFCodeProjectNode FileNode)
             {
                 var fileInfo = new FileInfo(FileNode.FilePath);
                 var contextMenu = new ContextMenu();
@@ -190,9 +204,12 @@ namespace StarFoxMapVisualizer.Screens
                 switch (FileNode.RecognizedFileType)
                 {
                     case SFCodeProjectFileTypes.Palette:
+                        retry:
                         item.SetResourceReference(StyleProperty, "PaletteTreeStyle");
                         if (!AppResources.IsFileIncluded(fileInfo))
                         {
+                            if (await IncludeFile(fileInfo))
+                                goto retry;
                             CreateINCContextMenu(FileNode, in contextMenu);
                             item.Foreground = Brushes.White; // Indicate with white that it isn't included yet
                         }
@@ -200,6 +217,8 @@ namespace StarFoxMapVisualizer.Screens
                     case SFCodeProjectFileTypes.SCR:
                     case SFCodeProjectFileTypes.CGX:
                         item.SetResourceReference(StyleProperty, "SpriteTreeStyle");
+                        if (AppResources.OpenFiles.ContainsKey(fileInfo.FullName))
+                            CreateClosableContextMenu(FileNode, in contextMenu);
                         break;
                     case SFCodeProjectFileTypes.Include:
                         if (!AppResources.IsFileIncluded(fileInfo))
@@ -248,7 +267,7 @@ namespace StarFoxMapVisualizer.Screens
                     item.BringIntoView();
                 Parent.Items.Add(item);
             }
-            SolutionExplorerView.Items.Add(AddProjectNode(currentProject.ParentNode));
+            SolutionExplorerView.Items.Add(await AddProjectNode(currentProject.ParentNode));
         }
 
         private void ReadyImporters()
@@ -366,7 +385,17 @@ namespace StarFoxMapVisualizer.Screens
             }
             return true;
         }
-
+        //3D IMPORT LOGIC
+        async Task<BSPFile?> doBSPImport(FileInfo File)
+        {
+            if (!await HandleImportMessages(File, BSPImport)) return default;
+            //**AUTO-INCLUDE COLTABS.ASM
+            if (SearchProjectForFile("coltabs.asm", out var projFile))
+                await TryIncludeColorTable(projFile);
+            //**
+            var file = await BSPImport.ImportAsync(File.FullName);
+            return file;
+        }
         public async Task<ASMFile?> ParseFile(FileInfo File)
         {                        
             //MAP IMPORT LOGIC
@@ -374,19 +403,7 @@ namespace StarFoxMapVisualizer.Screens
             {
                 if (!await HandleImportMessages(File, MAPImport)) return default;
                 return await MAPImport.ImportAsync(File.FullName);
-            }
-            //3D IMPORT LOGIC
-            async Task<ASMFile?> doBSPImport()
-            {
-                if (!await HandleImportMessages(File, BSPImport)) return default;
-                //**AUTO-INCLUDE COLTABS.ASM
-                if (SearchProjectForFile("coltabs.asm", out var projFile))                
-                    await TryIncludeColorTable(projFile);                
-                //**
-                var file = await BSPImport.ImportAsync(File.FullName);               
-            skipTree:
-                return file;
-            }
+            }            
             //GET IMPORTS SET
             ReadyImporters();
             //DO FILE PARSE NOW            
@@ -408,7 +425,7 @@ namespace StarFoxMapVisualizer.Screens
                         asmfile = await doMAPImport();
                         break;
                     case StarFox.Interop.SFFileType.FileTypes.BSP:
-                        asmfile = await doBSPImport();
+                        asmfile = await doBSPImport(File);
                         break;
                 }                
                 goto import;
@@ -492,6 +509,8 @@ namespace StarFoxMapVisualizer.Screens
         private async Task FileSelected(FileInfo File)
         {                        
             LoadingSpan.Visibility = Visibility.Visible;
+            if (AppResources.OpenFiles.ContainsKey(File.FullName))
+                AppResources.ImportedProject.CloseFile(File.FullName);
             //CHECK IF ITS A KNOWN FILE
             switch (File.GetSFFileType())
             { // YEAH?
@@ -710,6 +729,66 @@ namespace StarFoxMapVisualizer.Screens
             CurrentMode = ViewMode.GFX;
             HandleViewModes();
             UpdateInterface();
+        }
+
+        private async void ExportAll3DButton_Click(object sender, RoutedEventArgs e)
+        {
+            // EXPORT 3D FUNCTION -- I MADE HISTORY HERE TODAY. 11:53PM 03/31/2023 JEREMY GLAZEBROOK.
+            // I EXTRACTED STARFOX SHAPES SUCCESSFULLY AND DUMPED THEM ALL IN READABLE FORMAT.
+            var r = MessageBox.Show($"Welcome to the Export 3D Assets Wizard!\n" +
+                $"This tool will do the following: Export all 3D assets from the selected directory to *.sfshape files and palettes.\n" +
+                $"It will dump them to the exports/models directory.\n" +
+                $"You will get a manifest of all files dumped with their model names as well.\n" +
+                $"Happy hacking! - Love Bisquick <3", "Export 3D Assets Wizard", MessageBoxButton.OKCancel); // WELCOME MSG
+            if (r is MessageBoxResult.Cancel) return; // OOPSIES!
+            CommonOpenFileDialog d = new CommonOpenFileDialog()
+            {
+                IsFolderPicker = true,
+                Multiselect = false,
+                InitialDirectory = AppResources.ImportedProject.WorkspaceDirectory.FullName
+            }; // CREATE THE FOLDER PICKER
+            if (d.ShowDialog() is not CommonFileDialogResult.Ok) return; // OOPSIES x2
+            var directory = d.FileName; // Selected DIR
+            if (!Directory.Exists(directory)) return; // Random error?
+            var dirInfo = new DirectoryInfo(directory); 
+            LoadingSpan.Visibility = Visibility.Visible;
+            StringBuilder errorBuilder = new(); // ERRORS
+            StringBuilder exportedBSPs = new(); // BSPS
+            StringBuilder exportedFiles = new(); // ALL FILES
+            //GET IMPORTS SET
+            ReadyImporters();
+            foreach (var file in dirInfo.GetFiles()) // ITERATE OVER DIR FILES
+            {
+                try
+                {
+                    var bspFile = await doBSPImport(file); // IMPORT THE BSP
+                    foreach (var shape in bspFile.Shapes) // FIND ALL SHAPES
+                    {
+                        var files =await SHAPEStandard.ExportShapeToSfShape(shape); // USE STANDARD EXPORT FUNC
+                        if (files.Count() == 0) continue; // HUH, WEIRD?
+                        foreach(var eFile in files) // EXPORTED FILES
+                            exportedFiles.AppendLine(eFile);
+                        var bspFileAddr = files.ElementAt(0);
+                        exportedBSPs.AppendLine(bspFileAddr); // BSP ONLY
+                    }
+                }
+                catch (Exception ex)
+                {
+                    errorBuilder.AppendLine($"The file: {file.FullName} could not be exported.\n" +
+                        $"***\n{ex.ToString()}\n***"); // ERROR INFO
+                }                
+            }
+            //CREATE THE MANIFEST FILE
+            File.WriteAllText(System.IO.Path.Combine(SHAPEStandard.DefaultShapeExtractionDirectory, "manifest.txt"), exportedBSPs.ToString());
+            MessageBox.Show($"{exportedFiles}", "Exported Files");
+            if (!string.IsNullOrWhiteSpace(errorBuilder.ToString()))
+                MessageBox.Show($"{errorBuilder}", "Errors");
+            if (MessageBox.Show($"Files exported to:\n" +
+                $"{SHAPEStandard.DefaultShapeExtractionDirectory}\n" +
+                $"Do you want to copy its location to the clipboard?", "Complete",
+                MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                Clipboard.SetText(SHAPEStandard.DefaultShapeExtractionDirectory);
+            LoadingSpan.Visibility = Visibility.Collapsed;
         }
     }
 }

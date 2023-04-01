@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace StarFox.Interop.BSP.SHAPE
@@ -13,97 +14,98 @@ namespace StarFox.Interop.BSP.SHAPE
         /// <summary>
         /// The line this has been parsed from
         /// </summary>
-        public ASMLine? Base { get; internal set; }
+        [JsonIgnore]
+        public ASMLine? Base { get; set; }
         /// <summary>
         /// The macro function used to create this shape header
         /// </summary>
-        public string MacroName { get; internal set; }
+        public string MacroName { get; set; }
         /// <summary>
         /// The pointer to where the points are stored
         /// </summary>
-        public string PointPtr { get; }
+        public string PointPtr { get; set; }
         /// <summary>
         /// The bank to look in for this shape
         /// </summary>
-        public int Bank { get; }
-        public string FacePtr { get; }
+        public int Bank { get; set; }
+        public string FacePtr { get; set; }
         /// <summary>
         /// <code>byte</code>
         /// Looks unused in the code
         /// </summary>
-        public int Type { get; }
+        public int Type { get; set; }
         /// <summary>
         /// <code>ZSort (bitshift left) Shift</code>
         /// Unsure what this currently does
         /// </summary>
-        public int ZSort { get; }
+        public int ZSort { get; set; }
         /// <summary>
         /// <code>Height (bitshift left) Shift</code>
         /// Unused in ShapeHdr macro
         /// </summary>
-        public int Height { get; }
+        public int Height { get; set; }
         /// <summary>
         /// <code>View (bitshift left) Shift</code>
         /// Unused in ShapeHdr macro
         /// </summary>
-        public int View { get; }
+        public int View { get; set; }
         /// <summary>
         /// Shifts left <see cref="ZSort"/>, <see cref="Height"/>, <see cref="View"/>
         /// </summary>
-        public int Shift { get; }
+        public int Shift { get; set; }
         /// <summary>
         /// Radius is run through macro function chk1dig for verification
         /// <para><code>word</code></para>
         /// </summary>
-        public float Radius { get; }
+        public float Radius { get; set; }
         /// <summary>
         /// XMax, shift left by <see cref="Shift"/>
         /// <para><code>word</code></para>
         /// </summary>
-        public int XMax { get; }
+        public int XMax { get; set; }
         /// <summary>
         /// YMax, shift left by <see cref="Shift"/>
         /// <para><code>word</code></para>
         /// </summary>
-        public int YMax { get; }
+        public int YMax { get; set; }
         /// <summary>
         /// ZMax, shift left by <see cref="Shift"/>
         /// <para><code>word</code></para>
         /// </summary>
-        public int ZMax { get; }
+        public int ZMax { get; set; }
         /// <summary>
         /// Size, shift left by <see cref="Shift"/>
         /// <para><code>word</code></para>
         /// </summary>
-        public int Size { get; }
+        public int Size { get; set; }
         /// <summary>
         /// Pointer to color palette used for this shape. 
         /// <para>For our purposes we're storing just the name.</para>
         /// </summary>
-        public string ColorPalettePtr { get; }
+        public string ColorPalettePtr { get; set; }
         /// <summary>
         /// Shadow reference
         /// </summary>
-        public int Shadow { get; }
+        public int Shadow { get; set; }
         /// <summary>
         /// Generally unused
         /// </summary>
-        public string Simple1 { get; }
+        public string Simple1 { get; set; }
         /// <summary>
         /// Generally unused
         /// </summary>
-        public string Simple2 { get; }
+        public string Simple2 { get; set; }
         /// <summary>
         /// Generally unused
         /// </summary>
-        public string Simple3 { get; }
+        public string Simple3 { get; set; }
         /// <summary>
         /// Name of this shape
         /// </summary>
-        public string Name { get; }
+        public string Name { get; set; }
         internal static string[] CompatibleMacroNames =
         {
-            "shapehdr"
+            "shapehdr", "oshapehdr"
         };
 
         internal BSPShapeHeader()

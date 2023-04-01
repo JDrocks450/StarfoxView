@@ -246,7 +246,7 @@ namespace StarFox.Interop.GFX
                 }
 
                 //Load File
-                byte[] cgx_t = new byte[file.Length];
+                byte[] cgx_t = new byte[file.Length];                
                 file.Read(cgx_t, 0, (int)file.Length);
 
                 //Check Footer Info

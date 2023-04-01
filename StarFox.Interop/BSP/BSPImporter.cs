@@ -1,8 +1,11 @@
-﻿using StarFox.Interop.ASM;
+﻿//#define SPECIFIC
+
+using StarFox.Interop.ASM;
 using StarFox.Interop.ASM.TYP;
 using StarFox.Interop.ASM.TYP.STRUCT;
 using StarFox.Interop.BSP.SHAPE;
 using StarFox.Interop.MAP;
+using StarFox.Interop.MISC;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -38,8 +41,9 @@ namespace StarFox.Interop.BSP
         internal BSPFile? CurrentFile;
         internal BSPShape? CurrentShape = default; // the currently parsing shape
         internal int currentFrame = -1;
-        internal string? currentFrameDefinition = default;
-        internal int pointIndex = 0, pointActualIndex = 0, framePointIndexStart = 0, framePointActualIndexStart = 0;
+        internal string? currentFrameDefinition = default, currentFrameEndLabel = default;
+        internal int pointIndex = 0, framePointIndexStart = 0;
+        internal int frameDefinitionAmount = 0;
         internal bool BSPMode = false;
         internal string? BSPEndLabel;
         /// <summary>
@@ -76,9 +80,9 @@ namespace StarFox.Interop.BSP
             PointsMode = PointsModes.None;
             facesLocked = false;
             pointIndex = 0;
-            pointActualIndex = 0;
-            framePointIndexStart = framePointActualIndexStart = 0;
+            framePointIndexStart = 0;
             frames = 0;
+            frameDefinitionAmount = 0;
         }
         public void BeginPointsRegion(PointsModes Mode) => PointsMode = Mode;
         /// <summary>
@@ -92,11 +96,8 @@ namespace StarFox.Interop.BSP
             bool firstDefine = frames == 0;
             frames += NumberOfFrames;
             currentFrame = 0;
-            if (firstDefine)
-            {
-                framePointIndexStart = pointIndex;
-                framePointActualIndexStart = pointActualIndex;
-            }
+            frameDefinitionAmount = NumberOfFrames;
+            framePointIndexStart = pointIndex;
         }
         /// <summary>
         /// This function will push a new frame onto the object's <see cref="BSPShape.Frames"/> stack
@@ -129,7 +130,7 @@ namespace StarFox.Interop.BSP
         {
             currentFrame++;
             pointIndex = framePointIndexStart;
-            pointActualIndex = framePointActualIndexStart;
+            currentFrameDefinition = default;
         }
         /// <summary>
         /// Will create a point.
@@ -144,11 +145,11 @@ namespace StarFox.Interop.BSP
         /// <param name="y">Y</param>
         /// <param name="z">Z</param>
         /// <param name="divisor">Divide components by this divisor</param>
-        public BSPPoint MakePoint(PointsModes PointType, int x, int y, int z, float divisor = 1)
+        public BSPPoint MakePoint(int x, int y, int z, float divisor = 1)
         {
-            var point = new BSPPoint(pointIndex, pointActualIndex, (int)(x / divisor), (int)(y / divisor), (int)(z / divisor)); // make point
-            pointIndex += PointsDataWidth;
-            pointActualIndex++;
+            var point = new BSPPoint(pointIndex, PointsDataWidth, (int)(x / divisor), (int)(y / divisor), (int)(z / divisor)); // make point
+            //pointIndex += PointsDataWidth;
+            pointIndex++;
             return point;
         }
         /// <summary>
@@ -180,10 +181,40 @@ namespace StarFox.Interop.BSP
             };
             if (!compatible)
                 throw new InvalidOperationException($"You're not in the correct mode to define a point like that. M: {PointsMode} T: {PointType}");
-            var point = MakePoint(PointType, x, y, z, divisor);
-            if (currentFrameDefinition != null)
-                CurrentShape.FrameData[currentFrameDefinition].Points.Add(point);
-            else CurrentShape.Points.Add(point);
+            bool XMode = PointsMode is PointsModes.PointsXb or PointsModes.PointsXw;
+            XMode:
+            var point = MakePoint(x, y, z, divisor);
+            if (currentFrameDefinition != null) // are we in a frame?
+            {
+                CurrentShape.FrameData[currentFrameDefinition].AddPoint(point);
+#if SPECIFIC
+                ErrorList.AppendLine($"PUSHPOINT: to FRAME: {currentFrameDefinition} INDEX: {point.Index} ACTUAL: {point.ActualIndex} | {point}");
+#endif
+            }
+            else if (CurrentShape.Frames.Count > 0) // do any frames exist before this one?
+            { // add this point found to all previous frames in order
+                for (int i = 0; i < frameDefinitionAmount; i++)
+                {
+                    var frame = CurrentShape.GetFrame((frames - i) - 1);
+                    frame?.AddPointSequential(point,out pointIndex);
+#if SPECIFIC
+                    ErrorList.AppendLine($"PUSHPOINT: to FRAME: {currentFrameDefinition} INDEX: {point.Index} ACTUAL: {point.ActualIndex} | {point}");
+#endif
+                }
+            }
+            else
+            {
+                CurrentShape.AddPoint(point);
+#if SPECIFIC
+                ErrorList.AppendLine($"PUSHPOINT: to FRAME: default_0 INDEX: {point.Index} ACTUAL: {point.ActualIndex} | {point}");
+#endif
+            }
+            if (XMode)
+            {
+                x *= -1;
+                XMode = false;
+                goto XMode;
+            }
         }
         /// <summary>
         /// Pushes a BSP definition to the BSP jump table.
@@ -224,6 +255,9 @@ namespace StarFox.Interop.BSP
         {
             //looks promising, is this line a shape header?
             if (!BSPShapeHeader.TryParse(line, out var header)) return false; // nope, it's not.
+#if SPECIFIC
+            if (header.Name != "training") return false;
+#endif
             //found header !!!
             Context.CurrentShape = new BSPShape(header); // created a new shape to dump info into
             //Reset vars to default values
@@ -237,13 +271,20 @@ namespace StarFox.Interop.BSP
             { // this line is a face call
                 if (Face.PointIndices.Length > 3)
                 { // make into a TRI instead of an any sided shape
-                    var points = Face.PointIndices.Select(x => Context.CurrentShape.GetPoint(x.PointIndex)).ToArray();
-                    var newVerts = BSPTriangulate.TriangulateVertices(points);
-                    BSPPointRef[] refs = new BSPPointRef[newVerts.Count];
-                    for(int i = 0; i < newVerts.Count; i++)
+                    var points = Face.PointIndices.Select(x => Context.CurrentShape.FindPoint(x.PointIndex)).ToArray();
+                    bool result = BSPTriangulate.EarClipTriangulationAlgorithm(points, Face.Normal, out var newVerts);
+                    if (!result)
                     {
-                        var pointref = newVerts[i];
-                        var point = points.ElementAt(pointref);
+                        result = BSPTriangulate.EarClipTriangulationAlgorithm(points.Reverse(), Face.Normal, out newVerts);
+                        if (!result)
+                        {
+                            Context.ErrorList.AppendLine($"*****TRIANGULATION FAILURE! {Context.CurrentShape.Header.Name}*****");
+                        }
+                    }
+                    BSPPointRef[] refs = new BSPPointRef[newVerts.Count];
+                    for (int i = 0; i < newVerts.Count; i++)
+                    {
+                        var point = newVerts[i];
                         refs[i] = new BSPPointRef()
                         {
                             PointIndex = point.Index,
@@ -283,6 +324,11 @@ namespace StarFox.Interop.BSP
                     if (chunk == null) continue; // ???
                     if (chunk is ASMLine line)//Let's always only look for lines.
                     { // found a line
+                        if (asmContext.currentFrameDefinition != null && asmContext.currentFrameEndLabel != null && 
+                            line.Text.NormalizeFormatting().ToUpper().StartsWith(asmContext.currentFrameEndLabel.ToUpper()))
+                        { //we are leaving a keyframe                            
+                            asmContext.ReturnFromFrameDataRegion();
+                        }
                         if (!line.HasStructureApplied) continue; // hmm but this line doesn't have a recognized structure.
                         if (line.Structure is ASMMacroInvokeLineStructure macroInvoke)
                         {
@@ -313,6 +359,7 @@ namespace StarFox.Interop.BSP
                                     asmContext.BeginBSPRegion(macroInvoke.TryGetParameter(0).ParameterContent);
                                     continue;
                                 case "bsp":
+                                    continue;
                                     asmContext.PushBSP(
                                         macroInvoke.TryGetParameter(0).TryParseOrDefault(), 
                                         macroInvoke.TryGetParameter(1).ParameterContent,
@@ -336,8 +383,9 @@ namespace StarFox.Interop.BSP
                                     asmContext.BeginPointsRegion(BSPImporterContext.PointsModes.Pointsb);
                                     continue;
                                 case "jump": // move from this frame to the next
+                                    asmContext.currentFrameEndLabel = macroInvoke.TryGetParameter(0)?.ParameterContent;
                                     asmContext.ReturnFromFrameDataRegion();
-                                    break;
+                                    continue;
                                 case "jumptab": // define new frame at the specifed inline label
                                     var name = macroInvoke.TryGetParameter(0)?.ParameterContent;
                                     asmContext.BeginFrameDataDefine(name);

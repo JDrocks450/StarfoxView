@@ -1,4 +1,5 @@
-﻿using StarFox.Interop.GFX.DAT;
+﻿using StarFox.Interop;
+using StarFox.Interop.GFX.DAT;
 using StarFoxMapVisualizer.Misc;
 using System;
 using System.Collections.Generic;
@@ -53,17 +54,36 @@ namespace StarFoxMapVisualizer.Controls
 
         public async void RefreshFiles()
         {
+            TabItem GetTab(IImporterObject Object, Brush Background = default)
+            {
+                var item = new TabItem()
+                {
+                    Header = System.IO.Path.GetFileName(Object.OriginalFilePath),
+                    Tag = Object,                    
+                };
+                if (Background != default) item.Background = Background;
+                item.MouseDoubleClick += delegate
+                {
+                    int selectedIndex = FileSelectorTabViewer.SelectedIndex;
+                    AppResources.ImportedProject.CloseFile(Object);
+                    if (FileSelectorTabViewer.Items.Count <= 1) // more tabs, switch to the next one to the left
+                        selectedIndex = -1;
+                    else if (selectedIndex > 0)
+                        selectedIndex--;
+                    RefreshFiles();
+                    if (selectedIndex > -1)
+                        FileSelectorTabViewer.SelectedIndex = selectedIndex;
+                    else DragImage.Source = null;
+                };
+                FileSelectorTabViewer.Items.Add(item);
+                return item;
+            }
             void FillCGXFiles()
             {
                 var CGXFiles = AppResources.OpenFiles.Values.OfType<FXCGXFile>();
                 foreach (var cgx in CGXFiles)
                 {
-                    var item = new TabItem()
-                    {
-                        Header = System.IO.Path.GetFileName(cgx.OriginalFilePath),                        
-                        Tag = cgx
-                    };
-                    FileSelectorTabViewer.Items.Add(item);
+                    var item = GetTab(cgx);
                     if (SelectedGraphic != null && cgx == SelectedGraphic)
                         FileSelectorTabViewer.SelectedItem = item;
                 }
@@ -73,13 +93,7 @@ namespace StarFoxMapVisualizer.Controls
                 var SCRFiles = AppResources.OpenFiles.Values.OfType<FXSCRFile>();
                 foreach (var scr in SCRFiles)
                 {
-                    var item = new TabItem()
-                    {
-                        Header = System.IO.Path.GetFileName(scr.OriginalFilePath),
-                        Tag = scr,
-                        Background = Brushes.DarkRed,
-                    };
-                    FileSelectorTabViewer.Items.Add(item);
+                    var item = GetTab(scr, Brushes.DarkRed);
                     if (SelectedScreen != null && scr == SelectedScreen)
                         FileSelectorTabViewer.SelectedItem = item;
                 }
@@ -155,9 +169,12 @@ namespace StarFoxMapVisualizer.Controls
                 var fileName = System.IO.Path.GetFileNameWithoutExtension(SelectedScreen.OriginalFilePath);
                 var results = AppResources.ImportedProject.SearchFile(fileName + ".CGX");
                 if (!results.Any() || results.Count() > 1 || !AppResources.OpenFiles.ContainsKey(results.First().FilePath))
+                {
                     MessageBox.Show("Hey there! In order to view this Screen, include the corresponding *.CGX file. \n" +
                         "It needs to share the same name as this screen, it just ends with *.CGX!\n" +
                         "Come back here once you include that file.", "Woah there");
+                    return;
+                }
                 var graphics = AppResources.OpenFiles[results.First().FilePath] as FXCGXFile;
                 using (var palette = SelectedScreen.Render(graphics,SelectedPalette,true))
                     DragImage.Source = palette.Convert();

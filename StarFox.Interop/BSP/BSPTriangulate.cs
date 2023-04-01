@@ -1,4 +1,5 @@
-﻿using StarFox.Interop.BSP.SHAPE;
+﻿using EarClipperLib;
+using StarFox.Interop.BSP.SHAPE;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -11,6 +12,42 @@ namespace StarFox.Interop.BSP
 {
     public static class BSPTriangulate
     {
+        public static bool EarClipTriangulationAlgorithm(IEnumerable<BSPPoint> FacePoints, BSPVec3 Normal, out List<BSPPoint> NewVerts)
+        {
+            Vector3m Normalize(BSPVec3 vector)
+            {
+                double length = Math.Sqrt(vector.X * vector.X + vector.Y * vector.Y + vector.Z * vector.Z);
+                return new Vector3m(vector.X / length, vector.Y / length, vector.Z / length);
+            }
+            var verticies = FacePoints.Select(x => new Vector3m(x.X, x.Y, x.Z)).ToList();
+            EarClipping converter = new();
+            converter.SetPoints(verticies,null,Normalize(Normal));
+            NewVerts = new();
+            try
+            {
+                converter.Triangulate();
+                var result = converter.Result;                
+                foreach (var point in result)
+                {
+                    foreach (var bspPoint in FacePoints)
+                    {
+                        if (point.X == bspPoint.X &&
+                            point.Y == bspPoint.Y &&
+                            point.Z == bspPoint.Z)
+                        {
+                            NewVerts.Add(bspPoint);
+                            continue;
+                        }
+                    }
+                }
+                return NewVerts.Count % 3 == 0;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
         public static List<int> TriangulateVertices(IEnumerable<BSPPoint> FacePoints)
         {
             var vertices = FacePoints.Select(x => new Vector3()

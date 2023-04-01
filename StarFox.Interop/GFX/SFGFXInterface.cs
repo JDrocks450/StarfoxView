@@ -17,6 +17,15 @@ namespace StarFox.Interop.GFX
         /// </summary>
         /// <returns></returns>
         public static async Task<FXDatFile> OpenDATFile(string FilePath) => await FX.ExtractGraphics(FilePath);
+        static async Task<byte[]> ExtractDecrunch(string fullName)
+        {
+            using (var fs = File.OpenRead(fullName))
+            {                
+                byte[] fileArray = new byte[fs.Length];
+                await fs.ReadAsync(fileArray, 0, fileArray.Length);
+                return Decrunch.Decompress(fullName, fileArray);
+            }
+        }
         /// <summary>
         /// Will extract graphics data out of PCR and CCR files into a CGX or SCR file.
         /// <para>It will create a *.CGX file in the same directory as the current with the same name as the original file.</para>
@@ -25,19 +34,14 @@ namespace StarFox.Interop.GFX
         /// <returns></returns>
         public static async Task TranslateCompressedCCR(string fullName, CAD.BitDepthFormats BitDepth = CAD.BitDepthFormats.BPP_4)
         {
-            using (var fs = File.OpenRead(fullName))
+            string extension = "CGX";
+            string name = $"{Path.Combine(Path.GetDirectoryName(fullName), Path.GetFileNameWithoutExtension(fullName))}.{extension}";
+            var file = await ExtractDecrunch(fullName);
+            using (var ms = new MemoryStream(file))
             {
-                byte[] fileArray = new byte[fs.Length];
-                await fs.ReadAsync(fileArray, 0, fileArray.Length);
-                var file = Decrunch.Decompress(fullName, fileArray);
-                using (var ms = new MemoryStream(file))
-                {
-                    string extension = "CGX";
-                    var bytes = CAD.CGX.GetRAWCGXDataArray(ms, BitDepth);
-                    string name = $"{Path.Combine(Path.GetDirectoryName(fullName), Path.GetFileNameWithoutExtension(fullName))}.{extension}";
-                    await File.WriteAllBytesAsync(name, bytes);
-                    return;
-                }
+                var bytes = CAD.CGX.GetRAWCGXDataArray(ms, BitDepth);
+                await File.WriteAllBytesAsync(name, bytes);
+                return;
             }
         }
         /// <summary>
@@ -48,18 +52,15 @@ namespace StarFox.Interop.GFX
         /// <returns></returns>
         public static async Task TranslateCompressedPCR(string fullName, int scr_mode = 0)
         {
-            using (var fs = File.OpenRead(fullName))
+            string extension = "SCR";
+            string name = $"{Path.Combine(Path.GetDirectoryName(fullName), Path.GetFileNameWithoutExtension(fullName))}.{extension}";
+            var file = await ExtractDecrunch(fullName);
+            //await File.WriteAllBytesAsync(name, file);
+            //return;
+            using (var ms = new MemoryStream(file))
             {
-                byte[] fileArray = new byte[fs.Length];
-                await fs.ReadAsync(fileArray, 0, fileArray.Length);
-                var file = Decrunch.Decompress(fullName, fileArray);
-                using (var ms = new MemoryStream(file))
-                {
-                    string extension = "SCR";
-                    var bytes = CAD.SCR.GetRAWSCRDataArray(ms,0);
-                    var name = $"{Path.Combine(Path.GetDirectoryName(fullName), Path.GetFileNameWithoutExtension(fullName))}.{extension}";
-                    await File.WriteAllBytesAsync(name, bytes);
-                }
+                var bytes = CAD.SCR.GetRAWSCRDataArray(ms, 0);
+                await File.WriteAllBytesAsync(name, bytes);
             }
         }
         /// <summary>

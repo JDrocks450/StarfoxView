@@ -78,6 +78,8 @@ namespace Starfox.Editor
         /// <returns></returns>
         public IEnumerable<SFCodeProjectNode> SearchFile(string FileName) => 
             FileNodes.Where(x => Path.GetFileName(x.Key).ToLower() == FileName.ToLower()).Select(y => y.Value);
+        public bool CloseFile(string FilePath) => OpenFiles.Remove(FilePath);
+        public bool CloseFile(IImporterObject File) => CloseFile(File.OriginalFilePath);
         /// <summary>
         /// When called will populate the project file with all directories and files from the given project directory.
         /// <para>Dictated by the <see cref="WorkspaceDirectory"/></para>

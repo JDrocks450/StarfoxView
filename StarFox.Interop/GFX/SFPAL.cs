@@ -9,6 +9,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using static StarFox.Interop.GFX.CAD;
 
@@ -63,6 +64,13 @@ namespace StarFox.Interop.GFX
                 }
             }
             return bmp;
+        }
+        /// <summary>
+        /// Writes the serialized color data to the given stream
+        /// </summary>
+        public async Task SerializeColors(Stream Destination)
+        {
+            await JsonSerializer.SerializeAsync(Destination, Colors.Select(x => BSPColor.FromDrawing(x)));
         }
         /// <summary>
         /// Gets the palette, this is only compatible with 8BPP mode

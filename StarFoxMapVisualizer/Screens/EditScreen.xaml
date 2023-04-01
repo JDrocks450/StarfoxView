@@ -110,6 +110,10 @@
             <ColumnDefinition Width="4*"/>
             <ColumnDefinition Width="2*" MaxWidth="400" MinWidth="250"/>
         </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition/>
+            <RowDefinition Height="50"/>
+        </Grid.RowDefinitions>
         <Grid Background="#3F000000">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" MinHeight="100"/>
@@ -215,6 +219,12 @@
                     <ProgressBar Margin="0,5,0,0" IsIndeterminate="True" Height="20"/>
                 </StackPanel>
             </Button>
+        </Border>
+        <Border Grid.Row="1" Grid.ColumnSpan="3" Background="#FF333333">
+            <StackPanel Margin="10,0" VerticalAlignment="Center" Orientation="Horizontal">
+                <TextBlock VerticalAlignment="Center">Super Secret Functions: </TextBlock>
+                <Button x:Name="ExportAll3DButton" Margin="10,0" Padding="10,5" Background="DarkRed" Foreground="White" Click="ExportAll3DButton_Click">Export All 3D Data</Button>
+            </StackPanel>
         </Border>
     </Grid>
 </Page>

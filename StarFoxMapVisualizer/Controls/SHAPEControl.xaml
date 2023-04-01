@@ -7,76 +7,136 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800" Background="Black" PreviewKeyDown="Window_PreviewKeyDown" PreviewMouseMove="Window_PreviewMouseMove">
     <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200"/>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-            <RowDefinition Height="3*"/>
-            <RowDefinition/>
+            <RowDefinition Height="50"/>
+            <RowDefinition Height="282*"/>
+            <RowDefinition Height="113*"/>
         </Grid.RowDefinitions>
-        <Canvas Name="LineWorkCanvas" Grid.RowSpan="2">
+        <Canvas Name="LineWorkCanvas" Grid.RowSpan="3" Grid.ColumnSpan="2">
 
         </Canvas>
-        <DockPanel Grid.RowSpan="2">
-            <Grid DockPanel.Dock="Top" Background="Gainsboro">
-                <Grid Margin="10">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition/>
-                        <ColumnDefinition/>
-                        <ColumnDefinition/>
-                        <ColumnDefinition/>
-                        <ColumnDefinition/>
-                        <ColumnDefinition/>
-                        <ColumnDefinition/>
-                        <ColumnDefinition/>
-                        <ColumnDefinition/>
-                        <ColumnDefinition/>
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Right" FontWeight="Bold">X:</TextBlock>
-                    <TextBox Grid.Column="1" Text="{Binding Position.X, ElementName=Camera}" VerticalContentAlignment="Center"/>
-                    <TextBlock Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right" FontWeight="Bold">Y:</TextBlock>
-                    <TextBox Grid.Column="3"  Text="{Binding Position.Y, ElementName=Camera}" VerticalContentAlignment="Center"/>
-                    <TextBlock Grid.Column="4" VerticalAlignment="Center" HorizontalAlignment="Right" FontWeight="Bold">Z:</TextBlock>
-                    <TextBox Grid.Column="5" Text="{Binding Position.Z, ElementName=Camera}" VerticalContentAlignment="Center"/>
-                    <TextBlock Grid.Column="6" VerticalAlignment="Center" FontWeight="Bold" HorizontalAlignment="Right">SHAPE:</TextBlock>
-                    <ComboBox Grid.Column="7" Name="ShapeSelector" SelectionChanged="ShapeSelector_SelectionChanged"/>
-                    <TextBlock Grid.Column="8" VerticalAlignment="Center" FontWeight="Bold" HorizontalAlignment="Right">FRAME:</TextBlock>
-                    <ComboBox Grid.Column="9" Name="FrameSelector" SelectionChanged="FrameSelector_SelectionChanged"/>
-                </Grid>
+        <Grid Background="Gainsboro" Grid.ColumnSpan="3">
+            <Grid Margin="10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Right" FontWeight="Bold">X:</TextBlock>
+                <TextBox Grid.Column="1" Text="{Binding Position.X, ElementName=Camera}" VerticalContentAlignment="Center"/>
+                <TextBlock Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right" FontWeight="Bold">Y:</TextBlock>
+                <TextBox Grid.Column="3"  Text="{Binding Position.Y, ElementName=Camera}" VerticalContentAlignment="Center"/>
+                <TextBlock Grid.Column="4" VerticalAlignment="Center" HorizontalAlignment="Right" FontWeight="Bold">Z:</TextBlock>
+                <TextBox Grid.Column="5" Text="{Binding Position.Z, ElementName=Camera}" VerticalContentAlignment="Center"/>
+                <TextBlock Grid.Column="6" VerticalAlignment="Center" FontWeight="Bold" HorizontalAlignment="Right">SHAPE:</TextBlock>
+                <ComboBox Grid.Column="7" Name="ShapeSelector" SelectionChanged="ShapeSelector_SelectionChanged"/>
+                <TextBlock Grid.Column="8" VerticalAlignment="Center" FontWeight="Bold" HorizontalAlignment="Right">FRAME:</TextBlock>
+                <ComboBox Grid.Column="9" Name="FrameSelector" SelectionChanged="FrameSelector_SelectionChanged"/>
             </Grid>
-            <Viewport3D Name="ThreeDViewer">
-                <Viewport3D.Resources>
-                    <DiffuseMaterial x:Key="DefaultBrush">
-                        <DiffuseMaterial.Brush>
-                            <SolidColorBrush Color="Gainsboro"/>
-                        </DiffuseMaterial.Brush>
-                    </DiffuseMaterial>
-                </Viewport3D.Resources>
-                <Viewport3D.Camera>
-                    <PerspectiveCamera x:Name="Camera" 
+        </Grid>
+        <Grid Grid.Row="1" Grid.RowSpan="2">
+            <TabControl Margin="0,0,-40,0" Style="{StaticResource SFTabViewerKey}" TabStripPlacement="Right">
+                <TabItem x:Name="MTreeTab" Header="Model Tree">
+                    <TabItem.LayoutTransform>
+                        <TransformGroup>
+                            <ScaleTransform/>
+                            <SkewTransform/>
+                            <RotateTransform Angle="90"/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </TabItem.LayoutTransform>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="50"/>
+                            <RowDefinition Height="1*"/>
+                            <RowDefinition Height="1*"/>
+                        </Grid.RowDefinitions>
+                        <Grid>
+                            <Button Background="#FF3A3A3A" IsEnabled="False"/>
+                            <StackPanel HorizontalAlignment="Center" Margin="10" Orientation="Horizontal">
+                                <TextBlock Margin="0,0,10,0">PLAYBACK: </TextBlock>
+                                <Button x:Name="PlayButton" Width="30" Height="30" Background="#FFA7A7A7" Padding="0" Click="PlayButton_Click">
+                                    <Image Source="/Resources/Image/play.png" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+                                </Button>
+                                <Button x:Name="PauseButton" Width="30" Height="30" Margin="5,0,0,0" Background="#FF717171" Padding="0" Click="PauseButton_Click">
+                                    <Image  Source="/Resources/Image/pause.png" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                        <DockPanel Margin="10,10,10,10" Grid.Row="1">
+                            <TextBlock DockPanel.Dock="Top" Style="{DynamicResource TitleText}" FontSize="14" Margin="0,0,0,10">Tree</TextBlock>
+                            <TreeView Name="BSPTreeView" Background="{x:Null}" BorderBrush="{x:Null}" Foreground="White" FontFamily="Courier New" FontSize="12">
+                                <TreeViewItem Foreground="White" Header="Test"></TreeViewItem>
+                            </TreeView>
+                        </DockPanel>
+                        <GridSplitter ResizeDirection="Rows" VerticalAlignment="Bottom" Height="2" Grid.Row="1" HorizontalAlignment="Stretch" Background="#FF737373"/>
+                        <DockPanel Margin="10,10,10,10" Grid.Row="2">
+                            <TextBlock DockPanel.Dock="Top" Style="{DynamicResource TitleText}" FontSize="14" Margin="0,0,0,10">Points</TextBlock>
+                            <ListBox Name="PointsView" Background="{x:Null}" BorderBrush="{x:Null}" Foreground="White" FontFamily="Courier New" FontSize="12">
+                                Test
+                            </ListBox>
+                        </DockPanel>
+                    </Grid>
+                </TabItem>
+                <TabItem Header="Shape Header">
+                    <TabItem.LayoutTransform>
+                        <TransformGroup>
+                            <ScaleTransform/>
+                            <SkewTransform/>
+                            <RotateTransform Angle="90"/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </TabItem.LayoutTransform>
+                </TabItem>
+            </TabControl>
+        </Grid>
+        <Viewport3D Name="ThreeDViewer" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Grid.RowSpan="2">
+            <Viewport3D.Resources>
+                <DiffuseMaterial x:Key="DefaultBrush">
+                    <DiffuseMaterial.Brush>
+                        <SolidColorBrush Color="Gainsboro"/>
+                    </DiffuseMaterial.Brush>
+                </DiffuseMaterial>
+            </Viewport3D.Resources>
+            <Viewport3D.Camera>
+                <PerspectiveCamera x:Name="Camera" 
                         FarPlaneDistance="1000" 
                         LookDirection="0,0,1" 
                         UpDirection="0,1,0" 
                         NearPlaneDistance="1" 
                         Position="0,25,-200" 
                         FieldOfView="40" />
-                </Viewport3D.Camera>
-                <Viewport3D.Children>
-                    <ModelVisual3D>
-                        <ModelVisual3D.Content>
-                            <Model3DGroup>
-                                <!-- Lights, MeshGeometry3D and DiffuseMaterial objects are added to the ModelVisual3D. -->
-                                <AmbientLight x:Name="MainLight" Color="#FFFFFFFF"/>
-                                <Model3DGroup x:Name="MainSceneGroup"/>
-                            </Model3DGroup>
-                        </ModelVisual3D.Content>
-                    </ModelVisual3D>
-                </Viewport3D.Children>
-            </Viewport3D>
-        </DockPanel>
-        <TextBox Name="ErrorText" FontFamily="Consolas" Foreground="Red" IsReadOnly="True" VerticalScrollBarVisibility="Auto" Margin="0,2,0,0" Background="{x:Null}" Grid.Row="1" BorderThickness="0">
+            </Viewport3D.Camera>
+            <Viewport3D.Children>
+                <ModelVisual3D>
+                    <ModelVisual3D.Content>
+                        <Model3DGroup>
+                            <!-- Lights, MeshGeometry3D and DiffuseMaterial objects are added to the ModelVisual3D. -->
+                            <AmbientLight x:Name="MainLight" Color="#FFFFFFFF"/>
+                            <Model3DGroup x:Name="MainSceneGroup"/>
+                        </Model3DGroup>
+                    </ModelVisual3D.Content>
+                </ModelVisual3D>
+            </Viewport3D.Children>
+        </Viewport3D>
+        <TextBox Name="ErrorText" FontFamily="Consolas" Foreground="Red" IsReadOnly="True" VerticalScrollBarVisibility="Auto" Margin="0,2,0,0" Background="{x:Null}" Grid.Row="2" BorderThickness="0" Grid.Column="2">
 
         </TextBox>
-        <StackPanel Width="150" HorizontalAlignment="Right" Margin="0,55,0,0" Grid.RowSpan="2">
+        <StackPanel Width="150" HorizontalAlignment="Right" Grid.RowSpan="2" Grid.Column="1" Grid.Row="1">
             <Button x:Name="CapKeyboard" Click="CapKeyboard_Click">Capture Keyboard</Button>
             <Button x:Name="ResetCam" Margin="0,5" Click="ResetCam_Click">Reset Camera</Button>
+            <Button x:Name="ExportSFShapeButton" Click="ExportSFShapeButton_Click" Background="#FFC30000" Foreground="White" Height="37">Export to .sfshape</Button>
         </StackPanel>
     </Grid>
 </UserControl>
