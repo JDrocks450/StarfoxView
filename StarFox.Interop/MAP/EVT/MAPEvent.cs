@@ -1,5 +1,6 @@
 ﻿using StarFox.Interop.ASM.TYP;
 using StarFox.Interop.ASM.TYP.STRUCT;
+using System.Text.Json.Serialization;
 
 namespace StarFox.Interop.MAP.EVT
 {
@@ -32,10 +33,12 @@ namespace StarFox.Interop.MAP.EVT
     /// <summary>
     /// A base-class for all events in a map script
     /// </summary>
+    [Serializable]
     public abstract class MAPEvent
     {
-        public virtual string EventName { get; protected set; }
-        public ASMLine Callsite { get; protected set; }
+        public virtual string EventName { get; set; }
+        [JsonIgnore]
+        public ASMLine Callsite { get; set; }
         /// <summary>
         /// Overriden in inheritors -- the list of macros that are compatible with this type of MAPEvent
         /// </summary>

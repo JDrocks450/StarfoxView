@@ -16,11 +16,11 @@ namespace StarFox.Interop.MAP.EVT
         /// <summary>
         /// The name of this variable
         /// </summary>
-        public string Name { get; protected set; }
+        public string Name { get; set; }
         /// <summary>
         /// The value of the variable
         /// </summary>
-        public string Value { get; protected set; }
+        public string Value { get; set; }
 
         protected override string[] CompatibleMacros { get; } =
         {

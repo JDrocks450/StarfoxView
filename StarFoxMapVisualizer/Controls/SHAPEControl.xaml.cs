@@ -24,6 +24,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Media.Media3D;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using static Microsoft.WindowsAPICodePack.Shell.PropertySystem.SystemProperties.System;
 using static StarFox.Interop.GFX.CAD;
 
 namespace StarFoxMapVisualizer.Controls
@@ -189,9 +190,10 @@ namespace StarFoxMapVisualizer.Controls
         /// <summary>
         /// Draws lines behind the main 3D canvas
         /// </summary>
-        private void RedoLineWork()
+        private void RedoLineWork(int SizeX = 1000, int SizeY = 1000, int Step = 50)
         {
-            int MX_X = 1000, MX_Y = 1000, STEP = 50;
+            int MX_X = SizeX, MX_Y = SizeY, STEP = Step;
+            LineWorkCanvas.Children.Clear();
             for (int X = 0; X < MX_X; X += STEP)
             {
                 var line = new Line()
@@ -450,6 +452,7 @@ namespace StarFoxMapVisualizer.Controls
                 };
                 BSPTreeView.Items.Add(item);
             }
+            HeaderInformationGrid.ItemsSource = new[] { Shape.Header };
         }
         /// <summary>
         /// Populates points in the PointsView Control based on the current frame.
@@ -524,6 +527,12 @@ namespace StarFoxMapVisualizer.Controls
                 $"Do you want to copy its location to the clipboard?", "Complete", 
                 MessageBoxButton.YesNo) == MessageBoxResult.Yes)
                 Clipboard.SetText(SHAPEStandard.DefaultShapeExtractionDirectory);
+        }
+
+        private void ThreeDViewer_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            RedoLineWork((int)ThreeDViewer.ActualWidth, 
+                (int)ThreeDViewer.ActualHeight, (int)(ThreeDViewer.ActualHeight / 20));
         }
     }
 }

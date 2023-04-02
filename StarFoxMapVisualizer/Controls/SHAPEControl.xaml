@@ -16,7 +16,7 @@
             <RowDefinition Height="282*"/>
             <RowDefinition Height="113*"/>
         </Grid.RowDefinitions>
-        <Canvas Name="LineWorkCanvas" Grid.RowSpan="3" Grid.ColumnSpan="2">
+        <Canvas Name="LineWorkCanvas" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Grid.RowSpan="2">
 
         </Canvas>
         <Grid Background="Gainsboro" Grid.ColumnSpan="3">
@@ -46,7 +46,7 @@
             </Grid>
         </Grid>
         <Grid Grid.Row="1" Grid.RowSpan="2">
-            <TabControl Margin="0,0,-40,0" Style="{StaticResource SFTabViewerKey}" TabStripPlacement="Right">
+            <TabControl Margin="0,0,-32,0" Style="{StaticResource SFTabViewerKey}" TabStripPlacement="Right">
                 <TabItem x:Name="MTreeTab" Header="Model Tree">
                     <TabItem.LayoutTransform>
                         <TransformGroup>
@@ -98,10 +98,47 @@
                             <TranslateTransform/>
                         </TransformGroup>
                     </TabItem.LayoutTransform>
+                    <DockPanel Margin="5">
+                        <TextBlock DockPanel.Dock="Top" Style="{DynamicResource TitleText}" FontSize="14" HorizontalAlignment="Center">Shape Definition</TextBlock>
+                        <DataGrid HorizontalScrollBarVisibility="Visible" FontSize="18" Name="HeaderInformationGrid" Margin="0,10,0,0" Foreground="White" Background="#FF373737" BorderThickness="0" BorderBrush="#FF272727">
+                            <DataGrid.LayoutTransform>
+                                <TransformGroup>
+                                    <RotateTransform Angle="90"/>
+                                    <MatrixTransform Matrix="-1,0,0,1,0,0"/>
+                                </TransformGroup>
+                            </DataGrid.LayoutTransform>
+                            <DataGrid.ColumnHeaderStyle>
+                                <Style TargetType="{x:Type DataGridColumnHeader}" BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
+                                    <Setter Property="LayoutTransform">
+                                        <Setter.Value>
+                                            <TransformGroup>
+                                                <RotateTransform Angle="-90"/>
+                                                <ScaleTransform ScaleX="1" ScaleY="-1" />
+                                            </TransformGroup>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Setter Property="Background" Value="{Binding BorderBrush, ElementName=HeaderInformationGrid}"/>
+                                </Style>
+                            </DataGrid.ColumnHeaderStyle>
+                            <DataGrid.CellStyle>
+                                <Style  TargetType="DataGridCell">
+                                    <Setter Property="LayoutTransform">
+                                        <Setter.Value>
+                                            <TransformGroup>
+                                                <RotateTransform Angle="-90"/>
+                                                <ScaleTransform ScaleX="1" ScaleY="-1" />
+                                            </TransformGroup>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Setter Property="Background" Value="{Binding Background, ElementName=HeaderInformationGrid}"/>
+                                </Style>
+                            </DataGrid.CellStyle>
+                        </DataGrid>
+                    </DockPanel>
                 </TabItem>
             </TabControl>
         </Grid>
-        <Viewport3D Name="ThreeDViewer" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Grid.RowSpan="2">
+        <Viewport3D Name="ThreeDViewer" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Grid.RowSpan="2" SizeChanged="ThreeDViewer_SizeChanged">
             <Viewport3D.Resources>
                 <DiffuseMaterial x:Key="DefaultBrush">
                     <DiffuseMaterial.Brush>
@@ -138,5 +175,6 @@
             <Button x:Name="ResetCam" Margin="0,5" Click="ResetCam_Click">Reset Camera</Button>
             <Button x:Name="ExportSFShapeButton" Click="ExportSFShapeButton_Click" Background="#FFC30000" Foreground="White" Height="37">Export to .sfshape</Button>
         </StackPanel>
+        <GridSplitter Grid.Row="1" Grid.RowSpan="2" HorizontalAlignment="Right" Width="2" Background="Gray"/>
     </Grid>
 </UserControl>

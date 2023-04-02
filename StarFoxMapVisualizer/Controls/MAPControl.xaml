@@ -20,5 +20,6 @@
                 </customcontrols:PanAndZoomCanvas>
             </TabItem>
         </TabControl>
+        <Button x:Name="MapExportButton" HorizontalAlignment="Right" VerticalAlignment="Top" Height="32" Width="124" Margin="0,50,10,0" Foreground="White" Background="#FF2C9000" Click="MapExportButton_Click">Export to *.sfmap</Button>
     </Grid>
 </UserControl>

@@ -1,9 +1,12 @@
 ﻿using StarFox.Interop.MAP;
 using StarFox.Interop.MAP.EVT;
+using StarFoxMapVisualizer.Misc;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -56,6 +59,25 @@ namespace StarFoxMapVisualizer.Controls
                 OpenFile(file);
         }
 
+        private void MapExportButton_Click(object sender, RoutedEventArgs e)
+        {
+            var selectedFile = ((TabItem)MAPTabViewer.SelectedItem).Tag as MAPFile;
+            if (selectedFile == null) return;
+            var fileName = System.IO.Path.Combine(Environment.CurrentDirectory,
+                "export","maps",$"{selectedFile.LevelData.Title}.sfmap");  
+            Directory.CreateDirectory(System.IO.Path.GetDirectoryName(fileName));
+            using (var file = File.Create(fileName))
+            {
+                using (Utf8JsonWriter writer = new(file))
+                    selectedFile.LevelData.Serialize(writer);
+            }
+            if (MessageBox.Show($"The map was successfully exported to:\n" +
+                $"{fileName}\n" +
+                $"Do you want to copy its location to the clipboard?", "Complete",
+                MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                Clipboard.SetText(fileName);
+        }
+
         private void SetupPlayField(PanAndZoomCanvas PanCanvas, double CenterFieldX, double LevelYStart, double LevelYEnd = -100000000)
         {
             TextBlock AddFieldText(string Text, double X, double Y, bool major = false)
@@ -104,7 +126,8 @@ namespace StarFoxMapVisualizer.Controls
             var tabItem = new TabItem()
             {
                 Header = System.IO.Path.GetFileNameWithoutExtension(File.OriginalFilePath),
-                Content = EventCanvas
+                Content = EventCanvas,
+                Tag = File
             };
             MAPTabViewer.Items.Add(tabItem);
             MAPTabViewer.SelectedItem = tabItem;
@@ -119,7 +142,7 @@ namespace StarFoxMapVisualizer.Controls
             int runningDelay = 0;
             double lastNodeWidth = 0;
             int previousDelay = 0;
-            foreach(var evt in File.Events)
+            foreach(var evt in File.LevelData.Events)
             {
                 var control = new MapEventNodeControl(evt);
                 EventCanvas.Children.Add(control);

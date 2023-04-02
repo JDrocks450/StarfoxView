@@ -13,7 +13,7 @@ namespace StarFox.Interop.MAP.EVT
     /// </summary>
     public class MAPWaitEvent : MAPEvent, IMAPDelayEvent
     {
-        public int Delay { get; protected set; }
+        public int Delay { get; set; }
 
         protected override string[] CompatibleMacros { get; } =
         {

@@ -118,18 +118,18 @@ namespace StarFox.Interop.BSP.SHAPE
             int size, string colorPalettePtr, int shadow, string simple1, string simple2, string simple3, string name)
         {
             PointPtr = pointPtr;
-            Bank = bank;
+            Bank = bank>>16;
             FacePtr = facePtr;
             Type = type;
-            ZSort = zSort;
-            Height = height;
-            View = view;
+            ZSort = zSort<<shift;
+            Height = height<<shift;
+            View = view << shift;
             Shift = shift;
             Radius = radius;
-            XMax = xMax;
-            YMax = yMax;
-            ZMax = zMax;
-            Size = size;
+            XMax = xMax << shift;
+            YMax = yMax << shift;
+            ZMax = zMax << shift;
+            Size = size << Shift;
             ColorPalettePtr = colorPalettePtr;
             Shadow = shadow;
             Simple1 = simple1;

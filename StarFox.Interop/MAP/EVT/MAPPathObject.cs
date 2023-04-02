@@ -13,15 +13,15 @@ namespace StarFox.Interop.MAP.EVT
     /// </summary>
     public class MAPPathObjectEvent : MAPEvent, IMAPDelayEvent, IMAPLocationEvent, IMAPShapeEvent, IMAPPathEvent, IMAPHealthAttackEvent
     {
-        public int Delay { get; protected set; }
-        public int X { get; protected set; }
-        public int Y { get; protected set; }
-        public int Z { get; protected set; }
-        public int ShapeDefinitionLabel { get; protected set; }
-        public string ShapeName { get; protected set; }
-        public string PathName { get; protected set; }
-        public int HP { get; protected set; }
-        public int AP { get; protected set; }
+        public int Delay { get; set; }
+        public int X { get; set; }
+        public int Y { get; set; }
+        public int Z { get; set; }
+        public int ShapeDefinitionLabel { get; set; }
+        public string ShapeName { get; set; }
+        public string PathName { get; set; }
+        public int HP { get; set; }
+        public int AP { get; set; }
 
         protected override string[] CompatibleMacros { get; } =
         {

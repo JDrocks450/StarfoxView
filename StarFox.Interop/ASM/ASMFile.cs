@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace StarFox.Interop.ASM
 {
     public class ASMFile : IImporterObject
-    {
+    {        
         public string OriginalFilePath { get; protected set;  }
         /// <summary>
         /// Chunks added to this object through the <see cref="ASMImporter"/>
