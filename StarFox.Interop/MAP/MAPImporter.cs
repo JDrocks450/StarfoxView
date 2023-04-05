@@ -59,11 +59,8 @@ namespace StarFox.Interop.MAP
                     file.LevelData.Events.Add(alvar);
                 else if (MAPEvent.TryParse<MAPWaitEvent>(line, out var wait))
                     file.LevelData.Events.Add(wait);
-                else
-                {
-                    file.LevelData.Events.Add(new MAPUnknownEvent(line)); // default add unknown map event
-                    continue;
-                }
+                else                
+                    file.LevelData.Events.Add(new MAPUnknownEvent(line)); // default add unknown map event                
                 file.LevelData.EventsByDelay.Add(file.LevelData.Events.Count - 1, runningDelay);
                 var latestNode = file.LevelData.Events.Last();
                 if (latestNode is IMAPDelayEvent delay)

@@ -37,6 +37,8 @@ namespace StarFoxMapVisualizer.Controls
         public int SelectedFrame { get; private set; } = 0;
         public int SelectedShape { get; private set; } = 0;
 
+        public Dictionary<BSPShape, BSPFile> FileMap = new();
+
         /// <summary>
         /// The selected face in the editor control
         /// </summary>
@@ -244,8 +246,14 @@ namespace StarFoxMapVisualizer.Controls
         /// </summary>
         public void InvalidateFiles()
         {
+            ShapeSelector.Items.Clear();
+            FileMap.Clear();
+            ShapeSelector.SelectionChanged -= ShapeSelector_SelectionChanged;
             foreach (var file in AppResources.OpenFiles.Values.OfType<BSPFile>())
                 OpenFile(file);
+            ShapeSelector.SelectedIndex = -1;
+            ShapeSelector.SelectionChanged += ShapeSelector_SelectionChanged;  
+            ShapeSelector.SelectedIndex = SelectedShape;
         }
 
         /// <summary>
@@ -254,38 +262,23 @@ namespace StarFoxMapVisualizer.Controls
         /// <param name="file"></param>
         private void OpenFile(BSPFile file)
         {
-            CurrentFile = file;
-            ShapeSelector.SelectionChanged -= ShapeSelector_SelectionChanged;
-            ShapeSelector.ItemsSource = file.Shapes.Select(x => x.Header.Name);
-            ShapeSelector.SelectedIndex = -1;
-            ShapeSelector.SelectionChanged += ShapeSelector_SelectionChanged;
-            ShapeSelector.SelectedIndex = SelectedShape;                    
+            SelectedShape = (ShapeSelector.Items.Count - 1) + (file.Shapes.Count > 0 ? 1 : 0);
+            foreach (var shape in file.Shapes)
+            {
+                ShapeSelector.Items.Add(new ComboBoxItem()
+                {
+                    Content = $"{shape.Header.Name} [{System.IO.Path.GetFileName(file.OriginalFilePath)}]",
+                    Tag = shape
+                });
+                FileMap.Add(shape, file);
+            }                                                                  
         }
 
         private void Clear3DScreen()
         {
             MainSceneGroup.Children.Clear();
             //MainSceneGroup.Children.Add(MainLight);
-        }
-
-        private bool PushLine(ref MeshGeometry3D geometry, BSPShape Shape, in BSPFace Face, int Frame)
-        {
-            var ModelPoints = Face.PointIndices.Select(x => Shape.GetPointOrDefault(x.PointIndex, Frame)).Where(y => y != default).ToArray();
-            if (ModelPoints.Length != 2) return false; // not a line!!
-            int index = geometry.Positions.Count();
-            geometry.Positions.Add(new(ModelPoints[0].X, ModelPoints[0].Y, ModelPoints[0].Z)); // i
-            geometry.Positions.Add(new(ModelPoints[0].X - 1, ModelPoints[0].Y, ModelPoints[0].Z + 1)); // i + 1            
-            geometry.Positions.Add(new(ModelPoints[1].X, ModelPoints[1].Y, ModelPoints[1].Z)); // i + 2
-            geometry.Positions.Add(new(ModelPoints[1].X + 1, ModelPoints[1].Y, ModelPoints[1].Z - 1)); // i + 3
-            geometry.TriangleIndices.Add(index);
-            geometry.TriangleIndices.Add(index + 1);
-            geometry.TriangleIndices.Add(index + 2);
-            geometry.TriangleIndices.Add(index);
-            geometry.TriangleIndices.Add(index + 3);
-            geometry.TriangleIndices.Add(index + 2);
-            return true;
-        }
-
+        }        
         /// <summary>
         /// Invokes the control to draw a model with the current frame
         /// </summary>
@@ -299,27 +292,7 @@ namespace StarFoxMapVisualizer.Controls
             if (!CreateSFPalette("id_0_c")) return;
 
             currentShape = shape;
-
-            Color GetColor(COLDefinition.CallTypes Type, int colIndex)
-            { // Get a color for a COLDefinition from the sfPalette
-                var fooColor = System.Drawing.Color.Pink;
-                switch (Type)
-                {
-                    case COLDefinition.CallTypes.Collite:
-                        fooColor = currentSFPalette.Collites[colIndex];
-                        break;
-                    case COLDefinition.CallTypes.Coldepth:
-                        fooColor = currentSFPalette.Coldepths.ElementAtOrDefault(colIndex).Value;
-                        break;
-                }
-                return new System.Windows.Media.Color() //to media color
-                {
-                    A = 255,
-                    B = fooColor.B,
-                    G = fooColor.G,
-                    R = fooColor.R,
-                };
-            }
+            
             //Block additional calls to render
             canShowShape = false;
             //Stop animating, please
@@ -328,93 +301,20 @@ namespace StarFoxMapVisualizer.Controls
             Clear3DScreen();
 
             var group = currentGroup;
-            var models = new List<GeometryModel3D>();
-
-            //foreach (BSPPoint point in shape.GetPoints(Frame).OrderBy(x => x.ActualIndex))
-            //points.Add(new Point3D(point.X, point.Y, point.Z));
-            foreach (var face in shape.Faces)
-            {                
-                MeshGeometry3D geom = new();                
-                Material material = new DiffuseMaterial()
-                {
-                    Brush = new SolidColorBrush(Colors.Blue),
-                };
-                var definition = group.Definitions.ElementAtOrDefault(face.Color);
-                double _Opacity = 1;
-                if (definition != default)
-                {
-                    int colIndex = 0;                    
-                    switch (definition.CallType)
-                    {
-                        case COLDefinition.CallTypes.Collite:
-                        case COLDefinition.CallTypes.Coldepth:
-                        case COLDefinition.CallTypes.Colnorm:
-                        case COLDefinition.CallTypes.Colsmooth:
-                            {
-                                colIndex = ((ICOLColorIndexDefinition)definition).ColorByte;
-                                var color = GetColor(definition.CallType, colIndex);
-                                material = new DiffuseMaterial()
-                                {
-                                    Brush = new SolidColorBrush(color),
-                                };
-                            }
-                            break;
-                    }
-                }                
-                if (EDITOR_SelectedFace != default)
-                {
-                    _Opacity = .5;
-                    (material as DiffuseMaterial).Brush.Opacity = _Opacity;
-                    if (EDITOR_SelectedFace == face)
-                    {
-                        material = new EmissiveMaterial()
-                        {
-                            Brush = Brushes.Yellow,
-                        };
-                        _Opacity = 1;
-                    }
-                }                
-                GeometryModel3D model = new()
-                {
-                    Material = material,
-                    BackMaterial = material,
-                    Geometry = geom,                    
-                };
-                models.Add(model);
-                var remainder = face.PointIndices.Count() % 3;
-                var vector3 = new Vector3D()
-                {
-                    X = face.Normal.X,
-                    Y = face.Normal.Y,
-                    Z = face.Normal.Z
-                };
-                vector3.Normalize(); // normalize the vector is important considering Starfox is all integral numbers
-                geom.Normals.Add(vector3);
-                if (face.PointIndices.Count() < 3) // STRAY!
-                {
-                    PushLine(ref geom, shape, in face, Frame);
-                    continue;
-                }
-                var orderedIndicies = face.PointIndices.OrderBy(x => x.Position).ToArray();
-                for (int i = 0; i < face.PointIndices.Count(); i++)
-                {
-                    var pointRefd = orderedIndicies[i];
-                    try
-                    {
-                        var point = shape.GetPointOrDefault(pointRefd.PointIndex, Frame);
-                        if (point == null) break;
-                        geom.Positions.Add(new Point3D(point.X, point.Y, point.Z));
-                        geom.TriangleIndices.Add(i);
-                    }
-                    catch(Exception ex)
-                    {                        
-                        MessageBox.Show($"Reticulating Splines resulted in: \n" +
-                            $"{ex.Message}\nEnding preview.", "Error Occured");
-                        EndAnimatingFrames();
-                        canShowShape = true;
-                        return;
-                    }
-                }
+            List<GeometryModel3D> models = new();
+            try
+            {
+                //Use the standard SHAPE library function to render the shape to a MeshGeom
+                models = SHAPEStandard.MakeBSPShapeMeshGeometry(
+                    shape, in group, in currentSFPalette, Frame, EDITOR_SelectedFace);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Reticulating Splines resulted in: \n" +
+                    $"{ex.Message}\nEnding preview.", "Error Occured");
+                EndAnimatingFrames();
+                canShowShape = true;
+                return;
             }
             if (shape.Frames.Count > 0)
             {
@@ -468,11 +368,13 @@ namespace StarFoxMapVisualizer.Controls
 
         private void ShapeSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            var shapes = CurrentFile.Shapes;
             EDITOR_SelectedFace = null;
-            if (ShapeSelector.SelectedIndex >= 0 && ShapeSelector.SelectedIndex < shapes.Count)
+            if (ShapeSelector.SelectedIndex >= 0)
             {
-                var selectedShape = shapes.ElementAtOrDefault(ShapeSelector.SelectedIndex);
+                var item = (ComboBoxItem)ShapeSelector.SelectedItem;
+                if (item == default) return;
+                var selectedShape = (BSPShape)item.Tag;
+                CurrentFile = FileMap[selectedShape];                
                 FrameSelector.SelectionChanged -= FrameSelector_SelectionChanged;
                 FrameSelector.SelectedIndex = -1;
                 FrameSelector.ItemsSource = selectedShape.Frames.Select(x => x.Value);
@@ -532,7 +434,7 @@ namespace StarFoxMapVisualizer.Controls
         private void ThreeDViewer_SizeChanged(object sender, SizeChangedEventArgs e)
         {
             RedoLineWork((int)ThreeDViewer.ActualWidth, 
-                (int)ThreeDViewer.ActualHeight, (int)(ThreeDViewer.ActualHeight / 20));
+                (int)ThreeDViewer.ActualHeight, (int)(ThreeDViewer.ActualHeight / 20));            
         }
     }
 }

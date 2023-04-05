@@ -27,6 +27,17 @@ namespace StarFox.Interop.MAP.EVT
             if (structure == null) return;
             EventName = structure.MacroReference.Name;
             Delay = tryParseOrDefault(structure.TryGetParameter(0)?.ParameterContent);
+            //COMPATIBILITY WITH STARFOX**
+            if (Delay != 0)
+            {
+                if ((Delay >> 4)-256 < 0)
+                {
+                    CtrlOptCode = MAPCtrlVars.ctrlmapwait2;
+                    Delay >>= 4;
+                }
+                else                
+                    CtrlOptCode = MAPCtrlVars.ctrlmapwait;                                   
+            }
         }
     }
 }

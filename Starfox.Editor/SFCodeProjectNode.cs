@@ -12,7 +12,7 @@
         public SFCodeProjectFileTypes RecognizedFileType { get; private set; }
         /// <summary>
         /// The path to this Code Object in the host file system
-        /// <para>This is a path RELATIVE to the <see cref="SFCodeProject"/>'s base project directory path</para>
+        /// <para>This is a FullPath to the file on the host file system.</para>
         /// </summary>
         public string FilePath { get; set; }
         /// <summary>
@@ -49,8 +49,15 @@
         public SFCodeProjectNode AddFile(FileInfo File)
         {
             var node = new SFCodeProjectNode(SFCodeProjectNodeTypes.File, File.FullName);
+            if (node.RecognizedFileType is SFCodeProjectFileTypes.SF_EDIT_OPTIM)
+                node = new SFOptimizerNode(File.FullName);
             ChildNodes.Add(node);
             return node;
+        }
+        public SFOptimizerNode AddOptimizer(string Name, SFOptimizerDataStruct Data)
+        {
+            if (Type != SFCodeProjectNodeTypes.Directory) throw new Exception("You can't create an Optimizer on a File Node, only a directory node.");
+            return SFOptimizerNode.Create(FilePath, Name, Data);
         }
         /// <summary>
         /// Sets the type of node that this object currently is

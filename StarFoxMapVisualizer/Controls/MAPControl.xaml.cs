@@ -43,6 +43,7 @@ namespace StarFoxMapVisualizer.Controls
         private Dictionary<MAPFile, TabItem> tabMap = new();
         private const double DEF_X = 200;
         private double currentX = DEF_X, currentY = 500, yStep = -1d;
+        private MAPFile? selectedFile => ((TabItem)MAPTabViewer.SelectedItem).Tag as MAPFile;
 
         public void Pause() => Paused = true;
         public void Unpause()
@@ -61,7 +62,6 @@ namespace StarFoxMapVisualizer.Controls
 
         private void MapExportButton_Click(object sender, RoutedEventArgs e)
         {
-            var selectedFile = ((TabItem)MAPTabViewer.SelectedItem).Tag as MAPFile;
             if (selectedFile == null) return;
             var fileName = System.IO.Path.Combine(Environment.CurrentDirectory,
                 "export","maps",$"{selectedFile.LevelData.Title}.sfmap");  
@@ -76,6 +76,13 @@ namespace StarFoxMapVisualizer.Controls
                 $"Do you want to copy its location to the clipboard?", "Complete",
                 MessageBoxButton.YesNo) == MessageBoxResult.Yes)
                 Clipboard.SetText(fileName);
+        }
+
+        private async void View3DButton_Click(object sender, RoutedEventArgs e)
+        {
+            var map3D = new MAP3DControl(selectedFile);
+            await map3D.ShowMapContents();
+            map3D.Show();
         }
 
         private void SetupPlayField(PanAndZoomCanvas PanCanvas, double CenterFieldX, double LevelYStart, double LevelYEnd = -100000000)

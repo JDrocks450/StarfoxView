@@ -223,7 +223,9 @@
         <Border Grid.Row="1" Grid.ColumnSpan="3" Background="#FF333333">
             <StackPanel Margin="10,0" VerticalAlignment="Center" Orientation="Horizontal">
                 <TextBlock VerticalAlignment="Center">Super Secret Functions: </TextBlock>
-                <Button x:Name="ExportAll3DButton" Margin="10,0" Padding="10,5" Background="DarkRed" Foreground="White" Click="ExportAll3DButton_Click">Export All 3D Data</Button>
+                <Button x:Name="ExportAll3DButton" Margin="10,0,0,0" Padding="10,5" Background="DarkRed" Foreground="White" Click="ExportAll3DButton_Click">Export All 3D Data</Button>
+                <Button x:Name="SHAPEMapRefreshButton" Padding="10,5" Background="Gray" Foreground="White" Click="SHAPEMapRefreshButton_Click" Content="Refresh Editor SHAPE Map"/>
+
             </StackPanel>
         </Border>
     </Grid>

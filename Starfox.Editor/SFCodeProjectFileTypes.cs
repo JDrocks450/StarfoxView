@@ -16,7 +16,11 @@ namespace Starfox.Editor
         CCR,
         PCR,
         CGX,
-        SCR
+        SCR,
+        /// <summary>
+        /// An <see cref="SFOptimizerNode"/>
+        /// </summary>
+        SF_EDIT_OPTIM
     }
     
     public static class SFCodeProjectFileExtensions
@@ -37,7 +41,7 @@ namespace Starfox.Editor
                 return SFCodeProjectFileTypes.Palette;
             else if (path.EndsWith("BIN"))
                 return SFCodeProjectFileTypes.BINFile;
-            else if (path.EndsWith("CCR"))                
+            else if (path.EndsWith("CCR"))
                 return SFCodeProjectFileTypes.CCR;
             else if (path.EndsWith("PCR"))
                 return SFCodeProjectFileTypes.PCR;
@@ -45,6 +49,8 @@ namespace Starfox.Editor
                 return SFCodeProjectFileTypes.CGX;
             else if (path.EndsWith("SCR"))
                 return SFCodeProjectFileTypes.SCR;
+            else if (path.EndsWith(SFOptimizerNode.SF_OPTIM_Extension))
+                return SFCodeProjectFileTypes.SF_EDIT_OPTIM;
             return SFCodeProjectFileTypes.Unknown;
         }
         /// <summary>

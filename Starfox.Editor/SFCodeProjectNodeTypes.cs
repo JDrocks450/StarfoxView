@@ -17,6 +17,10 @@
         /// <summary>
         /// This is a file
         /// </summary>
-        File
+        File,
+        /// <summary>
+        /// This is an <see cref="SFOptimizer"/>
+        /// </summary>
+        Optimizer,
     }
 }

@@ -247,6 +247,7 @@ namespace StarFox.Interop.BSP.SHAPE
         /// <returns></returns>
         public BSPPoint? GetPointOrDefault(int Index, int Frame = 0, bool nested = false)
         {
+            if (Frame == -1 && Frames.Count > 0) Frame++;
             if (Index < 0)
                 return default;
             if (Points.Any(x => x.Index == Index))

@@ -31,11 +31,90 @@ namespace StarFox.Interop.MAP.EVT
         }
     }
     /// <summary>
+    /// Translated CtrlVar codes from Starfox MAPMACS.INC
+    /// </summary>
+    public enum MAPCtrlVars : short
+    {
+        None = -1,
+        ctrlmapobj = 0,
+        ctrlend = 2,
+        ctrlloop = 4,
+        ctrlmapdeb = 6,
+        ctrlmapnop = 8,
+        ctrlmapmother = 10,
+        ctrlmapremove = 12,
+        ctrlsetstage = 14,
+        ctrlsetbg = 16,
+        ctrlmapwait = 18,
+        ctrlsetbgm = 20,
+        ctrlnodots = 22,
+        ctrlgnddots = 24,
+        ctrlspacedust = 26,
+        ctrlsetothmus = 28,
+        ctrlvofson = 30,
+        ctrlvofsoff = 32,
+        ctrlhofson = 34,
+        ctrlhofsoff = 36,
+        ctrlmapobjzrot = 38,
+        ctrlmapjsr = 40,
+        ctrlmaprts = 42,
+        ctrlmapif = 44,
+        ctrlmapgoto = 46,
+        ctrlsetxrot = 48,
+        ctrlsetyrot = 50,
+        ctrlsetzrot = 52,
+        ctrlsetalvarb = 54,
+        ctrlsetalvarw = 56,
+        ctrlsetalvarl = 58,
+        ctrlsetalxvarb = 60,
+        ctrlsetalxvarw = 62,
+        ctrlsetalxvarl = 64,
+        ctrlsetfadeup = 66,
+        ctrlsetfadedown = 68,
+        ctrlsetalvarptrb = 70,
+        ctrlsetalvarptrw = 72,
+        ctrlsetvarobj = 74,
+        ctrlmapwaitfade = 76,
+        ctrlsetqfadeup = 78,
+        ctrlsetqfadedown = 80,
+        ctrlscreenoff = 82,
+        ctrlscreenon = 84,
+        ctrlzrotoff = 86,
+        ctrlzroton = 88,
+        ctrlmapspecial = 90,
+        ctrlsetvarb = 92,
+        ctrlsetvarw = 94,
+        ctrlsetvarl = 96,
+        ctrlsetbgslow = 98,
+        ctrlwaitsetbg = 100,
+        ctrlsetbginfo = 102,
+        ctrladdalvarptrb = 104,
+        ctrladdalvarptrw = 106,
+        ctrlfadetosea = 108,
+        ctrlfadetoground = 110,
+        ctrlmapqobj = 112,
+        ctrlmapobj8 = 114,
+        ctrlmapdobj = 116,
+        ctrlmapqobj2 = 118,
+        ctrl65816 = 120,
+        ctrlmapcodejsl = 122,
+        ctrlmapjmpvarless = 124,
+        ctrlmapjmpvarmore = 126,
+        ctrlmapjmpvareq = 128,
+        ctrlsendmessage = 130,
+        ctrlmapcspecial = 132,
+        ctrlnobj = 134,
+        ctrlmqnobj = 136,
+        ctrlmapwait2 = 138,
+        ctrlmapsetpath = 140,
+    }
+    /// <summary>
     /// A base-class for all events in a map script
     /// </summary>
     [Serializable]
     public abstract class MAPEvent
     {
+        public MAPCtrlVars CtrlOptCode = MAPCtrlVars.None;
         public virtual string EventName { get; set; }
         [JsonIgnore]
         public ASMLine Callsite { get; set; }

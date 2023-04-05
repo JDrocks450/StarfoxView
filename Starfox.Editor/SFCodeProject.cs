@@ -11,10 +11,19 @@ using static StarFox.Interop.GFX.CAD;
 namespace Starfox.Editor
 {
     /// <summary>
-    /// Represents a StarFox editor Code Project
+    /// Represents a StarFox Editor Code Project
     /// </summary>
     public class SFCodeProject
     {
+        /// <summary>
+        /// Gets whether or not this project has a Shapes Directory set yet
+        /// </summary>
+        public bool ShapesDirectoryPathSet => ShapesDirectoryPath != default;
+        /// <summary>
+        /// The path to the SHAPES directory -- if this project has one set.
+        /// <para>See: <see cref="ShapesDirectoryPathSet"/> to check for this scenario</para>
+        /// </summary>
+        public string? ShapesDirectoryPath { get; set; }
         /// <summary>
         /// Palettes that have been included in this project
         /// <para>FilePath, COL</para>
@@ -29,6 +38,10 @@ namespace Starfox.Editor
         /// </summary>
         public Dictionary<string,IImporterObject> OpenFiles { get; } = new();
         public IEnumerable<MAPFile> OpenMAPFiles => OpenFiles.Values.OfType<MAPFile>();
+        /// <summary>
+        /// A map of all directory nodes by their name
+        /// </summary>
+        public Dictionary<string, SFCodeProjectNode> DirectoryNodes = new();
         /// <summary>
         /// A map of all file nodes by their file name
         /// </summary>
@@ -60,6 +73,7 @@ namespace Starfox.Editor
         /// The root node of this project file
         /// </summary>
         public SFCodeProjectNode ParentNode { get; private set; }
+        public IEnumerable<SFOptimizerNode> Optimizers => FileNodes.Values.OfType<SFOptimizerNode>();
         /// <summary>
         /// Creates a new <see cref="SFCodeProject"/> with the given path to the base folder of the starfox project file
         /// </summary>
@@ -78,6 +92,13 @@ namespace Starfox.Editor
         /// <returns></returns>
         public IEnumerable<SFCodeProjectNode> SearchFile(string FileName) => 
             FileNodes.Where(x => Path.GetFileName(x.Key).ToLower() == FileName.ToLower()).Select(y => y.Value);
+        /// <summary>
+        /// Searches for all directories with matching name (not fullpath)
+        /// </summary>
+        /// <param name="FileName"></param>
+        /// <returns></returns>
+        public IEnumerable<SFCodeProjectNode> SearchDirectory(string Name) =>
+            DirectoryNodes.Where(x => x.Key.ToLower().EndsWith(Name.ToLower())).Select(y => y.Value);
         public bool CloseFile(string FilePath) => OpenFiles.Remove(FilePath);
         public bool CloseFile(IImporterObject File) => CloseFile(File.OriginalFilePath);
         /// <summary>
@@ -96,6 +117,9 @@ namespace Starfox.Editor
             SFCodeProjectNode processDirectory(DirectoryInfo Directory, SFCodeProjectNode? ParentNode)
             {
                 SFCodeProjectNode? newNode = new SFCodeProjectNode(SFCodeProjectNodeTypes.Directory, Directory.FullName);
+                var mDirName = Directory.FullName.Substring(WorkspaceDirectory.FullName.Length).TrimStart('\\');
+                if (!string.IsNullOrWhiteSpace(mDirName)) 
+                    DirectoryNodes.Add(mDirName, newNode);
                 if (ParentNode != null)
                     newNode = ParentNode.AddDirectory(Directory); // make a new node that represents this folder in the parent node
                 foreach (var folder in Directory.EnumerateDirectories()) // find every folder inside this one
@@ -105,6 +129,7 @@ namespace Starfox.Editor
                 return newNode;
             }
             FileNodes.Clear();
+            DirectoryNodes.Clear();
             return Task.Run(delegate // do this work on a background thread
             {
                 ParentNode = processDirectory(WorkspaceDirectory, null);

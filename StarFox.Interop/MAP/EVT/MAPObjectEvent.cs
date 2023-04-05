@@ -33,6 +33,31 @@ namespace StarFox.Interop.MAP.EVT
         {
 
         }
+        /// <summary>
+        /// To maintain code compatibility with Starfox, this function will determine the correct operation
+        /// to perform on the parameters of this event call.
+        /// </summary>
+        private void AutoCorrect()
+        {            
+            //mapobj function start
+            if (((Delay >> 4) - 256) < 0 &&
+                X + 512 > 0 &&
+                X - 512 < 0 &&
+                Y + 512 > 0 &&
+                Y - 512 < 0 &&
+                (Z >> 4) - 256 < 0) // starfox code compatibility
+            { // mapqobj frame,x,y,z,shape,strategy
+                return;
+                Delay = (Delay >> 4) & 0xFF;
+                X = (X >> 2) & 0xFF;
+                Y = (Y >> 2) & 0xFF;
+                Z = (Z >> 4) & 0xFF;
+            }
+            else
+            {
+                CtrlOptCode = MAPCtrlVars.ctrlmapobj;
+            }            
+        }
 
         protected override void Parse(ASMLine Line)
         {            
@@ -40,12 +65,13 @@ namespace StarFox.Interop.MAP.EVT
             var structure = Line.StructureAsMacroInvokeStructure;
             if (structure == null) return;
             EventName = structure.MacroReference.Name;
-            Delay = tryParseOrDefault(structure.TryGetParameter(0)?.ParameterContent); // parameter 0 is frame
+            Delay = tryParseOrDefault(structure.TryGetParameter(0)?.ParameterContent); // parameter 0 is frame            
             X = tryParseOrDefault(structure.TryGetParameter(1)?.ParameterContent); // parameter 1 is x
             Y = tryParseOrDefault(structure.TryGetParameter(2)?.ParameterContent); // parameter 2 is y
             Z = tryParseOrDefault(structure.TryGetParameter(3)?.ParameterContent); // parameter 3 is z
             ShapeName = structure.TryGetParameter(4)?.ParameterContent ?? ""; // parameter 4 is shape
             StrategyName = structure.TryGetParameter(5)?.ParameterContent ?? ""; // parameter 5 is strat
+            AutoCorrect();
         }
     }
 }
