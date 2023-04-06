@@ -39,5 +39,15 @@ namespace StarFox.Interop.ASM
             this.Constants = From.Constants;
             OriginalFilePath = From.OriginalFilePath;
         }
+        public object GetConstantValue(string ConstantName) => 
+            GetConstantValue(Constants.First(x => x.Name == ConstantName));
+        public object GetConstantValue(ASMConstant constant) => constant.TryParseOrDefault();
+        /// <summary>
+        /// Gets the given constant value as an integer. 
+        /// <para>If <see cref="int"/> is not the desired type, use: <see cref="GetConstantValue(string)"/></para>
+        /// </summary>
+        /// <param name="Constant">The name of the constant</param>
+        /// <returns></returns>
+        public int this[string Constant] => (int)GetConstantValue(Constant);
     }
 }

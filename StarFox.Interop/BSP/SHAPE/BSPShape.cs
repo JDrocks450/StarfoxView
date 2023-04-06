@@ -14,20 +14,18 @@ namespace StarFox.Interop.BSP.SHAPE
     public class BSPPoint
     {
         public int Index { get; set; }
-        public int Width { get; set; }
         public int X { get; set; }
         public int Y { get; set; }
         public int Z { get; set; }
 
-        public BSPPoint() : this(0,1,0,0,0)
+        public BSPPoint() : this(0,0,0,0)
         {
 
         }
 
-        public BSPPoint(int index, int width, int x, int y, int z)
+        public BSPPoint(int index, int x, int y, int z)
         {
             Index = index;
-            Width = width;
             X = x;
             Y = y;
             Z = z;
@@ -143,7 +141,7 @@ namespace StarFox.Interop.BSP.SHAPE
             }
             Point.Index = index;
             AddPoint(Point);
-            index += Point.Width;
+            index++;
         }
         /// <summary>
         /// Adds a point to this frame without changing the Index parameter (be careful)
@@ -172,6 +170,24 @@ namespace StarFox.Interop.BSP.SHAPE
         {
             Name = "default_0"
         };
+        /// <summary>
+        /// The suggested scale factor for the X Axis
+        /// </summary>
+        public double XScaleFactor => Header.XMax > 0 ? 
+            Header.XMax / Math.Max(1.0, LargestXPoint) : 1;
+        public int LargestXPoint { get; set; }
+        /// <summary>
+        /// The suggested scale factor for the Y Axis
+        /// </summary>
+        public double YScaleFactor => -1 * (Header.YMax > 0 ?
+            Header.YMax / Math.Max(1.0, LargestYPoint) : 1);
+        public int LargestYPoint { get; set; }
+        /// <summary>
+        /// The suggested scale factor for the Z Axis
+        /// </summary>
+        public double ZScaleFactor => Header.ZMax > 0 ?
+            Header.ZMax / Math.Max(1.0, LargestZPoint) : 1;
+        public int LargestZPoint { get; set; }
         /// <summary>
         /// These are points that are available no matter what frame of animation you're viewing.
         /// </summary>

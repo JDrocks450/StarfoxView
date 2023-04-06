@@ -1,4 +1,5 @@
-﻿using StarFox.Interop.ASM.TYP;
+﻿using StarFox.Interop.ASM;
+using StarFox.Interop.ASM.TYP;
 using System;
 using System.Collections.Generic;
 using System.Linq;

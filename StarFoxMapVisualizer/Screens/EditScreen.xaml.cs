@@ -112,7 +112,7 @@ namespace StarFoxMapVisualizer.Screens
                 importItem.Click += async delegate
                 {
                     //DO INCLUDE
-                    var result = await FILEStandard.IncludeFile(new FileInfo(FileNode.FilePath));
+                    var result = await FILEStandard.IncludeFile<object>(new FileInfo(FileNode.FilePath)) != default;
                     if (!result)
                     {
                         MessageBox.Show("That file could not be imported at this time.", "File Include Error");
@@ -203,7 +203,7 @@ namespace StarFoxMapVisualizer.Screens
                         item.SetResourceReference(StyleProperty, "PaletteTreeStyle");
                         if (!AppResources.IsFileIncluded(fileInfo))
                         {
-                            if (await FILEStandard.IncludeFile(fileInfo))
+                            if (await FILEStandard.IncludeFile<object>(fileInfo)!=default)
                                 goto retry;
                             CreateINCContextMenu(FileNode, in contextMenu);
                             item.Foreground = Brushes.White; // Indicate with white that it isn't included yet

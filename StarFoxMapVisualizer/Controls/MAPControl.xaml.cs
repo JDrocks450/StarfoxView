@@ -1,6 +1,7 @@
 ﻿using StarFox.Interop.MAP;
 using StarFox.Interop.MAP.EVT;
 using StarFoxMapVisualizer.Misc;
+using StarFoxMapVisualizer.Screens;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -45,6 +46,11 @@ namespace StarFoxMapVisualizer.Controls
         private double currentX = DEF_X, currentY = 500, yStep = -1d;
         private MAPFile? selectedFile => ((TabItem)MAPTabViewer.SelectedItem).Tag as MAPFile;
 
+        //3D VIEWER VARS
+        private MAP3DControl? MapWindow;
+        private bool MapWindowOpened => MapWindow != default;
+        //---
+
         public void Pause() => Paused = true;
         public void Unpause()
         {
@@ -80,9 +86,15 @@ namespace StarFoxMapVisualizer.Controls
 
         private async void View3DButton_Click(object sender, RoutedEventArgs e)
         {
-            var map3D = new MAP3DControl(selectedFile);
+            var map3D = MapWindow = new MAP3DControl(selectedFile);
             await map3D.ShowMapContents();
+            map3D.Closed += delegate
+            { // WINDOW CLOSED
+                MapWindow = null;
+                View3DButton.Visibility= Visibility.Visible;
+            };
             map3D.Show();
+            View3DButton.Visibility = Visibility.Collapsed;
         }
 
         private void SetupPlayField(PanAndZoomCanvas PanCanvas, double CenterFieldX, double LevelYStart, double LevelYEnd = -100000000)
@@ -198,6 +210,21 @@ namespace StarFoxMapVisualizer.Controls
                 EventCanvas.Children.Add(delayLine);
             }
             SetupPlayField(EventCanvas, linePositionX, levelStartY, currentY - 200);
+        }
+
+        internal async Task MapNodeSelected(MAPEvent MapEvent)
+        {
+            //CHECK 3D VIEWER OPENED
+            if (MapWindowOpened)
+            { // 3D CONTEXT
+                MapWindow.CameraTransitionToObject(MapEvent);
+                return;
+            }
+            //NO 3D VIEWER ATTACHED CONTEXT
+            var screen = EditScreen.Current;
+            await screen.ASMViewer.OpenSymbol(MapEvent.Callsite); // open the symbol in the assembly viewer
+            screen.CurrentMode = EditScreen.ViewMode.ASM; // switch to this viewer
+            await screen.HandleViewModes(); // update the view
         }
     }
 }

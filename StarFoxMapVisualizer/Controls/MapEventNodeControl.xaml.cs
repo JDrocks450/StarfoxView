@@ -39,9 +39,7 @@ namespace StarFoxMapVisualizer.Controls
             async void Clicked(object sender, MouseButtonEventArgs e)
             {
                 var screen = EditScreen.Current;
-                await screen.ASMViewer.OpenSymbol(MapEvent.Callsite); // open the symbol
-                screen.CurrentMode = EditScreen.ViewMode.ASM;
-                await screen.HandleViewModes();
+                await screen.MAPViewer.MapNodeSelected(MapEvent);
             }
             this.MapEvent = MapEvent;
             ComponentsStack.Children.Clear();

@@ -4,20 +4,20 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:StarFoxMapVisualizer.Controls"
-             mc:Ignorable="d" Background="White"
+             mc:Ignorable="d" Background="Black"
              d:DesignHeight="450" d:DesignWidth="800" PreviewMouseMove="Window_PreviewMouseMove" PreviewKeyDown="Window_PreviewKeyDown">
     <Grid>
         <Viewport3D Name="ThreeDViewer" SizeChanged="ThreeDViewer_SizeChanged">
             <Viewport3D.Resources>
                 <DiffuseMaterial x:Key="DefaultBrush">
                     <DiffuseMaterial.Brush>
-                        <SolidColorBrush Color="Gainsboro"/>
+                        <ImageBrush ImageSource="/Resources/Image/transparent.png" TileMode="Tile" Viewport="0,0,2,2" ViewportUnits="RelativeToBoundingBox"/>
                     </DiffuseMaterial.Brush>
                 </DiffuseMaterial>
             </Viewport3D.Resources>
             <Viewport3D.Camera>
                 <PerspectiveCamera x:Name="Camera" 
-                        FarPlaneDistance="10000" 
+                        FarPlaneDistance="13000" 
                         LookDirection="0,0,1" 
                         UpDirection="0,1,0" 
                         NearPlaneDistance="1" 
@@ -30,11 +30,47 @@
                         <Model3DGroup>
                             <!-- Lights, MeshGeometry3D and DiffuseMaterial objects are added to the ModelVisual3D. -->
                             <AmbientLight x:Name="MainLight" Color="#FFFFFFFF"/>
+                            <GeometryModel3D x:Name="GroundGeom" Material="{StaticResource DefaultBrush}">
+                                <GeometryModel3D.Geometry>
+                                    <MeshGeometry3D 
+                                      Positions="0 0 0  0 0 1  1 0 0  1 0 1"
+                                      Normals="0 1 0  0 1 0  0 1 0  0 1 0"
+                                      TextureCoordinates="0 0  0 1  1 0  1 1"
+                                      TriangleIndices="0 1 2  1 3 2"/>
+                                </GeometryModel3D.Geometry>
+                                <GeometryModel3D.Transform>
+                                    <ScaleTransform3D ScaleX="10000" ScaleY="1" ScaleZ="10000" />
+                                </GeometryModel3D.Transform>
+                            </GeometryModel3D>
                             <Model3DGroup x:Name="MainSceneGroup"/>
                         </Model3DGroup>
                     </ModelVisual3D.Content>
                 </ModelVisual3D>
             </Viewport3D.Children>
         </Viewport3D>
+        <Grid HorizontalAlignment="Left" VerticalAlignment="Top" Width="200" Margin="10">
+            <Button IsEnabled="False" Background="#FFBDBDBD"/>
+            <StackPanel Margin="5">
+                <TextBlock Margin="0,5" HorizontalAlignment="Center" FontWeight="Bold">DEPTH (Z Axis) SCRUNCH</TextBlock>
+                <Separator/>
+                <TextBlock Margin="0,5" HorizontalAlignment="Center" FontWeight="Bold">1 STARFOX UNIT</TextBlock>
+                <Canvas Height="20" Name="UnitsCanvas">
+                    <Border Name="SFUnits" Canvas.Left="0" Canvas.Top="0" Height="10" Background="DeepSkyBlue"/>
+                    <Border Name="EUnits" Canvas.Left="0" Canvas.Top="10" Height="10" Background="Blue"/>
+                </Canvas>
+                <TextBlock Margin="0,5" HorizontalAlignment="Center" FontWeight="Bold">1 EDITOR UNIT</TextBlock>
+                <Separator/>
+                <TextBlock Margin="0,5" HorizontalAlignment="Center">Roughly <Run Name="ScrunchPercentageBlock">25</Run>% scrunched</TextBlock>
+                <TextBlock FontWeight="Bold" HorizontalAlignment="Center">Adjust Scrunch:</TextBlock>
+                <Slider x:Name="ScrunchSlider" Margin="5" Minimum="0" Maximum="2"/>
+                <Grid Margin="5,0,5,5">
+                    <TextBlock HorizontalAlignment="Left">0%</TextBlock>
+                    <TextBlock HorizontalAlignment="Right">200%</TextBlock>
+                </Grid>
+                <Separator/>
+                <Button Margin="5"  x:Name="ReloadLayoutButton" Click="ReloadButton_Clicked" Height="25" Content="Reload Layout"/>
+            </StackPanel>
+        </Grid>
+        <StackPanel Margin="10" HorizontalAlignment="Right" Width="150"/>
     </Grid>
 </Window>

@@ -15,6 +15,7 @@ using StarFox.Interop.GFX.COLTAB.DEF;
 using System.Windows.Controls;
 using System.Windows.Media.Media3D;
 using System.Windows.Media;
+using StarFox.Interop.ASM;
 
 namespace StarFoxMapVisualizer.Misc
 {
@@ -104,7 +105,46 @@ namespace StarFoxMapVisualizer.Misc
             if (!shapeMap.TryGetValue(Name, out var FileName)) return default;
             var path = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(shapeOptim.FilePath), FileName);
             var file = await FILEStandard.OpenBSPFile(new FileInfo(path));
+            if (file != null && !AppResources.OpenFiles.ContainsKey(path))
+                AppResources.OpenFiles.Add(path, file);
             return file.Shapes.Where(x => x.Header.Name.ToLower() == Name.ToLower());
+        }
+        public static GeometryModel3D CreateLine(Point3D Point1, Point3D Point2, Material Material)
+        {
+            var lineMeshGeom = new MeshGeometry3D();
+            PushLine(ref lineMeshGeom, Point1, Point2);
+            return new GeometryModel3D(lineMeshGeom, Material);
+        }
+        public static bool PushLine(ref MeshGeometry3D geometry, Point3D Point1, Point3D Point2)
+        {
+            int index = geometry.Positions.Count(); // used to push indices
+            geometry.Positions.Add(new(Point1.X, Point1.Y, Point1.Z)); // i
+            geometry.Positions.Add(new(Point1.X - 1, Point1.Y, Point1.Z + 1)); // i + 1            
+            geometry.Positions.Add(new(Point2.X, Point2.Y, Point2.Z)); // i + 2
+            geometry.Positions.Add(new(Point2.X + 1, Point2.Y, Point2.Z - 1)); // i + 3
+            geometry.TriangleIndices.Add(index);
+            geometry.TriangleIndices.Add(index + 1);
+            geometry.TriangleIndices.Add(index + 2);
+            geometry.TriangleIndices.Add(index);
+            geometry.TriangleIndices.Add(index + 3);
+            geometry.TriangleIndices.Add(index + 2);
+            //RECAP: We made a rectangle that looks like a line. It has some depth to be viewable at oblique angles
+            return true;
+        }
+        /// <summary>
+        /// Puts a point into the specified Geometry
+        /// </summary>
+        /// <param name="geometry"></param>
+        /// <param name="Shape"></param>
+        /// <param name="Face"></param>
+        /// <param name="Frame"></param>
+        /// <returns></returns>
+        public static bool PushLine(ref MeshGeometry3D geometry, BSPShape Shape, in BSPFace Face, int Frame)
+        { // Pushes a line to the mesh geometry provided to this function
+            var ModelPoints = Face.PointIndices.Select(x => Shape.GetPointOrDefault(x.PointIndex, Frame)).Where(y => y != default).ToArray();
+            if (ModelPoints.Length != 2) return false; // not a line!!                        
+            return PushLine(ref geometry, new Point3D(ModelPoints[0].X, ModelPoints[0].Y, ModelPoints[0].Z),
+                new Point3D(ModelPoints[1].X, ModelPoints[1].Y, ModelPoints[1].Z));
         }
         /// <summary>
         /// Turns a <see cref="BSPShape"/> into a GeometryModel3D collection which makes up the supplied model
@@ -129,7 +169,8 @@ namespace StarFoxMapVisualizer.Misc
         /// <param name="HighlightFace">Optionally, a face to highlight over all others</param>
         /// <returns></returns>
         public static List<GeometryModel3D> MakeBSPShapeMeshGeometry(
-            BSPShape Shape, in COLGroup Group, in SFPalette Palette, int Frame, BSPFace? HighlightFace = default)
+            BSPShape Shape, in COLGroup Group, in SFPalette Palette, int Frame, 
+            BSPFace? HighlightFace = default)            
         {
             //SET VARS
             var models = new List<GeometryModel3D>();
@@ -158,25 +199,7 @@ namespace StarFoxMapVisualizer.Misc
                     G = fooColor.G,
                     R = fooColor.R,
                 };
-            }
-            bool PushLine(ref MeshGeometry3D geometry, BSPShape Shape, in BSPFace Face, int Frame)
-            { // Pushes a line to the mesh geometry provided to this function
-                var ModelPoints = Face.PointIndices.Select(x => Shape.GetPointOrDefault(x.PointIndex, Frame)).Where(y => y != default).ToArray();
-                if (ModelPoints.Length != 2) return false; // not a line!!
-                int index = geometry.Positions.Count(); // used to push indices
-                geometry.Positions.Add(new(ModelPoints[0].X, ModelPoints[0].Y, ModelPoints[0].Z)); // i
-                geometry.Positions.Add(new(ModelPoints[0].X - 1, ModelPoints[0].Y, ModelPoints[0].Z + 1)); // i + 1            
-                geometry.Positions.Add(new(ModelPoints[1].X, ModelPoints[1].Y, ModelPoints[1].Z)); // i + 2
-                geometry.Positions.Add(new(ModelPoints[1].X + 1, ModelPoints[1].Y, ModelPoints[1].Z - 1)); // i + 3
-                geometry.TriangleIndices.Add(index);
-                geometry.TriangleIndices.Add(index + 1);
-                geometry.TriangleIndices.Add(index + 2);
-                geometry.TriangleIndices.Add(index);
-                geometry.TriangleIndices.Add(index + 3);
-                geometry.TriangleIndices.Add(index + 2);
-                //RECAP: We made a rectangle that looks like a line. It has some depth to be viewable at oblique angles
-                return true;
-            }
+            }            
             foreach (var face in shape.Faces)
             { // find all faces
                 MeshGeometry3D geom = new(); // create geometry
@@ -203,6 +226,7 @@ namespace StarFoxMapVisualizer.Misc
                             break;
                         case COLDefinition.CallTypes.Animation: // color animation
                             {
+                                break;
                                 var animDef = definition as COLAnimationReference; // find anim definition
                                 //attempt to make a palette for this animation
                                 if (!SHAPEStandard.CreateSFPalette(animDef.TableName, out var animSFPal, out var animGroup)) break;

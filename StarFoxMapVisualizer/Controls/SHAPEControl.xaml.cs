@@ -178,7 +178,7 @@ namespace StarFoxMapVisualizer.Controls
             if (animationClock != null)
                 EndAnimatingFrames();
             currentShape = shape;
-            animationClock = new Timer(ChangeFrame, null, 1000 / 30, 1000);
+            animationClock = new Timer(ChangeFrame, null, 1000 / 15, 1000);
         }
         /// <summary>
         /// Stop animating this object

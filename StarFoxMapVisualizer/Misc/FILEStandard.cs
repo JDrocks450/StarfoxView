@@ -22,7 +22,14 @@ namespace StarFoxMapVisualizer.Misc
         private static MAPImporter MAPImport = new();
         private static BSPImporter BSPImport = new();
         private static COLTABImporter COLTImport = new();
-        public static async Task<bool> IncludeFile(FileInfo File)
+        /// <summary>
+        /// Includes a <see cref="SFCodeProjectFileTypes.Assembly"/>, <see cref="SFCodeProjectFileTypes.Include"/> or 
+        /// <see cref="SFCodeProjectFileTypes.Palette"/>.
+        /// <para>Note that passing generic type T is optional, since it will return default if it is not a matching type.</para>
+        /// </summary>
+        /// <param name="File"></param>
+        /// <returns></returns>
+        public static async Task<T?> IncludeFile<T>(FileInfo File) where T : class
         {
             if (!AppResources.IsFileIncluded(File))
             {
@@ -31,20 +38,21 @@ namespace StarFoxMapVisualizer.Misc
                     case SFCodeProjectFileTypes.Include:
                     case SFCodeProjectFileTypes.Assembly:
                         var asmFile = await ParseFile(File);
-                        if (asmFile == default) return false; // USER CANCEL                                                              
+                        if (asmFile == default) return default; // USER CANCEL                                                              
                         AppResources.Includes.Add(asmFile); // INCLUDE FILE FOR SYMBOL LINKING
-                        return true;
+                        return asmFile as T;
                     case SFCodeProjectFileTypes.Palette:
                         using (var file = File.OpenRead())
                         {
                             var palette = StarFox.Interop.GFX.CAD.COL.Load(file);
-                            if (palette == default) return false;
+                            if (palette == default) return default;
                             AppResources.ImportedProject.Palettes.Add(File.FullName, palette);
+                            return palette as T;
                         }
-                        break;
                 }
             }
-            return true;
+            else return AppResources.Includes.First(x => x.OriginalFilePath== File.FullName) as T;
+            return default;
         }
         public static void IncludeFile(ASMFile asmFile)
         {
@@ -83,7 +91,7 @@ namespace StarFoxMapVisualizer.Misc
                     foreach (var include in includes)
                     {
                         if (!SearchProjectForFile(include, out var file)) continue;
-                        await IncludeFile(file);
+                        await IncludeFile<object>(file);
                         autoIncluded.Add(file.Name);
                     }
                 }
@@ -117,7 +125,7 @@ namespace StarFoxMapVisualizer.Misc
                 if (!AppResources.ImportedProject.Palettes.Any())
                 {
                     if (!SearchProjectForFile("night.col", out var file)) return false;
-                    await IncludeFile(file);
+                    await IncludeFile<ASMFile>(file);
                 }
             }
             return true;
@@ -127,7 +135,7 @@ namespace StarFoxMapVisualizer.Misc
         {
             if (!AppResources.IsFileIncluded(File))
             {
-                var success = await IncludeFile(File);
+                var success = await IncludeFile<object>(File) != default;
                 if (!success) return;
             }
             var col = AppResources.ImportedProject.Palettes[File.FullName];
@@ -208,7 +216,8 @@ namespace StarFoxMapVisualizer.Misc
             asmfile = await ASMImport.ImportAsync(File.FullName);
         import:
             if (asmfile == default) return default;
-            AppResources.OpenFiles.Add(File.FullName, asmfile);
+            if (!AppResources.OpenFiles.ContainsKey(File.FullName))
+                AppResources.OpenFiles.Add(File.FullName, asmfile);
             return asmfile;
         }
         internal static async Task<ASMFile?> OpenASMFile(FileInfo File)

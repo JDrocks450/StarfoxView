@@ -1,4 +1,5 @@
-﻿using StarFox.Interop.ASM.TYP.STRUCT;
+﻿using StarFox.Interop.ASM;
+using StarFox.Interop.ASM.TYP.STRUCT;
 
 namespace StarFox.Interop.GFX.COLTAB.DEF
 {

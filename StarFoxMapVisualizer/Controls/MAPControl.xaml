@@ -21,6 +21,11 @@
             </TabItem>
         </TabControl>
         <Button x:Name="MapExportButton" HorizontalAlignment="Right" VerticalAlignment="Top" Height="32" Width="124" Margin="0,50,10,0" Foreground="White" Background="#FF2C9000" Click="MapExportButton_Click">Export to *.sfmap</Button>
-        <Button x:Name="View3DButton" HorizontalAlignment="Right" VerticalAlignment="Top" Height="32" Width="124" Margin="0,90,10,0" Foreground="White" Background="#FF2C9000" Click="View3DButton_Click">View Map 3D</Button>
+        <Button x:Name="View3DButton" HorizontalAlignment="Right" Padding="5" VerticalAlignment="Bottom" Width="124" Margin="0,0,10,10" Foreground="White" Background="#FF2C9000" Click="View3DButton_Click" Height="100">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Bottom" HorizontalAlignment="Center" Margin="0,5,0,0">Pop-Out 3D View</TextBlock>
+                <Image Source="/Resources/Image/view3d.png" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+            </DockPanel>
+        </Button>
     </Grid>
 </UserControl>

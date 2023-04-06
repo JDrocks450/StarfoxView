@@ -147,7 +147,7 @@ namespace StarFox.Interop.BSP
         /// <param name="divisor">Divide components by this divisor</param>
         public BSPPoint MakePoint(int x, int y, int z, float divisor = 1)
         {
-            var point = new BSPPoint(pointIndex, PointsDataWidth, (int)(x / divisor), (int)(y / divisor), (int)(z / divisor)); // make point
+            var point = new BSPPoint(pointIndex, (int)(x / divisor), (int)(y / divisor), (int)(z / divisor)); // make point
             //pointIndex += PointsDataWidth;
             pointIndex++;
             return point;
@@ -182,8 +182,11 @@ namespace StarFox.Interop.BSP
             if (!compatible)
                 throw new InvalidOperationException($"You're not in the correct mode to define a point like that. M: {PointsMode} T: {PointType}");
             bool XMode = PointsMode is PointsModes.PointsXb or PointsModes.PointsXw;
-            XMode:
+        XMode:
             var point = MakePoint(x, y, z, divisor);
+            CurrentShape.LargestXPoint = Math.Max(CurrentShape.LargestXPoint, Math.Abs(x));
+            CurrentShape.LargestYPoint = Math.Max(CurrentShape.LargestYPoint, Math.Abs(y));
+            CurrentShape.LargestZPoint = Math.Max(CurrentShape.LargestZPoint, Math.Abs(z));
             if (currentFrameDefinition != null) // are we in a frame?
             {
                 CurrentShape.FrameData[currentFrameDefinition].AddPoint(point);
