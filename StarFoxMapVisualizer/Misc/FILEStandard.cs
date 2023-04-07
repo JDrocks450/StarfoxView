@@ -26,10 +26,11 @@ namespace StarFoxMapVisualizer.Misc
         /// Includes a <see cref="SFCodeProjectFileTypes.Assembly"/>, <see cref="SFCodeProjectFileTypes.Include"/> or 
         /// <see cref="SFCodeProjectFileTypes.Palette"/>.
         /// <para>Note that passing generic type T is optional, since it will return default if it is not a matching type.</para>
+        /// <para>Note that unless ContextualFileType is passed and not default, a dialog is displayed asking the user what kind of file this is.</para>
         /// </summary>
         /// <param name="File"></param>
         /// <returns></returns>
-        public static async Task<T?> IncludeFile<T>(FileInfo File) where T : class
+        public static async Task<T?> IncludeFile<T>(FileInfo File, SFFileType.FileTypes? ContextualFileType = default) where T : class
         {
             if (!AppResources.IsFileIncluded(File))
             {
@@ -37,7 +38,7 @@ namespace StarFoxMapVisualizer.Misc
                 {
                     case SFCodeProjectFileTypes.Include:
                     case SFCodeProjectFileTypes.Assembly:
-                        var asmFile = await ParseFile(File);
+                        var asmFile = await ParseFile(File, ContextualFileType);
                         if (asmFile == default) return default; // USER CANCEL                                                              
                         AppResources.Includes.Add(asmFile); // INCLUDE FILE FOR SYMBOL LINKING
                         return asmFile as T;
@@ -91,7 +92,7 @@ namespace StarFoxMapVisualizer.Misc
                     foreach (var include in includes)
                     {
                         if (!SearchProjectForFile(include, out var file)) continue;
-                        await IncludeFile<object>(file);
+                        await IncludeFile<object>(file, SFFileType.FileTypes.ASM);
                         autoIncluded.Add(file.Name);
                     }
                 }
@@ -103,7 +104,7 @@ namespace StarFoxMapVisualizer.Misc
             var message = importer.CheckWarningMessage(File.FullName);
             await AutoIncludeNow(message, importer.ExpectedIncludes);
             ReadyImporters();
-            message = BSPImport.CheckWarningMessage(File.FullName);
+            message = importer.CheckWarningMessage(File.FullName);
             if (!string.IsNullOrWhiteSpace(message))
             {
                 if (MessageBox.Show(message, "Continue?", MessageBoxButton.OKCancel) == MessageBoxResult.Cancel)
@@ -184,7 +185,17 @@ namespace StarFoxMapVisualizer.Misc
             if (!await HandleImportMessages(File, MAPImport)) return default;
             return await MAPImport.ImportAsync(File.FullName);
         }
-        private static async Task<ASMFile?> ParseFile(FileInfo File)
+        /// <summary>
+        /// Will import an *.ASM file into the project's OpenFiles collection and return the parsed result.
+        /// <para>NOTE: This function WILL call a dialog to have the user select which kind of file this is. 
+        /// This can cause a softlock if this logic is nested with other Parse logic.</para>
+        /// <para>To avoid this, please make diligent use of the ContextualFileType parameter.</para>
+        /// </summary>
+        /// <param name="File">The file to parse.</param>
+        /// <param name="ContextualFileType">Will skip the Dialog asking what kind of file this is parsing by using this value
+        /// <para>If <see langword="default"/>, the dialog is displayed.</para></param>
+        /// <returns></returns>
+        private static async Task<ASMFile?> ParseFile(FileInfo File, SFFileType.FileTypes? ContextualFileType = default)
         {                     
             //GET IMPORTS SET
             ReadyImporters();
@@ -193,12 +204,18 @@ namespace StarFoxMapVisualizer.Misc
             if (File.GetSFFileType() is SFCodeProjectFileTypes.Assembly) // assembly file
             { // DOUBT AS TO FILE TYPE
                 //CREATE THE MENU WINDOW
-                FileImportMenu importMenu = new()
+                SFFileType.FileTypes selectFileType = SFFileType.FileTypes.ASM;
+                if (!ContextualFileType.HasValue)
                 {
-                    Owner = Application.Current.MainWindow
-                };
-                if (!importMenu.ShowDialog() ?? true) return default; // USER CANCEL
-                switch (importMenu.FileType)
+                    FileImportMenu importMenu = new()
+                    {
+                        Owner = Application.Current.MainWindow
+                    };
+                    if (!importMenu.ShowDialog() ?? true) return default; // USER CANCEL
+                    selectFileType = importMenu.FileType;
+                }
+                else selectFileType = ContextualFileType.Value;
+                switch (selectFileType)
                 {
                     default: return default;
                     case StarFox.Interop.SFFileType.FileTypes.ASM:

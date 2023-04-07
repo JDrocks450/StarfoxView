@@ -629,6 +629,8 @@ namespace StarFoxMapVisualizer.Screens
             if (dirInfo == default) return; // User Cancelled
             StringBuilder errorBuilder = new(); // ERRORS
             Dictionary<string, string> shapeMap = new();
+            //GET IMPORTS SET
+            FILEStandard.ReadyImporters();
             foreach (var file in dirInfo.GetFiles()) // ITERATE OVER DIR FILES
             {
                 try
@@ -644,7 +646,7 @@ namespace StarFoxMapVisualizer.Screens
                             fooSName = sName + "_" + tries;
                             tries++;
                         }
-                        sName = fooSName;
+                        sName = fooSName.ToUpper();
                         shapeMap.Add(sName, file.Name);
                     }
                 }

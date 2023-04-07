@@ -27,6 +27,7 @@ namespace StarFox.Interop.ASM
     {
         private ASMImporterContext _context;
         internal ASMImporterContext Context => _context;
+        internal ASMFile[]? CurrentIncludes => _context?.Includes;
 
         public ASMImporter()
         {

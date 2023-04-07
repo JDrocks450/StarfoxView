@@ -69,7 +69,7 @@ namespace StarFoxMapVisualizer.Controls
                     modelGroup.Children.Add(face);
                 if (DrawHeightLine)
                 {                    
-                    var editorLine1 = new Point3D(0, fooPos.Y, 0);
+                    var editorLine1 = new Point3D(0, fooPos.Y / Scale.Y, 0);
                     var editorLine2 = new Point3D(0, 0, 0);
                     var linemodel = SHAPEStandard.CreateLine(editorLine1, editorLine2,
                         new DiffuseMaterial()
@@ -86,9 +86,10 @@ namespace StarFoxMapVisualizer.Controls
         //STARFOX CONSTANTS
         private ASMFile STRATEQU_Constants { get; set; }
         private int ShipMedSpeed => STRATEQU_Constants["medPspeed"];
+        private double MapZFar = 0;
         private int TranslateDelayToZDepth(int Delay)
         {
-            return (int)(Delay * Editor_ZScrunchPercentage);
+            return (int)(Delay);
             //delay is measured in units travelled for the arwing
             //arwing moves at (ShipMedSpeed * 10) / sec
             double arwingSpeedPerSec = ShipMedSpeed * 10;
@@ -98,8 +99,9 @@ namespace StarFoxMapVisualizer.Controls
         //--
 
         //map 3D collections and vars
-        private List<MAPViewerObject3D> mapObjects = new();
+        private List<MAPViewerObject3D> mapObjects = new();        
         private Dictionary<MAPEvent, MAPViewerObject3D> mapToEventMap = new();
+        private Dictionary<MAPEvent, bool> mapEventsSpawnedChecklist = new();
         private Dictionary<string,BSPShape> referencedShapes = new();
         //--
 
@@ -118,29 +120,32 @@ namespace StarFoxMapVisualizer.Controls
             SelectedFile = MapFile;
             return ShowMapContents(MapFile);
         }
+        private void ClearMap()
+        {
+            MainSceneGroup.Children.Clear();
+            mapEventsSpawnedChecklist.Clear();
+            mapToEventMap.Clear();
+            mapObjects.Clear();
+        }
         /// <summary>
         /// Invalidates this control using the <see cref="SelectedFile"/> property to poll information from
         /// </summary>
         public async Task ShowMapContents()
         {
+            //RESET THE MAP
+            ClearMap();
             //**LOAD CONTENT
             if (!await LoadContent())
                 return;
-            //**CREATE MAP CONTENT
-            CreateMap();
-            //**RENDER THE RESULT
-            Render();
+            //**CREATE MAP CONTENT (up until wherever the camera is!)
+            CreateMap(Camera.Position.Z + 5000);            
             await UpdateUI();
         }
 
-        public void CameraTransitionToObject(MAPEvent mapEvent)
+        public void CameraTransitionToPoint(Point3D ToPosition, Vector3D LookAt)
         {
-            //Try to find the referenced MAPEvent
-            if (!mapToEventMap.TryGetValue(mapEvent, out var mapObj)) return;
-            var vecToPos = mapObj.Position;
-            var toPos = new Point3D(vecToPos.X, vecToPos.Y + 100 + mapObj.ColSize.Y, vecToPos.Z-700);
-            var lookAtDirection = vecToPos - new Vector3D(toPos.X, toPos.Y, toPos.Z);
-            lookAtDirection.Normalize();
+            var toPos = ToPosition;
+            var lookAtDirection = LookAt;
             var positionAnim = new Point3DAnimation(toPos, TimeSpan.FromSeconds(1))
             {
                 AccelerationRatio = .5,
@@ -161,9 +166,21 @@ namespace StarFoxMapVisualizer.Controls
             {
                 Camera.LookDirection = lookAtDirection;
             };
-            Camera.BeginAnimation(ProjectionCamera.PositionProperty,positionAnim);
-            Camera.BeginAnimation(ProjectionCamera.LookDirectionProperty,lookAnim);
-                
+            Camera.BeginAnimation(ProjectionCamera.PositionProperty, positionAnim);
+            Camera.BeginAnimation(ProjectionCamera.LookDirectionProperty, lookAnim);
+        }
+
+        public void CameraTransitionToObject(MAPEvent mapEvent)
+        {
+            //Try to find the referenced MAPEvent
+            if (!mapToEventMap.TryGetValue(mapEvent, out var mapObj)) return;
+            var vecToPos = mapObj.Position;
+            var linearAdj = -(4 * mapObj.ColSize.Y);
+            var toPos = new Point3D(vecToPos.X, vecToPos.Y + 100 + mapObj.ColSize.Y, vecToPos.Z + linearAdj);
+            var lookAtDirection = vecToPos - new Vector3D(toPos.X, toPos.Y, toPos.Z);
+            lookAtDirection.Normalize();
+            CameraTransitionToPoint(toPos, lookAtDirection);
+            _ = this;
         }
 
         private DispatcherOperation UpdateUI()
@@ -185,7 +202,7 @@ namespace StarFoxMapVisualizer.Controls
                     SFUnits.Width = TotalWidth;
                 }
                 ScrunchSlider.Value = Editor_ZScrunchPercentage;
-                ScrunchPercentageBlock.Text = ((int)(Editor_ZScrunchPercentage * 100)).ToString();
+                ScrunchPercentageBlock.Text = ((int)((1 - Editor_ZScrunchPercentage) * 100)).ToString();
             }, System.Windows.Threading.DispatcherPriority.ContextIdle);
         }
 
@@ -253,41 +270,58 @@ namespace StarFoxMapVisualizer.Controls
         }
         /// <summary>
         /// Creates the map objects on screen
+        /// <para>Will spawn objects up until SpawnZDepthMax then stop</para>
         /// </summary>
-        private void CreateMap()
+        private void CreateMap(double SpawnZDepthMax)
         {
-            mapToEventMap.Clear();
-            foreach (var node in SelectedFile.LevelData.EventsByDelay)
+            double currentZDepth = 0;
+            double mapFar = 0;
+            int runningIndex = -1;
+            do
             {
-                var delay = node.Value;
-                var nodeData = SelectedFile.LevelData.Events.ElementAtOrDefault(node.Key);
+                runningIndex++;
+                if (!SelectedFile.LevelData.EventsByDelay.TryGetValue(runningIndex, out var delay))
+                    break; // can't load, probably end the end of objects list or one was skipped.                
+                var nodeData = SelectedFile.LevelData.Events.ElementAtOrDefault(runningIndex);                
                 if (nodeData == null) continue;
                 var depth = TranslateDelayToZDepth(delay);
-                SpawnEventObject(nodeData, depth);
-            }            
+                currentZDepth = depth;
+                if (currentZDepth * Editor_ZScrunchPercentage > SpawnZDepthMax) 
+                    break;
+                if (mapEventsSpawnedChecklist.TryGetValue(nodeData, out var spawned) && spawned)
+                    continue; // ALREADY SPAWNED!!!     
+                var createdObject = SpawnEventObject(nodeData, (int)depth, out var drawLoc);
+                mapFar = Math.Max(mapFar, drawLoc.Z);
+                if (createdObject != default)
+                    Render(createdObject); // render the new object
+            }
+            while (currentZDepth * Editor_ZScrunchPercentage < SpawnZDepthMax);
+            MapZFar = Math.Max(MapZFar, mapFar);
         }
         /// <summary>
         /// Renders the control and all map elements contained within
         /// </summary>
-        private void Render()
+        private void Render(MAPViewerObject3D node)
         {
-            MainSceneGroup.Children.Clear();
-            foreach (var node in mapObjects)
-                MainSceneGroup.Children.Add(node.Render());
+            MainSceneGroup.Children.Add(node.Render());
         }
         /// <summary>
         /// Spawns an event object from the given event data
         /// </summary>
         /// <param name="Evt"></param>
         /// <param name="Depth"></param>
-        private void SpawnEventObject(MAPEvent Evt, int Depth)
+        private MAPViewerObject3D? SpawnEventObject(MAPEvent Evt, int Depth, out Vector3D Location)
         {
+            Location = new Vector3D(0,0,0);
+            if (mapEventsSpawnedChecklist.TryGetValue(Evt, out var spawned) && spawned)
+                return default; // uhh, already spawned?
+            mapEventsSpawnedChecklist.Add(Evt, true);
             string? ShapeName = null;
-            Vector3D Location = new Vector3D(0, 0, Depth);
+            Location = new Vector3D(0, 0, Depth);
             if (Evt is IMAPShapeEvent shapeDat) // HAS A SHAPE!
                 ShapeName = shapeDat.ShapeName;
             if (Evt is IMAPLocationEvent locationDat)
-                Location = new Vector3D(locationDat.X, -locationDat.Y, Depth + locationDat.Z);
+                Location = new Vector3D(locationDat.X, -locationDat.Y, (Depth + locationDat.Z) * Editor_ZScrunchPercentage);
             if (ShapeName != null && referencedShapes.ContainsKey(ShapeName))
             {
                 var asset = referencedShapes[ShapeName];
@@ -297,17 +331,45 @@ namespace StarFoxMapVisualizer.Controls
                 };
                 mapObjects.Add(newObject);
                 mapToEventMap.Add(Evt, newObject);
+                return newObject;
             }
+            return default;
         }
 
-        private void AdjustGroundToCam()
+        private void CameraMoved(Point3D NewPosition)
+        {
+            if (true)
+                SetPlayfieldGround();
+            else AdjustGroundToCam(NewPosition);
+            //**CREATE MAP CONTENT (up until wherever the camera is!)
+            CreateMap(Camera.Position.Z + 5000);
+        }
+        /// <summary>
+        /// sets the ground for the real-estate afforded by the current level
+        /// </summary>
+        /// <param name="Position"></param>
+        private void SetPlayfieldGround()
+        {
+            int w = 10000, h = (int)Math.Max(SelectedFile.LevelData.EventsByDelay.Values.Max(), MapZFar);
+            var transformGroup = new Transform3DGroup();
+            transformGroup.Children.Add(new ScaleTransform3D(
+                w, 1, h));
+            transformGroup.Children.Add(new TranslateTransform3D(
+                -(w/2), 0, 0));
+            GroundGeom.Transform = transformGroup;
+        }
+        /// <summary>
+        /// Moves the ground to wherever the camera is
+        /// </summary>
+        /// <param name="Position"></param>
+        private void AdjustGroundToCam(Point3D Position)
         {
             int w = 17000, h = 17000;
             var transformGroup = new Transform3DGroup();            
             transformGroup.Children.Add(new ScaleTransform3D(
                 w, 1, h));
             transformGroup.Children.Add(new TranslateTransform3D(
-                Camera.Position.X - (w/2), 0, Camera.Position.Z - (h/2)));
+                Position.X - (w/2), 0, Position.Z - (h/2)));
             GroundGeom.Transform = transformGroup;
         }
 
@@ -319,7 +381,7 @@ namespace StarFoxMapVisualizer.Controls
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
         {
             Camera.MoveBy(e.Key, 100).RotateBy(e.Key, 3);
-            AdjustGroundToCam();
+            CameraMoved(Camera.Position);
         }
 
         Point from;
@@ -343,8 +405,8 @@ namespace StarFoxMapVisualizer.Controls
             {
                 var angle = (distance / Camera.FieldOfView) % 45d;
                 Camera.Rotate(new(dy, -dx, 0d), angle);
-            }
-            AdjustGroundToCam();
+                CameraMoved(Camera.Position);
+            }            
         }
 
         private async void ThreeDViewer_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -355,6 +417,11 @@ namespace StarFoxMapVisualizer.Controls
         private async void ReloadButton_Clicked(object sender, RoutedEventArgs e)
         {
             await ShowMapContents();
+        }
+
+        private void CamJumpStartButton_Click(object sender, RoutedEventArgs e)
+        {
+            CameraTransitionToPoint(new Point3D(0, 100, 0), new Vector3D(0, 0, 1));
         }
     }
 }

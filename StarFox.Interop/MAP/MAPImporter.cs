@@ -14,7 +14,8 @@ namespace StarFox.Interop.MAP
     {
         public override string[] ExpectedIncludes => new string[]
         {
-            "MAPMACS.INC" // MAPMACS.INC is expected
+            "MAPMACS.INC", // MAPMACS.INC is expected
+            "BGS.ASM" // BGS.ASM contains data on which levels should be have like
         };
         private ASMImporter baseImporter = new();
         public MAPImporter()

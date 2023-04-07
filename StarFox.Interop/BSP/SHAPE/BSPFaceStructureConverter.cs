@@ -24,7 +24,7 @@ namespace StarFox.Interop.BSP.SHAPE
         /// <param name="Line"></param>
         /// <param name="Result"></param>
         /// <returns></returns>
-        public static bool TryParse(in ASMLine Line, out BSPFace Result)
+        public static bool TryParse(in ASMLine Line, out BSPFace Result, params ASMFile[] Includes)
         {
             Result = default;
             if (Line == default) return false; // stop.
@@ -34,6 +34,10 @@ namespace StarFox.Interop.BSP.SHAPE
 
             if (!CompatibleMacros.Contains(Structure.MacroReference.Name.ToLower())) // not found
                 return false; // uh oh, leave this line isn't a header
+
+            //START CONST INCLUDE CONTEXT
+            ASMExtensions.BeginConstantsContext(Includes);
+
             //found the macro needed (face)
             Result = new BSPFace()
             {
@@ -57,6 +61,8 @@ namespace StarFox.Interop.BSP.SHAPE
                     Position = i
                 };
             }
+            //END CONTEXT
+            ASMExtensions.EndConstantsContext();
             return true;
         }
     }

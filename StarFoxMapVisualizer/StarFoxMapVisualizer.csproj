@@ -24,6 +24,7 @@
     <None Remove="Resources\Image\sf_frame_cn.png" />
     <None Remove="Resources\Image\sf_small.png" />
     <None Remove="Resources\Image\spriteicon.png" />
+    <None Remove="Resources\Image\threedtransparent.png" />
     <None Remove="Resources\Image\transparent.png" />
     <None Remove="Resources\Image\view3d.png" />
     <None Remove="Resources\Model\Arwing.fbx" />
@@ -64,6 +65,7 @@
     <Resource Include="Resources\Image\sf_frame_cn.png" />
     <Resource Include="Resources\Image\sf_small.png" />
     <Resource Include="Resources\Image\spriteicon.png" />
+    <Resource Include="Resources\Image\threedtransparent.png" />
     <Resource Include="Resources\Image\transparent.png" />
     <Resource Include="Resources\Image\view3d.png" />
     <Resource Include="Resources\Star-Fox-Starwing.ttf" />

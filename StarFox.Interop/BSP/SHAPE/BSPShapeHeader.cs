@@ -147,7 +147,7 @@ namespace StarFox.Interop.BSP.SHAPE
         /// <param name="Structure"></param>
         /// <param name="header"></param>
         /// <returns></returns>
-        public static bool TryParse(ASMLine Line, out BSPShapeHeader? header)
+        public static bool TryParse(ASMLine Line, out BSPShapeHeader? header, params ASMFile[] Includes)
         {
             header = default;
             if (Line == default) return false; // stop.
@@ -158,6 +158,8 @@ namespace StarFox.Interop.BSP.SHAPE
             if (!CompatibleMacroNames.Contains(Structure.MacroReference.Name.ToLower())) // not found
                 return false; // uh oh, leave this line isn't a header
             //found the macro needed (shape header)
+            ASMExtensions.BeginConstantsContext(Includes);
+            //---- CONST CONTEXT START
             var pptr = Structure.TryGetParameter(0)?.ParameterContent ?? ""; // name of the point ptr
             var bank = Structure.TryGetParameter(1)?.TryParseOrDefault() ?? 0;
             var fptr = Structure.TryGetParameter(2)?.ParameterContent ?? ""; // name of the face ptr
@@ -177,6 +179,8 @@ namespace StarFox.Interop.BSP.SHAPE
             var simple2 = Structure.TryGetParameter(0x10)?.ParameterContent ?? "0";
             var simple3 = Structure.TryGetParameter(0x11)?.ParameterContent ?? "0";
             var name = Structure.TryGetParameter(0x12)?.ParameterContent ?? ""; // name of the object
+            //---- END
+            ASMExtensions.EndConstantsContext();
             if (!string.IsNullOrWhiteSpace(name))
                 name = name.TrimStart('<').TrimEnd('>');
             header = new(pptr, bank, fptr, type, zsort, height, view, shift, 

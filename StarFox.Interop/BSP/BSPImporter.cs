@@ -38,6 +38,7 @@ namespace StarFox.Interop.BSP
         }
 
         //*** BSP VARS
+        internal ASMFile[]? Includes;
         internal BSPFile? CurrentFile;
         internal BSPShape? CurrentShape = default; // the currently parsing shape
         internal int currentFrame = -1;
@@ -46,6 +47,8 @@ namespace StarFox.Interop.BSP
         internal int frameDefinitionAmount = 0;
         internal bool BSPMode = false;
         internal string? BSPEndLabel;
+        //----
+
         /// <summary>
         /// Describes the current point parsing mode
         /// </summary>
@@ -240,7 +243,8 @@ namespace StarFox.Interop.BSP
     {
         private ASMImporter baseImporter = new();
         public override string[] ExpectedIncludes => new string[] {
-            "SHMACS.INC"
+            "SHMACS.INC", //Shape Macros required
+            "STRATEQU.INC" // Used for constants that describe sizing constraints, etc.
         };
         BSPImporterContext asmContext;        
 
@@ -250,14 +254,14 @@ namespace StarFox.Interop.BSP
         public BSPImporter()
         {
 
-        }        
+        }
 
-        public override void SetImports(params ASMFile[] Includes) => baseImporter.SetImports(Includes);
-
+        public override void SetImports(params ASMFile[] Includes) => baseImporter.SetImports(Includes);        
+                   
         private bool LookForShapeHeader(ASMLine line, BSPImporterContext Context)
         {
             //looks promising, is this line a shape header?
-            if (!BSPShapeHeader.TryParse(line, out var header)) return false; // nope, it's not.
+            if (!BSPShapeHeader.TryParse(line, out var header, Context.Includes)) return false; // nope, it's not.
 #if SPECIFIC
             if (header.Name != "training") return false;
 #endif
@@ -317,6 +321,7 @@ namespace StarFox.Interop.BSP
             asmContext = new BSPImporterContext() // create a new context
             {
                 CurrentFile = file,
+                Includes = baseImporter.CurrentIncludes
             };
             asmContext.ResetVars();
             foreach(var chunk in file.Chunks)

@@ -145,7 +145,7 @@ namespace StarFox.Interop.MAP.EVT
             if (!Line.HasStructureApplied) return false;
             if (Line.Structure is not ASMMacroInvokeLineStructure) return false;
             var structure = Line.StructureAsMacroInvokeStructure;
-            return CompatibleMacros.Contains(structure.MacroReference.Name);
+            return CompatibleMacros.Contains(structure.MacroReference.Name.ToLower());
         }
         /// <summary>
         /// Tries to parse a new map event out of the given macro invoke expression

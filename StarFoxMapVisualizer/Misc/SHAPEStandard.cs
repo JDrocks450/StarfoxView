@@ -102,7 +102,7 @@ namespace StarFoxMapVisualizer.Misc
                 throw new Exception("This project has Optimizers, but none of them are for Shapes.\n" +
                     "Use the Refresh ShapeMap button to create this.");
             var shapeMap = shapeOptim.OptimizerData.ObjectMap;
-            if (!shapeMap.TryGetValue(Name, out var FileName)) return default;
+            if (!shapeMap.TryGetValue(Name.ToUpper(), out var FileName)) return default;
             var path = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(shapeOptim.FilePath), FileName);
             var file = await FILEStandard.OpenBSPFile(new FileInfo(path));
             if (file != null && !AppResources.OpenFiles.ContainsKey(path))

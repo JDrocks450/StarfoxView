@@ -5,13 +5,13 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:StarFoxMapVisualizer.Controls"
              mc:Ignorable="d" Background="Black"
-             d:DesignHeight="450" d:DesignWidth="800" PreviewMouseMove="Window_PreviewMouseMove" PreviewKeyDown="Window_PreviewKeyDown">
+             Height="768" Width="1024" MinHeight="600" MinWidth="800" PreviewMouseMove="Window_PreviewMouseMove" PreviewKeyDown="Window_PreviewKeyDown">
     <Grid>
         <Viewport3D Name="ThreeDViewer" SizeChanged="ThreeDViewer_SizeChanged">
             <Viewport3D.Resources>
                 <DiffuseMaterial x:Key="DefaultBrush">
                     <DiffuseMaterial.Brush>
-                        <ImageBrush ImageSource="/Resources/Image/transparent.png" TileMode="Tile" Viewport="0,0,2,2" ViewportUnits="RelativeToBoundingBox"/>
+                        <ImageBrush ImageSource="/Resources/Image/threedtransparent.png" TileMode="Tile" Viewport="0,0,.1,.008" ViewportUnits="Absolute" Opacity=".25"/>
                     </DiffuseMaterial.Brush>
                 </DiffuseMaterial>
             </Viewport3D.Resources>
@@ -48,29 +48,44 @@
                 </ModelVisual3D>
             </Viewport3D.Children>
         </Viewport3D>
-        <Grid HorizontalAlignment="Left" VerticalAlignment="Top" Width="200" Margin="10">
-            <Button IsEnabled="False" Background="#FFBDBDBD"/>
-            <StackPanel Margin="5">
-                <TextBlock Margin="0,5" HorizontalAlignment="Center" FontWeight="Bold">DEPTH (Z Axis) SCRUNCH</TextBlock>
-                <Separator/>
-                <TextBlock Margin="0,5" HorizontalAlignment="Center" FontWeight="Bold">1 STARFOX UNIT</TextBlock>
-                <Canvas Height="20" Name="UnitsCanvas">
-                    <Border Name="SFUnits" Canvas.Left="0" Canvas.Top="0" Height="10" Background="DeepSkyBlue"/>
-                    <Border Name="EUnits" Canvas.Left="0" Canvas.Top="10" Height="10" Background="Blue"/>
-                </Canvas>
-                <TextBlock Margin="0,5" HorizontalAlignment="Center" FontWeight="Bold">1 EDITOR UNIT</TextBlock>
-                <Separator/>
-                <TextBlock Margin="0,5" HorizontalAlignment="Center">Roughly <Run Name="ScrunchPercentageBlock">25</Run>% scrunched</TextBlock>
-                <TextBlock FontWeight="Bold" HorizontalAlignment="Center">Adjust Scrunch:</TextBlock>
-                <Slider x:Name="ScrunchSlider" Margin="5" Minimum="0" Maximum="2"/>
-                <Grid Margin="5,0,5,5">
-                    <TextBlock HorizontalAlignment="Left">0%</TextBlock>
-                    <TextBlock HorizontalAlignment="Right">200%</TextBlock>
-                </Grid>
-                <Separator/>
-                <Button Margin="5"  x:Name="ReloadLayoutButton" Click="ReloadButton_Clicked" Height="25" Content="Reload Layout"/>
-            </StackPanel>
-        </Grid>
-        <StackPanel Margin="10" HorizontalAlignment="Right" Width="150"/>
+        <StackPanel Width="200" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10">
+            <Grid>
+                <Button IsEnabled="False" Background="#FFBDBDBD"/>
+                <StackPanel Margin="5">
+                    <TextBlock Margin="0,5" HorizontalAlignment="Center" FontWeight="Bold">DEPTH (Z Axis) SCRUNCH</TextBlock>
+                    <Separator/>
+                    <TextBlock Margin="0,5" HorizontalAlignment="Center" FontWeight="Bold">1 STARFOX UNIT</TextBlock>
+                    <Canvas Height="20" Name="UnitsCanvas">
+                        <Border Name="SFUnits" Canvas.Left="0" Canvas.Top="0" Height="10" Background="DeepSkyBlue"/>
+                        <Border Name="EUnits" Canvas.Left="0" Canvas.Top="10" Height="10" Background="Blue"/>
+                    </Canvas>
+                    <TextBlock Margin="0,5" HorizontalAlignment="Center" FontWeight="Bold">1 EDITOR UNIT</TextBlock>
+                    <Separator/>
+                    <TextBlock Margin="0,5" HorizontalAlignment="Center">Roughly <Run Name="ScrunchPercentageBlock">25</Run>% scrunched</TextBlock>
+                    <TextBlock FontWeight="Bold" HorizontalAlignment="Center">Adjust Scrunch:</TextBlock>
+                    <Slider x:Name="ScrunchSlider" Margin="5" Minimum="0" Maximum="2"/>
+                    <Grid Margin="5,0,5,5">
+                        <TextBlock HorizontalAlignment="Left">0%</TextBlock>
+                        <TextBlock HorizontalAlignment="Right">200%</TextBlock>
+                    </Grid>
+                    <Separator/>
+                    <Button Margin="5"  x:Name="ReloadLayoutButton" Click="ReloadButton_Clicked" Height="25" Content="Reload Layout"/>
+                </StackPanel>
+            </Grid>
+            <Grid Margin="0,10">
+                <Button IsEnabled="False" Background="#FFBDBDBD"/>
+                <StackPanel Margin="5">
+                    <TextBlock Margin="0,5" HorizontalAlignment="Center" FontWeight="Bold">EDITOR CAMERA</TextBlock>
+                    <Separator/>
+                    <TextBlock HorizontalAlignment="Left" Margin="20,5" FontWeight="Bold">
+                    X: <Run Text="{Binding Position.X, ElementName=Camera}" FontWeight="Regular"/><LineBreak/>
+                    Y: <Run Text="{Binding Position.Y, ElementName=Camera}" FontWeight="Regular"/><LineBreak/>
+                    Z: <Run Text="{Binding Position.Z, ElementName=Camera}" FontWeight="Regular"/><LineBreak/>
+                    </TextBlock>
+                    <Separator/>
+                    <Button Margin="5" x:Name="CamJumpStartButton" Click="CamJumpStartButton_Click" Height="25" Content="Jump to Start"/>
+                </StackPanel>
+            </Grid>
+        </StackPanel>
     </Grid>
 </Window>
