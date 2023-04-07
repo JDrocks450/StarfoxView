@@ -202,14 +202,14 @@ namespace StarFoxMapVisualizer.Controls
                     SFUnits.Width = TotalWidth;
                 }
                 ScrunchSlider.Value = Editor_ZScrunchPercentage;
-                ScrunchPercentageBlock.Text = ((int)((1 - Editor_ZScrunchPercentage) * 100)).ToString();
+                ScrunchPercentageBlock.Text = ((1 - Editor_ZScrunchPercentage) * 100).ToString("0.#");
             }, System.Windows.Threading.DispatcherPriority.ContextIdle);
         }
 
         private void ScrunchValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             Editor_ZScrunchPercentage = ScrunchSlider.Value;
-            ScrunchPercentageBlock.Text = ((int)(Editor_ZScrunchPercentage * 100)).ToString();
+            ScrunchPercentageBlock.Text = ((1 - Editor_ZScrunchPercentage) * 100).ToString("0.#");
         }
 
         /// <summary>
