@@ -32,7 +32,7 @@ namespace StarFox.Interop.BSP.SHAPE
         }
         public override string ToString()
         {
-            return $"BSPPoint - X: {X}, Y: {Y}, Z: {Z}";
+            return $"X: {X}, Y: {Y}, Z: {Z}";
         }
     }
     /// <summary>
@@ -126,6 +126,21 @@ namespace StarFox.Interop.BSP.SHAPE
         /// <para>Pay close attention to the Index field of the BSPPoint to find where it belongs.</para>
         /// </summary>
         public BSPPoint[] Points { get; set; } = { };
+        public BSPFrame()
+        {
+
+        }
+        public BSPFrame(string name, BSPPoint[] points)
+        {
+            Name = name;
+            Points = points;
+        }
+        public BSPFrame(BSPFrame Other)
+        {
+            Name = Other.Name;
+            Points = new BSPPoint[Other.Points.Length];
+            Other.Points.CopyTo(Points, 0);
+        }
         /// <summary>
         /// Adds a point to this object and rectifies the Index property to be the next in sequence
         /// </summary>
@@ -340,6 +355,14 @@ namespace StarFox.Interop.BSP.SHAPE
         public override string ToString()
         {
             return $"SHAPE - {Header?.Name ?? ""} Faces: {Faces.Count}, Frames: {Frames.Count}";
+        }
+
+        public void CopyData(BSPShape Other)
+        {
+            Frames = new Dictionary<int, string>(Other.Frames);
+            FrameData = new Dictionary<string, BSPFrame>(Other.FrameData);
+            GlobalFrame = new BSPFrame(Other.GlobalFrame);
+            Faces = new HashSet<BSPFace>(Other.Faces);
         }
     }
 }

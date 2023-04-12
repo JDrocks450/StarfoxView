@@ -90,8 +90,9 @@ namespace Starfox.Editor
         /// </summary>
         /// <param name="FileName"></param>
         /// <returns></returns>
-        public IEnumerable<SFCodeProjectNode> SearchFile(string FileName) => 
-            FileNodes.Where(x => Path.GetFileName(x.Key).ToLower() == FileName.ToLower()).Select(y => y.Value);
+        public IEnumerable<SFCodeProjectNode> SearchFile(string FileName, bool IgnoreHyphens = false) => 
+            FileNodes.Where(x => Path.GetFileName(IgnoreHyphens ? x.Key.Replace("-", "") : x.Key).ToLower()
+            == FileName.ToLower()).Select(y => y.Value);
         /// <summary>
         /// Searches for all directories with matching name (not fullpath)
         /// </summary>

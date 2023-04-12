@@ -405,7 +405,7 @@ namespace StarFox.Interop.GFX
                 //Tile Size
                 int t = 8 * (scr_mode + 1);
 
-                Bitmap output = new Bitmap(512 * (t / 8), 512 * (t / 8));
+                Bitmap output = new Bitmap(512 * (t / 8), 512 * (t / 8));                
 
                 //Screen ID
                 for (int s = 0; s < 4; s++)
@@ -454,8 +454,7 @@ namespace StarFox.Interop.GFX
                             g.DrawImage(chr, x, y, z, z);
                         }
                     }
-                }
-
+                }                
                 return output;
             }
 #endif

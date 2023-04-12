@@ -267,7 +267,7 @@ namespace StarFoxMapVisualizer.Controls
             {
                 ShapeSelector.Items.Add(new ComboBoxItem()
                 {
-                    Content = $"{shape.Header.Name} [{System.IO.Path.GetFileName(file.OriginalFilePath)}]",
+                    Content = $"{shape.Header.UniqueName} [{System.IO.Path.GetFileName(file.OriginalFilePath)}]",
                     Tag = shape
                 });
                 FileMap.Add(shape, file);

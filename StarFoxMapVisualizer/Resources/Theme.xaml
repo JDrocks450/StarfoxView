@@ -6,10 +6,12 @@
     <SolidColorBrush Color="DeepSkyBlue" x:Key="MacroColor"/>
     <SolidColorBrush Color="#FF00FF9C" x:Key="PaletteNodeColor"/>
     <SolidColorBrush Color="#FF006FC5" x:Key="ColorTableNodeColor"/>
+    <SolidColorBrush Color="Salmon" x:Key="ScreenNodeColor"/>
     <SolidColorBrush Color="Coral" x:Key="SpriteNodeColor"/>
     <SolidColorBrush Color="#FFB686FF" x:Key="DefineColor"/>
     <SolidColorBrush Color="Orange" x:Key="MacroInvokeColor"/>
     <SolidColorBrush Color="Pink" x:Key="MacroInvokeParameterColor"/>
     <SolidColorBrush Color="#FF006FC5" x:Key="WindowColor"/>
     <SolidColorBrush Color="#FF344559" x:Key="WindowBackgroundColor"/>
+    <ImageBrush x:Key="TransparentImageKey" TileMode="Tile" Stretch="None" ImageSource="/Resources/Image/transparent.png" Viewport="0,0,6,6" Opacity=".1"  ViewportUnits="Absolute"/>
 </ResourceDictionary>

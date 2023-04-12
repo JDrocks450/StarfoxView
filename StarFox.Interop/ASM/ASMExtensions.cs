@@ -113,10 +113,47 @@ namespace StarFox.Interop.ASM
         }
         private static int base_TryParseOrDefault(string Value)
         {
+            bool getOperands(string content, char op, out int left, out int right)
+            {
+                var operands = content.Replace(" ", "").Split(op);
+                left = right = 0;
+                if (operands.Length < 2)
+                    return false;
+                if (!int.TryParse(operands[0], out left)) return false;
+                if (!int.TryParse(operands[1], out right)) return false;
+                return true;
+            }
             var content = Value;
             if (string.IsNullOrEmpty(content)) return 0;
-            if (content.Contains("$")) return TryParseHexOrDefault(Value);
-            if (int.TryParse(content, out int result)) { return result; }
+            if (content.Contains("deg")) // DEGREES
+            {
+                content.Replace("deg", "");
+                if (!double.TryParse(content, out var degrees)) return 0;
+                return (int)((degrees * Math.PI) / 1800); // horrible data loss here. NEED TO FIX.
+            }
+            if (int.TryParse(content, out int result)) return result; // simple number?
+            //OPERATORS
+            if (content.Contains('/')) // DIV
+            {
+                if (!getOperands(content, '/', out var left, out var right)) return 0;
+                return (int)((double)left / right);
+            }
+            if (content.Contains('*')) // MUL
+            {
+                if (!getOperands(content, '*', out var left, out var right)) return 0;
+                return (int)((double)left * right);
+            }
+            if (content.Contains('+')) // ADD
+            {
+                if (!getOperands(content, '/', out var left, out var right)) return 0;
+                return (int)((double)left / right);
+            }
+            if (content.Contains('-')) // SUB
+            {
+                if (!getOperands(content, '/', out var left, out var right)) return 0;
+                return (int)((double)left / right);
+            }
+            if (content.Contains("$")) return TryParseHexOrDefault(Value);            
             return 0;
         }
         /// <summary>

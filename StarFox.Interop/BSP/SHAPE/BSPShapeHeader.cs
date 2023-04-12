@@ -104,6 +104,14 @@ namespace StarFox.Interop.BSP.SHAPE
         /// Name of this shape
         /// </summary>
         public string Name { get; set; }
+        /// <summary>
+        /// If an inline label appears on the same line as this definition, the label's text is copied here.
+        /// </summary>
+        public string? InlineLabelName { get; set; }
+        /// <summary>
+        /// A name that has been given by the importer, unique to any other shape in the file.
+        /// </summary>
+        public string UniqueName { get; set; }
         internal static string[] CompatibleMacroNames =
         {
             "shapehdr", "oshapehdr"
@@ -137,6 +145,7 @@ namespace StarFox.Interop.BSP.SHAPE
             Simple2 = simple2;
             Simple3 = simple3;
             Name = name;
+            UniqueName = name;
         }
 
         /// <summary>
@@ -182,12 +191,21 @@ namespace StarFox.Interop.BSP.SHAPE
             //---- END
             ASMExtensions.EndConstantsContext();
             if (!string.IsNullOrWhiteSpace(name))
-                name = name.TrimStart('<').TrimEnd('>');
+            {
+                if (name.Contains('<') && name.Contains('>'))
+                {
+                    var startIndex = name.IndexOf('<') + 1;
+                    var len = name.IndexOf('>') - startIndex;
+                    name = name.Substring(startIndex, len > -1 ? len : 0);
+                }
+                else name = name.TrimStart('<').TrimEnd('>');
+            }
             header = new(pptr, bank, fptr, type, zsort, height, view, shift, 
                 radius, xmax, ymax, zmax, size, cptr, shadow, simple1, simple2, simple3, name)
             {
                 MacroName = Structure.MacroReference.Name,
-                Base = Line
+                Base = Line,
+                InlineLabelName = Line.InlineLabel
             };
             return true;
         }

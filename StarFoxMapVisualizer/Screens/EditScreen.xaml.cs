@@ -63,7 +63,7 @@ namespace StarFoxMapVisualizer.Screens
 
         }
 
-        private async Task ImportCodeProject(bool Flush = false)
+        internal async Task ImportCodeProject(bool Flush = false)
         {            
             var currentProject = AppResources.ImportedProject;
             if (currentProject == null)
@@ -210,6 +210,10 @@ namespace StarFoxMapVisualizer.Screens
                         }
                         break;
                     case SFCodeProjectFileTypes.SCR:
+                        item.SetResourceReference(StyleProperty, "ScreenTreeStyle");
+                        if (AppResources.OpenFiles.ContainsKey(fileInfo.FullName))
+                            CreateClosableContextMenu(FileNode, in contextMenu);
+                        break;
                     case SFCodeProjectFileTypes.CGX:
                         item.SetResourceReference(StyleProperty, "SpriteTreeStyle");
                         if (AppResources.OpenFiles.ContainsKey(fileInfo.FullName))
@@ -347,12 +351,7 @@ namespace StarFoxMapVisualizer.Screens
                     return;
                 case SFCodeProjectFileTypes.CCR: // EXTRACT COMPRESSED GRAPHICS
                     {
-                        BPPDepthMenu menu = new()
-                        {
-                            Owner = Application.Current.MainWindow
-                        };
-                        if (!menu.ShowDialog() ?? true) return;
-                        await SFGFXInterface.TranslateCompressedCCR(File.FullName, menu.FileType);
+                        await GFXStandard.ExtractCCR(File);
                         LoadingSpan.Visibility = Visibility.Collapsed;
                         UpdateInterface(true); // Files changed!
                     }
@@ -366,19 +365,7 @@ namespace StarFoxMapVisualizer.Screens
                     return;
                 case SFCodeProjectFileTypes.SCR: // screens
                     //OPEN THE SCR FILE
-                    if (!AppResources.OpenFiles.ContainsKey(File.FullName))
-                    {
-                        //ATTEMPT TO OPEN THE FILE AS WELL-FORMED
-                        var fxGFX = await SFGFXInterface.OpenSCR(File.FullName);
-                        if (fxGFX == null)
-                        { // NOPE CAN'T DO THAT
-                            //OKAY, TRY TO IMPORT IT
-                            fxGFX = await SFGFXInterface.ImportSCR(File.FullName);
-                        }
-                        if (fxGFX == null) throw new Exception("That file cannot be opened or imported."); // GIVE UP
-                        //ADD IT AS AN OPEN FILE
-                        AppResources.OpenFiles.Add(File.FullName, fxGFX);
-                    }
+                    await GFXStandard.OpenSCR(File);
                     LoadingSpan.Visibility = Visibility.Collapsed;
                     UpdateInterface();
                     CurrentMode = ViewMode.GFX;
@@ -386,24 +373,7 @@ namespace StarFoxMapVisualizer.Screens
                     return;
                 case SFCodeProjectFileTypes.CGX: // graphics
                     //OPEN THE CGX FILE
-                    if (!AppResources.OpenFiles.ContainsKey(File.FullName))
-                    {                        
-                        //ATTEMPT TO OPEN THE FILE AS WELL-FORMED
-                        var fxGFX = await SFGFXInterface.OpenCGX(File.FullName);
-                        if (fxGFX == null)
-                        { // NOPE CAN'T DO THAT
-                            BPPDepthMenu menu = new()
-                            {
-                                Owner = Application.Current.MainWindow
-                            };
-                            if (!menu.ShowDialog() ?? true) return; // USER CANCELLED!
-                            //OKAY, TRY TO IMPORT IT WITH THE SPECIFIED BITDEPTH
-                            fxGFX = await SFGFXInterface.ImportCGX(File.FullName, menu.FileType);
-                        }
-                        if (fxGFX == null) throw new Exception("That file cannot be opened or imported."); // GIVE UP
-                        //ADD IT AS AN OPEN FILE
-                        AppResources.OpenFiles.Add(File.FullName, fxGFX);
-                    }
+                    await GFXStandard.OpenCGX(File);
                     LoadingSpan.Visibility = Visibility.Collapsed;
                     UpdateInterface();
                     CurrentMode = ViewMode.GFX;
@@ -638,7 +608,7 @@ namespace StarFoxMapVisualizer.Screens
                     var bspFile = await FILEStandard.OpenBSPFile(file); // IMPORT THE BSP
                     foreach(var shape in bspFile.Shapes)
                     {
-                        var sName = shape.Header.Name;
+                        var sName = shape.Header.UniqueName;
                         var fooSName = sName;
                         int tries = 1;
                         while (shapeMap.ContainsKey(fooSName))
@@ -663,6 +633,22 @@ namespace StarFoxMapVisualizer.Screens
                 SFOptimizerTypeSpecifiers.Shapes, shapeMap));
             MessageBox.Show("The ShapesMap Code Project Optimizer has been updated.");
             UpdateInterface(true); // files updated!
+        }
+
+        private void BGSASMViewerButton_Click(object sender, RoutedEventArgs e)
+        {
+            var file = FILEStandard.MAPImport?.LoadedContextDefinitions;
+            if (file == null)
+            {
+                MessageBox.Show("Level contexts have not been loaded yet. Open a level file to have this information populated.");
+                return;
+            }
+            LevelContextViewer viewer = new LevelContextViewer(file)
+            {
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                Owner = Application.Current.MainWindow
+            };
+            viewer.Show();
         }
     }
 }

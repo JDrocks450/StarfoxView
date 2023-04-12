@@ -32,7 +32,7 @@ namespace StarFox.Interop.GFX
         /// </summary>
         /// <param name="fullName">The full name of the file to convert.</param>
         /// <returns></returns>
-        public static async Task TranslateCompressedCCR(string fullName, CAD.BitDepthFormats BitDepth = CAD.BitDepthFormats.BPP_4)
+        public static async Task<string> TranslateCompressedCCR(string fullName, CAD.BitDepthFormats BitDepth = CAD.BitDepthFormats.BPP_4)
         {
             string extension = "CGX";
             string name = $"{Path.Combine(Path.GetDirectoryName(fullName), Path.GetFileNameWithoutExtension(fullName))}.{extension}";
@@ -41,7 +41,7 @@ namespace StarFox.Interop.GFX
             {
                 var bytes = CAD.CGX.GetRAWCGXDataArray(ms, BitDepth);
                 await File.WriteAllBytesAsync(name, bytes);
-                return;
+                return name;
             }
         }
         /// <summary>
@@ -50,7 +50,7 @@ namespace StarFox.Interop.GFX
         /// </summary>
         /// <param name="fullName">The full name of the file to convert.</param>
         /// <returns></returns>
-        public static async Task TranslateCompressedPCR(string fullName, int scr_mode = 0)
+        public static async Task<string> TranslateCompressedPCR(string fullName, int scr_mode = 0)
         {
             string extension = "SCR";
             string name = $"{Path.Combine(Path.GetDirectoryName(fullName), Path.GetFileNameWithoutExtension(fullName))}.{extension}";
@@ -61,6 +61,7 @@ namespace StarFox.Interop.GFX
             {
                 var bytes = CAD.SCR.GetRAWSCRDataArray(ms, 0);
                 await File.WriteAllBytesAsync(name, bytes);
+                return name;
             }
         }
         /// <summary>

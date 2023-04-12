@@ -16,12 +16,15 @@ using System.Windows;
 
 namespace StarFoxMapVisualizer.Misc
 {
+    /// <summary>
+    /// Common helper functions for interacting with files in the editor environment
+    /// </summary>
     internal static class FILEStandard
     {
-        private static ASMImporter ASMImport = new();
-        private static MAPImporter MAPImport = new();
-        private static BSPImporter BSPImport = new();
-        private static COLTABImporter COLTImport = new();
+        internal static readonly ASMImporter ASMImport = new();
+        internal static readonly MAPImporter MAPImport = new();
+        internal static readonly BSPImporter BSPImport = new();
+        internal static readonly COLTABImporter COLTImport = new();
         /// <summary>
         /// Includes a <see cref="SFCodeProjectFileTypes.Assembly"/>, <see cref="SFCodeProjectFileTypes.Include"/> or 
         /// <see cref="SFCodeProjectFileTypes.Palette"/>.
@@ -63,10 +66,10 @@ namespace StarFoxMapVisualizer.Misc
                 AppResources.Includes.Add(asmFile);
             }
         }
-        public static bool SearchProjectForFile(string FileName, out FileInfo? File)
+        public static bool SearchProjectForFile(string FileName, out FileInfo? File, bool IgnoreHyphens = false)
         {
             File = null;
-            var results = AppResources.ImportedProject.SearchFile(FileName);
+            var results = AppResources.ImportedProject.SearchFile(FileName, IgnoreHyphens);
             if (results.Count() == 0) return false;
             if (results.Count() > 1) // ambiguous
                 return false;
@@ -183,6 +186,8 @@ namespace StarFoxMapVisualizer.Misc
         {
             //MAP IMPORT LOGIC   
             if (!await HandleImportMessages(File, MAPImport)) return default;
+            if (!MAPImport.MapContextsSet)
+                await MAPImport.ProcessLevelContexts();
             return await MAPImport.ImportAsync(File.FullName);
         }
         /// <summary>

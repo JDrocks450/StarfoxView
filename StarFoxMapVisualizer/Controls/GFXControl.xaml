@@ -6,6 +6,11 @@
              xmlns:local="clr-namespace:StarFoxMapVisualizer.Controls" xmlns:customcontrols="clr-namespace:WpfPanAndZoom.CustomControls;assembly=WpfPanAndZoom"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800" Background="{DynamicResource WindowBackgroundColor}" Foreground="White">
+    <UserControl.Resources>
+        <ContextMenu x:Key="CopyImageContextMenu">
+            <MenuItem Header="Copy" Name="CopyImage" Click="CopyImage_Click"/>
+        </ContextMenu>
+    </UserControl.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="35"/>
@@ -29,7 +34,7 @@
                     </Grid.RowDefinitions>
                     <DockPanel Margin="10,10,5,10">
                         <TextBlock DockPanel.Dock="Top" Style="{StaticResource TitleText}">Selected Palette</TextBlock>
-                        <Image DockPanel.Dock="Top" Margin="0,10" Name="PaletteViewImage" RenderOptions.BitmapScalingMode="NearestNeighbor" Grid.RowSpan="2"/>
+                        <Image DockPanel.Dock="Top" Margin="0,10" Name="PaletteViewImage" ContextMenu="{StaticResource CopyImageContextMenu}" RenderOptions.BitmapScalingMode="NearestNeighbor" Grid.RowSpan="2"/>
                     </DockPanel>
                     <ScrollViewer Margin="10,0,0,0" Grid.Row="1">
                         <DockPanel Margin="0,0,5,0">
@@ -76,10 +81,7 @@
             </ContentControl>
         </Grid>
         <GridSplitter Grid.Column="1" Grid.Row="1" HorizontalAlignment="Left" Width="2"/>
-        <Border Grid.Row="1" Grid.Column="1" Margin="2,0,0,0">
-            <Border.Background>
-                <ImageBrush TileMode="Tile" Stretch="None" ImageSource="/Resources/Image/transparent.png" Viewport="0,0,6,6" Opacity=".1"  ViewportUnits="Absolute"/>
-            </Border.Background>
+        <Border Grid.Row="1" Grid.Column="1" Margin="2,0,0,0" Background="{StaticResource TransparentImageKey}">
             <customcontrols:PanAndZoomCanvas Background="#02FFFFFF" x:Name="GraphicDragView" ClipToBounds="True">
                 <customcontrols:PanAndZoomCanvas.Resources>
                     <Style TargetType="Image">

@@ -31,7 +31,7 @@ namespace StarFoxMapVisualizer.Controls
     /// </summary>
     public partial class MAP3DControl : Window
     {
-        private static double Editor_ZScrunchPercentage = .25;
+        private static double Editor_ZScrunchPercentage = 1;
 
         /// <summary>
         /// A basic port of Glider Game Object 3D with basic Positional, Scale, etc. parameters and render code
@@ -45,6 +45,7 @@ namespace StarFoxMapVisualizer.Controls
                 Scale = new Vector3D(shape.XScaleFactor, shape.YScaleFactor, shape.ZScaleFactor);                
             }
             public Vector3D Position { get; set; }
+            public Vector3D Rotation { get; set; }
             public Vector3D Scale { get; set; }
             public BSPShape Shape { get; set; }
             public Vector3D ColSize => new Vector3D(Shape.Header.XMax, Shape.Header.YMax, Shape.Header.ZMax);
@@ -59,7 +60,13 @@ namespace StarFoxMapVisualizer.Controls
                 var scale = new ScaleTransform3D(Scale);
                 var fooPos = Position;                
                 var translation = new TranslateTransform3D(fooPos);
+                var rotationX = new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(1, 0, 0), Rotation.X));
+                var rotationY = new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(0, 1, 0), Rotation.Y));
+                var rotationZ = new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(0, 0, 1), Rotation.Z));                
                 transform.Children.Add(scale);
+                transform.Children.Add(rotationZ);
+                transform.Children.Add(rotationY);
+                transform.Children.Add(rotationX);
                 transform.Children.Add(translation);
                 var modelGroup = new Model3DGroup()
                 {
@@ -96,6 +103,9 @@ namespace StarFoxMapVisualizer.Controls
             double arwingSpeedPerFrame = (arwingSpeedPerSec / 15.0);
             return (int)(Delay * arwingSpeedPerFrame);
         }
+
+        Dictionary<string, int> int_alVar = new();
+
         //--
 
         //map 3D collections and vars
@@ -122,6 +132,7 @@ namespace StarFoxMapVisualizer.Controls
         }
         private void ClearMap()
         {
+            int_alVar.Clear();
             MainSceneGroup.Children.Clear();
             mapEventsSpawnedChecklist.Clear();
             mapToEventMap.Clear();
@@ -260,7 +271,7 @@ namespace StarFoxMapVisualizer.Controls
             {
                 var shapeName = asset.ShapeName;
                 if (referencedShapes.ContainsKey(shapeName)) continue;
-                var shapes = await SHAPEStandard.GetShapesByNameOrDefault(shapeName);
+                var shapes = await SHAPEStandard.GetShapesByUniqueNameOrDefault(shapeName);
                 if (shapes == default || shapes.Count() == 0) 
                     continue;
                 var shape = shapes.First();
@@ -305,6 +316,38 @@ namespace StarFoxMapVisualizer.Controls
         {
             MainSceneGroup.Children.Add(node.Render());
         }
+        private void AlSet(string name, int value = 0)
+        {
+            name = $"al_{name}";
+            if (!int_alVar.ContainsKey(name))
+                int_alVar.Add(name, value);
+            int_alVar[name] = value;
+        }
+        private void AlInc(string name, int value = 0)
+        {
+            name = $"al_{name}";
+            if (!int_alVar.ContainsKey(name))
+                int_alVar.Add(name, value);
+            int_alVar[name] += value;
+        }
+        private int AlGet(string name)
+        {
+            name = $"al_{name}";
+            if (!int_alVar.ContainsKey(name))
+                return 0;
+            return int_alVar[name];
+        }
+        private void PerformBasicIStrat(string name, MAPViewerObject3D Object)
+        {
+            switch (name.ToLower())
+            {
+                case "rockhard_istrat":
+                    goto case "hard180yr_istrat";
+                case "hard180yr_istrat":                    
+                    AlSet("roty",180);
+                    break;
+            }
+        }
         /// <summary>
         /// Spawns an event object from the given event data
         /// </summary>
@@ -316,12 +359,21 @@ namespace StarFoxMapVisualizer.Controls
             if (mapEventsSpawnedChecklist.TryGetValue(Evt, out var spawned) && spawned)
                 return default; // uhh, already spawned?
             mapEventsSpawnedChecklist.Add(Evt, true);
+            if (Evt is MAPAlVarEvent alVarEvt) // AL_VAR here
+            {
+                if (!int.TryParse(alVarEvt.Value.Replace("deg",""), out var alValue)) return default;
+                AlSet(alVarEvt.Name, alValue);
+                return default;
+            }
             string? ShapeName = null;
             Location = new Vector3D(0, 0, Depth);
             if (Evt is IMAPShapeEvent shapeDat) // HAS A SHAPE!
                 ShapeName = shapeDat.ShapeName;
             if (Evt is IMAPLocationEvent locationDat)
                 Location = new Vector3D(locationDat.X, -locationDat.Y, (Depth + locationDat.Z) * Editor_ZScrunchPercentage);
+            string? iStrat = default;
+            if (Evt is IMAPStrategyEvent strat)
+                iStrat = strat.StrategyName;
             if (ShapeName != null && referencedShapes.ContainsKey(ShapeName))
             {
                 var asset = referencedShapes[ShapeName];
@@ -329,6 +381,17 @@ namespace StarFoxMapVisualizer.Controls
                 {
                     Position = Location,
                 };
+                if (iStrat != default) PerformBasicIStrat(iStrat, newObject);
+                //rotational alvars *******
+                var rotx = AlGet("rotx");
+                var roty = AlGet("roty");
+                var rotz = AlGet("rotz");
+                newObject.Rotation = new Vector3D(rotx, roty, rotz);
+                //reset them
+                AlSet("rotx", 0);
+                AlSet("roty", 0);
+                AlSet("rotz", 0);
+                //*************************
                 mapObjects.Add(newObject);
                 mapToEventMap.Add(Evt, newObject);
                 return newObject;

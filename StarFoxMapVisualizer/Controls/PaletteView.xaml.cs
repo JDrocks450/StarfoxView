@@ -22,8 +22,6 @@ namespace StarFoxMapVisualizer.Controls
     /// </summary>
     public partial class PaletteView : Window
     {
-        private Bitmap _bitmap;
-
         public PaletteView()
         {
             InitializeComponent();
@@ -31,8 +29,8 @@ namespace StarFoxMapVisualizer.Controls
 
         public void SetupControl(COL Palette)
         {
-            _bitmap = Palette.RenderPalette();
-            PaletteViewImage.Source = _bitmap.Convert();
+            using (var _bitmap = Palette.RenderPalette())
+                PaletteViewImage.Source = _bitmap.Convert();
             ColorsBlock.Text = Palette.GetPalette().Length.ToString();
         }
 

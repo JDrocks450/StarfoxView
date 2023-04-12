@@ -37,12 +37,13 @@ namespace StarFoxMapVisualizer.Controls
         /// The currently selected Palette
         /// </summary>
         public COL SelectedPalette { get; private set; }
-        private Image DragImage { get; set; }
+        private Image DragImage;
 
         public GFXControl()
         {
             InitializeComponent();
-            DragImage = new Image();
+            DragImage= new Image();
+            DragImage.SetResourceReference(ContextMenuProperty, "CopyImageContextMenu");
             GraphicDragView.Children.Add(DragImage);
             Loaded += OnLoad;
         }
@@ -155,6 +156,7 @@ namespace StarFoxMapVisualizer.Controls
 
         private void DrawGraphics()
         {
+            if (DragImage == null) return;
             DragImage.Source = null;
             if (SelectedPalette == null)
                 return;
@@ -186,6 +188,14 @@ namespace StarFoxMapVisualizer.Controls
             if (SelectedPalette == null) return;
             using (var palette = SelectedPalette.RenderPalette())
                 PaletteViewImage.Source = palette.Convert();            
+        }
+
+        private void CopyImage_Click(object sender, RoutedEventArgs e)
+        {
+            var image = (((sender as MenuItem)?.Parent as ContextMenu)?.PlacementTarget as Image)?.Source as BitmapImage;
+            if (image != null) Clipboard.SetImage(image);
+            else MessageBox.Show("Copying that image failed, it isn't of the correct type.\n" +
+                "Probably my bad, I apologize. Let me know with a screenshot please. :)");
         }
     }
 }

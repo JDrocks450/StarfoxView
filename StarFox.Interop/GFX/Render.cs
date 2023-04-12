@@ -44,7 +44,7 @@ namespace StarFox.Interop.GFX
 
             public static Bitmap Tile4BPP(byte[] dat, Color[] pal, bool xflip = false, bool yflip = false)
             {
-                Bitmap tile = new Bitmap(8, 8);
+                Bitmap tile = new Bitmap(8, 8);                
 
                 for (int y = 0; y < 8; y++)
                 {
@@ -60,10 +60,15 @@ namespace StarFox.Interop.GFX
                         int yt = y;
                         if (yflip) yt = 7 - y;
 
-                        tile.SetPixel(xt, yt, pal[colorID % pal.Length]);
+                        var index = colorID % pal.Length;
+                        var column = index % 16;
+                        var color = pal[index];
+                        if (column == 0)
+                            color = Color.Transparent;
+
+                        tile.SetPixel(xt, yt, color);
                     }
                 }
-
                 return tile;
             }
 

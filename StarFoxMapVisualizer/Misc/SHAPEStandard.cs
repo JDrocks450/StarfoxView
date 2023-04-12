@@ -90,7 +90,7 @@ namespace StarFoxMapVisualizer.Misc
         /// Gets the shape by name by finding it in the ShapesMap (Code Project Optimizer), loading the file, and ripping the Shape out.
         /// </summary>
         /// <returns></returns>
-        public static async Task<IEnumerable<BSPShape>?> GetShapesByNameOrDefault(string Name)
+        public static async Task<IEnumerable<BSPShape>?> GetShapesByUniqueNameOrDefault(string UniqueName)
         {
             var project = AppResources.ImportedProject;
             if (!project.Optimizers.Any())
@@ -102,12 +102,12 @@ namespace StarFoxMapVisualizer.Misc
                 throw new Exception("This project has Optimizers, but none of them are for Shapes.\n" +
                     "Use the Refresh ShapeMap button to create this.");
             var shapeMap = shapeOptim.OptimizerData.ObjectMap;
-            if (!shapeMap.TryGetValue(Name.ToUpper(), out var FileName)) return default;
+            if (!shapeMap.TryGetValue(UniqueName.ToUpper(), out var FileName)) return default;
             var path = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(shapeOptim.FilePath), FileName);
             var file = await FILEStandard.OpenBSPFile(new FileInfo(path));
             if (file != null && !AppResources.OpenFiles.ContainsKey(path))
                 AppResources.OpenFiles.Add(path, file);
-            return file.Shapes.Where(x => x.Header.Name.ToLower() == Name.ToLower());
+            return file.Shapes.Where(x => x.Header.Name.ToLower() == UniqueName.ToLower());
         }
         public static GeometryModel3D CreateLine(Point3D Point1, Point3D Point2, Material Material)
         {

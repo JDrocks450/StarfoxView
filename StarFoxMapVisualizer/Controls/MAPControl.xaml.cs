@@ -137,6 +137,16 @@ namespace StarFoxMapVisualizer.Controls
             PanCanvas.Children.Add(AddFieldText("EXIT", CenterFieldX, LevelYEnd));
         }
 
+        private void MapContextButton_Click(object sender, RoutedEventArgs e)
+        {
+            LevelContextViewer viewer = new LevelContextViewer(FILEStandard.MAPImport.LoadedContextDefinitions)
+            {
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                Owner = Application.Current.MainWindow
+            };
+            viewer.Show();
+        }
+
         private void OpenFile(MAPFile File)
         {
             if (tabMap.ContainsKey(File))

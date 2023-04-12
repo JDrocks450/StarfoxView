@@ -33,7 +33,7 @@ namespace StarFox.Interop.ASM.TYP
         public ASMLabelStructure StructureAsLabelStructure => Structure as ASMLabelStructure;
 
         public string? InlineLabel { get; private set; } = null;
-        public bool HasInlineLabel => InlineLabel != default;
+        public bool HasInlineLabel => !string.IsNullOrWhiteSpace(InlineLabel);
 
         /// <summary>
         /// Creates a new ASMLine instance and references the Current file being imported and any imports for symbol linking
@@ -51,12 +51,9 @@ namespace StarFox.Interop.ASM.TYP
             imports[imports.Length - 1] = context.CurrentFile;
         }
 
-        public override void Parse(StreamReader FileStream)
+        private void HighCompat_ParseOutLabels(ref string parseLine)
         {
-            InitStream(FileStream);
-            var line = FileStream.ReadLine().RemoveEscapes();
-            var parseLine = line;
-            if (parseLine.Contains(';')) parseLine = parseLine.Substring(0, parseLine.IndexOf(';'));
+            //COMPATIBILITY WITH EXISTING CODE USED IN BSP IMPORTER!!
             if (parseLine.NormalizeFormatting().StartsWith('.')) // looks like a label
             {//label
                 var inlineStart = parseLine.IndexOf('.') + 1;
@@ -75,10 +72,37 @@ namespace StarFox.Interop.ASM.TYP
                     }
                     InlineLabel = InlineLabel.TrimEnd();
                 }
-            }            
+                return;
+            }
+            //END COMPAT            
+        }
+
+        private void Risky_ParseOutLabels(ref string parseLine, IEnumerable<ASMFile> imports)
+        {
+            var chunks = parseLine.NormalizeFormatting().Split(' ');
+            if (chunks.Length == 0) return;
+            var checkStr = chunks[0];
+            //IS THIS FIRST CHUNK HERE A MACRO?
+            var macro = SymbolOperations.MatchMacro(imports, checkStr);
+            if (macro != default) return; // nope, the first part of this is a macro.
+            //FIRST PART IS NOT A RECOGNIZED MACRO
+            InlineLabel = checkStr.TrimStart().TrimEnd();
+            parseLine = parseLine.Substring(parseLine.IndexOf(" ") + 1);
+        }
+
+        public override void Parse(StreamReader FileStream)
+        {
+            InitStream(FileStream);
+            var line = FileStream.ReadLine().RemoveEscapes();
+            var parseLine = line;
+            //COMMENTS
+            if (parseLine.Contains(';')) parseLine = parseLine.Substring(0, parseLine.IndexOf(';'));
+            //LABELS
+            HighCompat_ParseOutLabels(ref parseLine);
             var newPosition = FileStream.GetActualPosition();
             if (!string.IsNullOrWhiteSpace(parseLine))
             {
+                //CONSTANTS
                 if (ASMDefineLineStructure.TryParse(parseLine, out var result))
                 {
                     Structure = result;
@@ -86,10 +110,16 @@ namespace StarFox.Interop.ASM.TYP
                     result.Constant = constant;
                     context.CurrentFile.Constants.Add(constant);
                 }
-                else if (ASMMacroInvokeLineStructure.TryParse(parseLine, out var mresult, imports))
-                    Structure = mresult;
+                //LABELS w/ a COLON :
                 else if (ASMLabelStructure.TryParse(parseLine, out var lresult))
                     Structure = lresult;
+                //MACRO INVOKATIONS
+                else
+                {
+                    Risky_ParseOutLabels(ref parseLine, imports);
+                    if (ASMMacroInvokeLineStructure.TryParse(parseLine, out var mresult, imports))
+                        Structure = mresult;
+                }
             }
             Text = line;
             Length = newPosition - Position;

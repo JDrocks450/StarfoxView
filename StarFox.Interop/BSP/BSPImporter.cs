@@ -156,6 +156,32 @@ namespace StarFox.Interop.BSP
             return point;
         }
         /// <summary>
+        /// Tries to find a Shape Header, if <see langword="true"/> then the new shape definition is automatically
+        /// set to be the <see cref="CurrentShape"/>
+        /// </summary>
+        /// <param name="line"></param>
+        /// <param name="Context"></param>
+        /// <returns></returns>
+        internal bool LookForShapeHeader(ASMLine line)
+        {
+            //looks promising, is this line a shape header?
+            if (!BSPShapeHeader.TryParse(line, out var header, Includes)) return false; // nope, it's not.
+#if SPECIFIC
+            if (header.Name != "training") return false;
+#endif
+            if (CurrentShape != default) // yikes, we found a stray definition, or perhaps one that references another.
+            {
+                // stray shape, push this header to the strays list.          
+                CurrentFile.BlankShapes.Add(CurrentShape);
+                CurrentShape = null;
+            }
+            //found header !!!
+            CurrentShape = new BSPShape(header); // created a new shape to dump info into
+            //Reset vars to default values
+            ResetVars();
+            return true;
+        }
+        /// <summary>
         /// Will push a point to the base shape, not a keyframe.
         /// PointType is important, as the width of the point is determined by its type.
         /// <code>pb, pw [etc.] x,y,z</code>
@@ -256,22 +282,62 @@ namespace StarFox.Interop.BSP
 
         }
 
-        public override void SetImports(params ASMFile[] Includes) => baseImporter.SetImports(Includes);        
-                   
-        private bool LookForShapeHeader(ASMLine line, BSPImporterContext Context)
-        {
-            //looks promising, is this line a shape header?
-            if (!BSPShapeHeader.TryParse(line, out var header, Context.Includes)) return false; // nope, it's not.
-#if SPECIFIC
-            if (header.Name != "training") return false;
-#endif
-            //found header !!!
-            Context.CurrentShape = new BSPShape(header); // created a new shape to dump info into
-            //Reset vars to default values
-            Context.ResetVars();
-            return true;
-        }
+        public override void SetImports(params ASMFile[] Includes) => baseImporter.SetImports(Includes);                                  
 
+        /// <summary>
+        /// After all shapes have been defined and parsed, this function can be used to attempt to turn Blank Shapes
+        /// into their original forms through finding where their point data actually lives.
+        /// </summary>
+        private void DereferenceBlankShapes(BSPFile File)
+        {
+            List<BSPShape> completes = new(); // completed shapes
+            foreach(var blankShape in File.BlankShapes) // blank shapes iteration
+            {
+                foreach(var shape in File.Shapes) // iterate over all shapes
+                {
+                    if (shape.Equals(blankShape)) 
+                        continue; // ignore the current blank shape, please.
+                    if (shape.Header.PointPtr == blankShape.Header.PointPtr &&
+                        shape.Header.FacePtr == blankShape.Header.FacePtr)
+                    { // we FOUND the data!
+                        blankShape.CopyData(shape);
+                        if (blankShape.Header.Name == shape.Header.Name)
+                        {
+                            var tempName = shape.Header.Name + "";
+                            if (!string.IsNullOrWhiteSpace(blankShape.Header.InlineLabelName))
+                                blankShape.Header.Name = blankShape.Header.InlineLabelName;                    
+                        }
+                        completes.Add(blankShape);
+                    }    
+                }
+            }
+            foreach (var shape in completes)
+            {
+                File.Shapes.Add(shape);
+                File.BlankShapes.Remove(shape);
+            }
+            completes.Clear();
+        }
+        private void FixDuplicateNames(BSPFile File)
+        {
+            foreach (var shape in File.Shapes) // iterate over all shapes
+            {
+                var matches = File.Shapes.Where(x => shape != x && x.Header.UniqueName == shape.Header.UniqueName);
+                int index = 0;
+                foreach (var match in matches)
+                {
+                    index++;
+                    match.Header.UniqueName = match.Header.Name + $" ({index})";
+                }
+            }
+        }
+        /// <summary>
+        /// Attempts to turn this line into a <see cref="BSPFace"/> and returns whether that's feasible or not.
+        /// If true, then the face is automatically processed to the <see cref="BSPImporterContext.CurrentShape"/>
+        /// </summary>
+        /// <param name="line"></param>
+        /// <param name="Context"></param>
+        /// <returns></returns>
         private bool LookForFaceDefinition(ASMLine line, BSPImporterContext Context)
         {
             if (BSPFaceStructureConverter.TryParse(in line, out var Face))
@@ -340,25 +406,21 @@ namespace StarFox.Interop.BSP
                         if (!line.HasStructureApplied) continue; // hmm but this line doesn't have a recognized structure.
                         if (line.Structure is ASMMacroInvokeLineStructure macroInvoke)
                         {
-                            if (asmContext.CurrentShape == default) // looking for a shape header...
-                            {
-                                if(LookForShapeHeader(line, asmContext))
-                                {
-                                    var name = asmContext.CurrentShape.Header.Name;
-                                    ;
-                                }
-                                continue;
-                            }
+                            //ALWAYS LOOK FOR HEADERS
+                            if (asmContext.LookForShapeHeader(line))
+                                continue; // Started a new shape  
+                            if (asmContext.CurrentShape == default) continue;
+                            //NOT A HEADER, CHECK IF IT HAS A LABEL (JumpTab)
                             if (line.HasInlineLabel)
                             {
                                 if (asmContext.CurrentShape.FrameData.ContainsKey(line.InlineLabel))
                                     asmContext.currentFrameDefinition = line.InlineLabel; // we're now defining a keyframe
                             }
                             //looking for model stuff
-                            //** advanced function calls first
+                            //** advanced function calls first -- Recognize Faces
                             if (LookForFaceDefinition(line, asmContext)) continue;
                             BSPImporterContext.PointsModes mode = BSPImporterContext.PointsModes.Pointsb;
-                            //** then basic function calls
+                            //** then basic function calls (recognize everything else)
                             float pbDivisor = 1, yFactor = 1; // point-specific macro math operations
                             switch (macroInvoke.MacroReference.Name.ToLower())
                             {
@@ -441,6 +503,8 @@ namespace StarFox.Interop.BSP
                     asmContext.ResetVars();
                 }
             }
+            DereferenceBlankShapes(file);
+            FixDuplicateNames(file);
             end:
             return file;
         }

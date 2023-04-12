@@ -1,6 +1,7 @@
 ﻿using StarFox.Interop.ASM;
 using StarFox.Interop.ASM.TYP;
 using StarFox.Interop.ASM.TYP.STRUCT;
+using StarFox.Interop.MAP.CONTEXT;
 using StarFox.Interop.MAP.EVT;
 using System;
 using System.Collections.Generic;
@@ -15,9 +16,21 @@ namespace StarFox.Interop.MAP
         public override string[] ExpectedIncludes => new string[]
         {
             "MAPMACS.INC", // MAPMACS.INC is expected
-            "BGS.ASM" // BGS.ASM contains data on which levels should be have like
+            "BGS.ASM", // BGS.ASM contains data what what levels should appear like
+            "BGMACS.INC"
         };
         private ASMImporter baseImporter = new();
+        private MAPContextFile? mapContextDefinitions;
+        /// <summary>
+        /// Using <see cref="ProcessLevelContexts"/> functions will populate this value.
+        /// <para>You should use this property to explore the loaded contexts, but not edit them.</para>
+        /// </summary>
+        public MAPContextFile? LoadedContextDefinitions => mapContextDefinitions;
+        /// <summary>
+        /// Dictates whether or not this <see cref="MAPImporter"/> has contexts set.
+        /// <para>See: <see cref="ProcessLevelContexts(string, ASMFile)"/></para>
+        /// </summary>
+        public bool MapContextsSet => mapContextDefinitions != null;
         public MAPImporter()
         {
 
@@ -26,6 +39,55 @@ namespace StarFox.Interop.MAP
         {
             _ = ImportAsync(FilePath).Result;
         }
+        /// <summary>
+        /// Optionally, this importer can attach <see cref="CONTEXT.MAPContextDefinition"/> info
+        /// to this MAP import by getting data from <c>BGS.ASM</c> data.
+        /// </summary>
+        /// <param name="BGSASM">The full path to the <c>BGS.ASM</c> file.</param>
+        /// <param name="BGMACS">The BGMACS file imported for finding symbols.</param>
+        /// <returns></returns>
+        public async Task<MAPContextFile> ProcessLevelContexts(string BGSASM, ASMFile BGMACS)
+        {
+            var importer = new MAPContextImporter();
+            importer.SetImports(BGMACS);
+            var message = importer.CheckWarningMessage(BGSASM);
+            if (message != default) throw new Exception(message);
+            var bgsASM = mapContextDefinitions = await importer.ImportAsync(BGSASM);
+            return bgsASM;
+        }
+        /// <summary>
+        /// Optionally, this importer can attach <see cref="CONTEXT.MAPContextDefinition"/> info
+        /// to this MAP import by getting data from <c>BGS.ASM</c> data.
+        /// <para>This will use <see cref="SetImports(ASMFile[])"/> to find the <c>BGMACS.INC</c> file. 
+        /// If it is not imported, this method will throw an exception.</para>
+        /// </summary>
+        /// <param name="BGSASM">The full path to the <c>BGS.ASM</c> file.</param>
+        public Task<MAPContextFile> ProcessLevelContexts(string BGSASM)
+        {
+            var bgmacs = baseImporter.Context.Includes.FirstOrDefault(x =>
+                Path.GetFileName(x.OriginalFilePath).ToUpper() == "BGMACS.INC");
+            if (bgmacs == default) throw new FileNotFoundException("BGMACS.INC is not imported.");
+            return ProcessLevelContexts(BGSASM, bgmacs);
+        }
+        /// <summary>
+        /// Optionally, this importer can attach <see cref="CONTEXT.MAPContextDefinition"/> info
+        /// to this MAP import by getting data from <c>BGS.ASM</c> data.
+        /// <para>This will use <see cref="SetImports(ASMFile[])"/> to find the <c>BGMACS.INC</c> file
+        /// and <c>BGS.ASM</c>. If they are not imported, this method will throw an exception.</para>       
+        /// </summary>
+        public Task<MAPContextFile> ProcessLevelContexts()
+        {
+            var bgsasm = baseImporter.Context.Includes.FirstOrDefault(x =>
+                Path.GetFileName(x.OriginalFilePath).ToUpper() == "BGS.ASM");
+            if (bgsasm == default) throw new FileNotFoundException("BGS.ASM is not imported.");
+            return ProcessLevelContexts(bgsasm.OriginalFilePath);
+        }
+        /// <summary>
+        /// Optionally, this importer can attach <see cref="CONTEXT.MAPContextDefinition"/> info
+        /// to this MAP import by getting data from <c>BGS.ASM</c> data.
+        /// </summary>
+        public void ProcessLevelContexts(MAPContextFile MapContextFile) =>
+            mapContextDefinitions = MapContextFile;
         /// <summary>
         /// Sets the currently included symbol definitions files.
         /// </summary>
@@ -60,9 +122,13 @@ namespace StarFox.Interop.MAP
                     file.LevelData.Events.Add(alvar);
                 else if (MAPEvent.TryParse<MAPWaitEvent>(line, out var wait))
                     file.LevelData.Events.Add(wait);
-                else                
+                else if (MAPEvent.TryParse<MAPInitLevelEvent>(line, out var init))
+                    file.LevelData.Events.Add(init);
+                else if (MAPEvent.TryParse<MAPSetBG>(line, out var setBG))
+                    file.LevelData.Events.Add(setBG);
+                else
                     file.LevelData.Events.Add(new MAPUnknownEvent(line)); // default add unknown map event                
-                file.LevelData.EventsByDelay.Add(file.LevelData.Events.Count - 1, runningDelay);
+                file.LevelData.EventsByDelay.Add(file.LevelData.Events.Count - 1, runningDelay);                
                 var latestNode = file.LevelData.Events.Last();
                 if (latestNode is IMAPDelayEvent delay)
                     runningDelay += delay.Delay;

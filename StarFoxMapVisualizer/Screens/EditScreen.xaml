@@ -30,7 +30,7 @@
                 <Setter.Value>
                     <DataTemplate>
                         <StackPanel Orientation="Horizontal">
-                            <Image Margin="0,0,10,0" Source="/Resources/Image/folder_empty.png" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+                            <Image Margin="0,0,10,0" Source="/Resources/Image/folder_full.png" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
                             <TextBlock Text="{Binding}"/>
                         </StackPanel>
                     </DataTemplate>
@@ -89,6 +89,19 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        <Style TargetType="TreeViewItem" x:Key="ScreenTreeStyle" BasedOn="{StaticResource BaseTreeStyle}">
+            <Setter Property="Foreground" Value="{StaticResource ScreenNodeColor}"/>
+            <Setter Property="HeaderTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <Image Margin="0,0,10,0" Source="/Resources/Image/screenIcon.png" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+                            <TextBlock Text="{Binding}"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         <Style TargetType="TreeViewItem" x:Key="SpriteTreeStyle" BasedOn="{StaticResource BaseTreeStyle}">
             <Setter Property="Foreground" Value="{StaticResource SpriteNodeColor}"/>
             <Setter Property="HeaderTemplate">
@@ -129,24 +142,13 @@
                             <Style TargetType="TreeViewItem" BasedOn="{StaticResource ProjectTreeStyle}"/>
                         </TreeView.Resources>
                         <TreeViewItem IsExpanded="True" Style="{StaticResource ProjectTreeStyle}" FontWeight="Bold">
-                            <TreeViewItem Header="Folder" Style="{StaticResource FolderTreeStyle}">
-                                
-                            </TreeViewItem>
-                            <TreeViewItem Header="File" Style="{StaticResource FileTreeStyle}">
-
-                            </TreeViewItem>
-                            <TreeViewItem Header="Import" Style="{StaticResource FileImportTreeStyle}">
-
-                            </TreeViewItem>
-                            <TreeViewItem Header="Palette" Style="{StaticResource PaletteTreeStyle}">
-
-                            </TreeViewItem>
-                            <TreeViewItem Header="Color Table" Style="{StaticResource ColorTableTreeStyle}">
-
-                            </TreeViewItem>
-                            <TreeViewItem Header="Graphics" Style="{StaticResource SpriteTreeStyle}">
-
-                            </TreeViewItem>
+                            <TreeViewItem Header="Folder" Style="{StaticResource FolderTreeStyle}"/>
+                            <TreeViewItem Header="File" Style="{StaticResource FileTreeStyle}"/>
+                            <TreeViewItem Header="Import" Style="{StaticResource FileImportTreeStyle}"/>
+                            <TreeViewItem Header="Palette" Style="{StaticResource PaletteTreeStyle}"/>
+                            <TreeViewItem Header="Color Table" Style="{StaticResource ColorTableTreeStyle}"/>
+                            <TreeViewItem Header="Graphics" Style="{StaticResource SpriteTreeStyle}"/>
+                            <TreeViewItem Header="Screens" Style="{StaticResource ScreenTreeStyle}"/>
                         </TreeViewItem>
                     </TreeView>
                 </ContentControl>
@@ -225,7 +227,7 @@
                 <TextBlock VerticalAlignment="Center">Super Secret Functions: </TextBlock>
                 <Button x:Name="ExportAll3DButton" Margin="10,0,0,0" Padding="10,5" Background="DarkRed" Foreground="White" Click="ExportAll3DButton_Click">Export All 3D Data</Button>
                 <Button x:Name="SHAPEMapRefreshButton" Padding="10,5" Background="Gray" Foreground="White" Click="SHAPEMapRefreshButton_Click" Content="Refresh Editor SHAPE Map"/>
-
+                <Button x:Name="BGSASMViewerButton" Padding="10,5" Background="#FF00A76E" Foreground="White" Click="BGSASMViewerButton_Click" Content="View Level Contexts"/>
             </StackPanel>
         </Border>
     </Grid>

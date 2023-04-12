@@ -16,6 +16,11 @@ namespace StarFox.Interop.BSP
         /// </summary>
         public HashSet<BSPShape> Shapes { get; internal set; } = new();
         /// <summary>
+        /// These are shapes that are just a standalone definition. Developers used a trick to get multiple shapes out of one set of faces and
+        /// points through clever use of inline labels that reference the same shape code.
+        /// </summary>
+        public HashSet<BSPShape> BlankShapes { get; internal set; } = new();
+        /// <summary>
         /// Errors that happened while exporting are dumped here
         /// </summary>
         public StringBuilder ImportErrors { get; } = new();

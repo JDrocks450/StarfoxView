@@ -1,4 +1,5 @@
 ﻿using StarFox.Interop.ASM;
+using StarFox.Interop.MAP.CONTEXT;
 using StarFox.Interop.MAP.EVT;
 using StarFox.Interop.MISC;
 using System;
@@ -90,6 +91,7 @@ namespace StarFox.Interop.MAP
         /// The level data contained in this file
         /// </summary>
         public MAPData LevelData { get; internal set; } = new();
+        public MAPContextDefinition LevelContext { get; internal set; }
         /// <summary>
         /// Creates a new MAPFile representing the referenced file
         /// </summary>
