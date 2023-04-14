@@ -13,6 +13,7 @@ namespace StarFox.Interop
         public virtual string[] ExpectedIncludes { get; } = new string[] { };
         internal abstract ImporterContext<IncludeType>? GetCurrentContext<IncludeType>() where IncludeType : IImporterObject;
         public T? ImportedObject { get; protected set; }
+        public StringBuilder ErrorOut { get; protected set; } = new();
         public abstract void SetImports(params ASMFile[] Includes);
         /// <summary>
         /// Imports the selected file now with the current context.

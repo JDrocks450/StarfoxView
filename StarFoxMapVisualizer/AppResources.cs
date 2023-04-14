@@ -19,6 +19,10 @@ namespace StarFoxMapVisualizer
     internal static class AppResources
     {
         /// <summary>
+        /// Dictates whether the <see cref="MAPImporter"/> can automatically find refernenced level sections and populate them
+        /// </summary>
+        public static Boolean MapImporterAutoDereferenceMode = true;
+        /// <summary>
         /// Files that are marked as *include files, as in containing symbol information
         /// </summary>
         public static HashSet<ASMFile>? Includes => ImportedProject?.Includes;

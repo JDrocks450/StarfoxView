@@ -129,6 +129,17 @@ namespace StarFoxMapVisualizer.Controls
                 Header = "LINE",
                 Content = MapEvent.Callsite.Line
             });
+            if (MapEvent is IMAPBGEvent mapBG)
+            {
+                var contentItem = new HeaderedContentControl()
+                {
+                    Header = "EDITOR BACKGROUND",
+                    Content = "Switch BG to this",
+                    Cursor = Cursors.Hand,
+                    Background = Brushes.SlateBlue
+                };
+                ComponentsStack.Children.Add(contentItem);
+            }
         }
     }
 }

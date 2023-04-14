@@ -7,7 +7,7 @@ namespace StarFox.Interop.MAP.CONTEXT
     internal class MAPContextImporterContext : ImporterContext<ASMFile>
     {
         internal new MAPContextFile CurrentFile { get; }
-        internal MAPContextDefinition CurrentDefinition { get; private set; }
+        internal MAPContextDefinition? CurrentDefinition { get; private set; }
         private bool BGINITIALIZED = false;
 
         internal MAPContextImporterContext(MAPContextFile ParentFile) { 
@@ -41,7 +41,7 @@ namespace StarFox.Interop.MAP.CONTEXT
         {
             if (CurrentDefinition == null) return false;
             if (!line.HasStructureApplied) return false;
-            if (!(line.Structure is ASMMacroInvokeLineStructure macroInvokation)) return false;
+            if (!(line.Structure is ASMMacroInvokeLineStructure macroInvokation)) return false;            
             string? paramStr(int index) => macroInvokation.TryGetParameter(index)?.ParameterContent;
             string[] paramsStr = macroInvokation.Parameters.
                 Select(x => x?.ParameterContent).Where(y => !string.IsNullOrWhiteSpace(y)).ToArray();                
@@ -54,10 +54,10 @@ namespace StarFox.Interop.MAP.CONTEXT
                     BGINITIALIZED = true;
                     return true;
                 case "bg2chr": // SET SCREEN CHARS (TILES)
-                    SetChr(param1str);
+                    SetChr(macroInvokation);
                     return true;
                 case "bg2scr": // SET SCREEN ITSELF
-                    SetScr(param1str); return true;                    
+                    SetScr(macroInvokation); return true;                    
                 case "palette": // Background Palette
                     SetBGPalette(param1str);
                     return true;
@@ -68,10 +68,41 @@ namespace StarFox.Interop.MAP.CONTEXT
                     SetGameplayFlags(paramsStr);
                     return true;
                 case "bg3chr": // SET SCREEN CHARS BG3 (TILES)
-                    SetChr3(param1str);
+                    SetChr3(macroInvokation);
                     return true;
                 case "bg3scr": // SET SCREEN ITSELF BG3
-                    SetScr3(param1str); 
+                    SetScr3(macroInvokation); 
+                    return true;
+                case "bg2xscroll":
+                case "bg2hoff":
+                    {
+                        var hoff = macroInvokation.TryGetParameter(0)?.TryParseOrDefault() ?? 0;
+                        CurrentDefinition.BG2.HorizontalOffset = hoff;
+                    }
+                    return true;
+                case "bg2yscroll":
+                    {
+                        var vofs = macroInvokation.TryGetParameter(0)?.TryParseOrDefault() ?? 0;
+                        CurrentDefinition.BG2.VerticalOffset = vofs;
+                    }
+                    return true;
+                case "bg3xscroll":
+                    {
+                        var hoff = macroInvokation.TryGetParameter(0)?.TryParseOrDefault() ?? 0;
+                        CurrentDefinition.BG3.HorizontalOffset = hoff;
+                    }
+                    return true;
+                case "bg3yscroll":
+                    {
+                        var vofs = macroInvokation.TryGetParameter(0)?.TryParseOrDefault() ?? 0;
+                        CurrentDefinition.BG3.VerticalOffset = vofs;
+                    }
+                    return true;
+                case "setbg3vofs":
+                    {
+                        var vofs = macroInvokation.TryGetParameter(0)?.TryParseOrDefault() ?? 0;
+                        CurrentDefinition.BG3.VerticalOffset = vofs*100;
+                    }
                     return true;
                 case "bgm": // background music
                     SetBgm(param1str);
@@ -110,25 +141,29 @@ namespace StarFox.Interop.MAP.CONTEXT
             if (PalName == null) return;
             CurrentDefinition.BackgroundPalette = PalName;
         }
-        private void SetChr(string? ChrFileName)
+        private void SetChr(ASMMacroInvokeLineStructure BGChrLine)
         {
-            if (ChrFileName== null) return;
-            CurrentDefinition.BG2ChrFile = ChrFileName;
+            var bgName = BGChrLine.TryGetParameter(0)?.ParameterContent;
+            if(bgName == null) return;
+            CurrentDefinition.BG2.BGChrFile = bgName;
         }
-        private void SetScr(string? ScrFileName)
+        private void SetScr(ASMMacroInvokeLineStructure BGScrLine)
         {
-            if (ScrFileName == null) return;
-            CurrentDefinition.BG2ScrFile = ScrFileName;
+            var bgName = BGScrLine.TryGetParameter(0)?.ParameterContent;
+            if (bgName == null) return;
+            CurrentDefinition.BG2.BGScrFile = bgName;
         }
-        private void SetChr3(string? ChrFileName)
+        private void SetChr3(ASMMacroInvokeLineStructure BGChrLine)
         {
-            if (ChrFileName == null) return;
-            CurrentDefinition.BG3ChrFile = ChrFileName;
+            var bgName = BGChrLine.TryGetParameter(0)?.ParameterContent;
+            if (bgName == null) return;
+            CurrentDefinition.BG3.BGChrFile = bgName;
         }
-        private void SetScr3(string? ScrFileName)
+        private void SetScr3(ASMMacroInvokeLineStructure BGScrLine)
         {
-            if (ScrFileName == null) return;
-            CurrentDefinition.BG3ScrFile = ScrFileName;
+            var bgName = BGScrLine.TryGetParameter(0)?.ParameterContent;
+            if (bgName == null) return;
+            CurrentDefinition.BG3.BGScrFile = bgName;
         }
         internal void EndDefinition()
         {

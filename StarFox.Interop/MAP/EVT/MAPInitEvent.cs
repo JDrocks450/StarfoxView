@@ -8,7 +8,7 @@ namespace StarFox.Interop.MAP.EVT
     /// <para>It will do the provided Fade, if applicable.</para>
     /// <para>It will do the provided "Wipe" or transition, if applicable.</para>
     /// </summary>
-    public class MAPInitLevelEvent : MAPEvent, IMAPNamedEvent
+    public class MAPInitLevelEvent : MAPEvent, IMAPNamedEvent, IMAPBGEvent
     {
         protected override string[] CompatibleMacros { get; } =
         {
@@ -35,6 +35,7 @@ namespace StarFox.Interop.MAP.EVT
             Callsite = Line;
             var structure = Line.StructureAsMacroInvokeStructure;
             if (structure == null) return;
+            EventName = structure.MacroReference.Name;
             Background = structure.TryGetParameter(0)?.ParameterContent;
             FadeStyle = structure.TryGetParameter(1)?.ParameterContent;
             WipeStyle = structure.TryGetParameter(2)?.ParameterContent;

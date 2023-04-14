@@ -17,7 +17,8 @@ namespace StarFox.Interop.MAP
         {
             "MAPMACS.INC", // MAPMACS.INC is expected
             "BGS.ASM", // BGS.ASM contains data what what levels should appear like
-            "BGMACS.INC"
+            "BGMACS.INC",
+            "VARS.INC"
         };
         private ASMImporter baseImporter = new();
         private MAPContextFile? mapContextDefinitions;
@@ -97,25 +98,56 @@ namespace StarFox.Interop.MAP
             baseImporter.SetImports(Imports);
         }
         /// <summary>
+        /// Finds the specified <see cref="MAPContextDefinition"/> by name (as it appears in code, not 
+        /// <see cref="MAPSetBG.TranslateNameToMAPContext(in string, string)"/>)
+        /// </summary>
+        /// <param name="Name"></param>
+        /// <returns></returns>
+        public MAPContextDefinition? FindContext(string Name)
+        {
+            var bgname = MAPSetBG.TranslateNameToMAPContext(Name);
+            return mapContextDefinitions?.Definitions?.FirstOrDefault(
+                x => x.Key.ToLower() == bgname.ToLower()).Value;
+        }
+
+        /// <summary>
         /// Attempts to import the given file and interpret the code as a MAP file
         /// </summary>
         /// <param name="FilePath"></param>
         /// <returns></returns>
         public override async Task<MAPFile> ImportAsync(string FilePath)
         {
+            ErrorOut.Clear();
             var baseImport = await baseImporter.ImportAsync(FilePath);
             if (baseImport == default) throw new InvalidOperationException("That file could not be parsed.");
-            var file = ImportedObject = new MAPFile(baseImport); // from ASM file
+            var file = ImportedObject = new MAPFile(baseImport); // from ASM file                                    
             var title = Path.GetFileNameWithoutExtension(FilePath);
             file.LevelData.Title = title;
             int runningDelay = 0;
-            foreach(var line in file.Chunks.OfType<ASMLine>()) // get all lines
+
+            //Appends a new background to this file
+            bool AppendBackground(string BackgroundName)
+            {
+                var context = FindContext(BackgroundName);
+                if (context == default)
+                {
+                    ErrorOut.AppendLine($"Can't add a context: {BackgroundName} because it wasn't found.\n" +
+                        $"Attempted to translate it to be: {MAPSetBG.TranslateNameToMAPContext(BackgroundName)}, no luck.");
+                    return false;                 
+                }
+                file.AttachContext(context, runningDelay);
+                return true;
+            }
+
+            foreach (var line in file.Chunks.OfType<ASMLine>()) // get all lines
             { // go through chunks looking for Map objects
                 if (!line.HasStructureApplied) continue;
                 if (line.Structure is not ASMMacroInvokeLineStructure) continue; // we can't do much with these right now
                 // ** begin macro invoke line                
                 if (MAPEvent.TryParse<MAPObjectEvent>(line, out var mapobj))
                     file.LevelData.Events.Add(mapobj);
+                else if (MAPEvent.TryParse<MAPJSREvent>(line, out var mapjsr))                
+                    file.LevelData.Events.Add(mapjsr);                
                 else if (MAPEvent.TryParse<MAPPathObjectEvent>(line, out var mappath))
                     file.LevelData.Events.Add(mappath);
                 else if (MAPEvent.TryParse<MAPAlVarEvent>(line, out var alvar))
@@ -123,9 +155,15 @@ namespace StarFox.Interop.MAP
                 else if (MAPEvent.TryParse<MAPWaitEvent>(line, out var wait))
                     file.LevelData.Events.Add(wait);
                 else if (MAPEvent.TryParse<MAPInitLevelEvent>(line, out var init))
+                {
                     file.LevelData.Events.Add(init);
+                    AppendBackground(init.Background);
+                }
                 else if (MAPEvent.TryParse<MAPSetBG>(line, out var setBG))
+                {
                     file.LevelData.Events.Add(setBG);
+                    AppendBackground(setBG.Background);
+                }
                 else
                     file.LevelData.Events.Add(new MAPUnknownEvent(line)); // default add unknown map event                
                 file.LevelData.EventsByDelay.Add(file.LevelData.Events.Count - 1, runningDelay);                

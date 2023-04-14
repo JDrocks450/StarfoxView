@@ -90,7 +90,7 @@ namespace StarFoxMapVisualizer.Screens
                 {
                     Header = Message
                 };
-                importItem.Click += async delegate
+                importItem.Click += delegate
                 {
                     //DO INCLUDE
                     var result = AppResources.ImportedProject.CloseFile(FileNode.FilePath);
@@ -365,7 +365,7 @@ namespace StarFoxMapVisualizer.Screens
                     return;
                 case SFCodeProjectFileTypes.SCR: // screens
                     //OPEN THE SCR FILE
-                    await GFXStandard.OpenSCR(File);
+                    GFXStandard.OpenSCR(File);
                     LoadingSpan.Visibility = Visibility.Collapsed;
                     UpdateInterface();
                     CurrentMode = ViewMode.GFX;

@@ -22,6 +22,12 @@ namespace StarFoxMapVisualizer.Controls
     /// </summary>
     public partial class LevelContextViewer : Window
     {
+        /// <summary>
+        /// This event is raised when the "Use as Level Context" button is pressed.
+        /// <para>You should update the preview of the level context with this new selection when this event is raised.</para>
+        /// </summary>
+        public event EventHandler<MAPContextDefinition> EditorPreviewSelectionChanged;
+
         public LevelContextViewer()
         {
             InitializeComponent();
@@ -37,10 +43,19 @@ namespace StarFoxMapVisualizer.Controls
         public LevelContextViewer(MAPContextFile ContextFile) : this()
         {
             if (ContextFile != default)
-                AttachMany(ContextFile);
+                Loaded += async delegate {
+                    await AttachMany(ContextFile);
+                }; 
+        }
+        public LevelContextViewer(params MAPContextDefinition[] Contexts) : this()
+        {
+            Loaded += async delegate {
+                await AttachMany(Contexts);
+            };
         }
         public MAPContextDefinition? SelectedLevelContext { get; private set; }
         public MAPContextFile? SelectedFile { get; private set; }
+        private MAPContextDefinition ViewSwitcherSelectionAsContext => (MAPContextDefinition)ViewSwitcher.SelectedItem;
 
         public async Task Attach(MAPContextDefinition levelContext, bool ExtractCCR = false, bool ExtractPCR = false)
         {
@@ -55,26 +70,37 @@ namespace StarFoxMapVisualizer.Controls
             await LevelViewerControl.Attach(levelContext, ExtractCCR, ExtractPCR);
             IsEnabled = true;
         }
-        public void AttachMany(MAPContextFile contextFile)
+        public async Task AttachMany(MAPContextFile contextFile)
         {
             SelectedFile = contextFile;
             if (SelectedFile == null || !SelectedFile.Definitions.Any()) return;
-            ViewBar.Visibility = Visibility.Visible;
-            ViewSwitcher.SelectionChanged -= ChangeDefinition;
-            ViewSwitcher.ItemsSource = contextFile.Definitions.Values;
-            ViewSwitcher.SelectionChanged += ChangeDefinition;
-            if (ViewSwitcher.HasItems)
-                ViewSwitcher.SelectedIndex = 1;
+            await AttachMany(contextFile.Definitions.Values.ToArray());
+        }
+        public async Task AttachMany(params MAPContextDefinition[] Contexts)
+        {
+            ViewBar.Visibility = Visibility.Collapsed;
+            if (Contexts.Length > 1)
+            {
+                ViewBar.Visibility = Visibility.Visible;
+                ViewSwitcher.SelectionChanged -= ChangeDefinition;
+                ViewSwitcher.ItemsSource = Contexts;
+                ViewSwitcher.SelectionChanged += ChangeDefinition;
+                if (ViewSwitcher.HasItems)
+                    ViewSwitcher.SelectedIndex = 1;
+            }
+            else if (Contexts.Length == 1)
+                await Attach(Contexts[0]);
+            else return;
         }
 
         private async void ChangeDefinition(object sender, SelectionChangedEventArgs e)
         {
-            await Attach((MAPContextDefinition)ViewSwitcher.SelectedItem);
+            await Attach(ViewSwitcherSelectionAsContext);
         }
 
         private async void ReextractButton_Click(object sender, RoutedEventArgs e)
         {
-            await Attach((MAPContextDefinition)ViewSwitcher.SelectedItem, true, true);
+            await Attach(ViewSwitcherSelectionAsContext, true, true);
         }
 
         private void HOST_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -94,8 +120,13 @@ namespace StarFoxMapVisualizer.Controls
 
         private void ShareButton_Click(object sender, RoutedEventArgs e)
         {
-            var image = LevelViewerControl.BG2Render.Source as BitmapImage;
+            var image = LevelViewerControl.ImageContent.BG2Render.ImageSource as BitmapImage;
             if (image != null) Clipboard.SetImage(image);
+        }
+
+        private void UseAsButton_Click(object sender, RoutedEventArgs e)
+        {
+            EditorPreviewSelectionChanged?.Invoke(this, SelectedLevelContext);
         }
     }
 }

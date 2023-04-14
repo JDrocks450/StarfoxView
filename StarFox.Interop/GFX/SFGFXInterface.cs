@@ -83,7 +83,7 @@ namespace StarFox.Interop.GFX
         /// </summary>
         /// <param name="FileName">The path to get to the file</param>
         /// <returns></returns>
-        public static async Task<FXCGXFile?> OpenCGX(string FileName)
+        public static FXCGXFile? OpenCGX(string FileName)
         {
             using (var fs = File.OpenRead(FileName))
             {
@@ -97,7 +97,7 @@ namespace StarFox.Interop.GFX
         /// </summary>
         /// <param name="FileName">The path to get to the file</param>
         /// <returns></returns>
-        public static async Task<FXSCRFile?> OpenSCR(string FileName)
+        public static FXSCRFile? OpenSCR(string FileName)
         {
             using (var fs = File.OpenRead(FileName))
             {
@@ -111,7 +111,7 @@ namespace StarFox.Interop.GFX
         /// </summary>
         /// <param name="FileName">The path to get to the file</param>
         /// <returns></returns>
-        public static async Task<FXSCRFile?> ImportSCR(string FileName)
+        public static FXSCRFile? ImportSCR(string FileName)
         {
             using (var fs = File.OpenRead(FileName))
             {

@@ -505,7 +505,8 @@ namespace StarFox.Interop.BSP
             }
             DereferenceBlankShapes(file);
             FixDuplicateNames(file);
-            end:
+        end:
+            ErrorOut = file.ImportErrors;
             return file;
         }
 

@@ -77,6 +77,7 @@ namespace StarFox.Interop.MAP.CONTEXT
             {
                 Includes = _baseImporter.CurrentIncludes
             };
+            ASMExtensions.BeginConstantsContext(_context.Includes);
             foreach (var line in file.Chunks.OfType<ASMLine>())
             {
                 if (!line.HasStructureApplied)
@@ -95,6 +96,7 @@ namespace StarFox.Interop.MAP.CONTEXT
                 if (line.Structure is not ASMMacroInvokeLineStructure) continue; // we can't do much with these right now
                 ReadLine(line); // read the current line to find information 
             }
+            ASMExtensions.EndConstantsContext();
             return file;
         }
         internal override ImporterContext<IncludeType>? GetCurrentContext<IncludeType>() => _context as ImporterContext<IncludeType>;

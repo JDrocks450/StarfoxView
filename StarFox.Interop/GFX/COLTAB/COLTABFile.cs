@@ -28,7 +28,6 @@ namespace StarFox.Interop.GFX.COLTAB
 
         }
 
-        public string OriginalFilePath { get; }
         /// <summary>
         /// Gets a group by the given name, not case sensitive.
         /// <para>null when the group wasn't found.</para>

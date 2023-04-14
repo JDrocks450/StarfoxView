@@ -179,7 +179,7 @@ namespace StarFoxMapVisualizer.Misc
             //LOAD THE CGX
             var fxCGX = await OpenCGX(CGX);
             //LOAD THE SCR
-            var fxSCR = await OpenSCR(SCR);
+            var fxSCR = OpenSCR(SCR);
             //RENDER OUT
             return fxSCR.Render(fxCGX, Palette);
         }
@@ -196,7 +196,7 @@ namespace StarFoxMapVisualizer.Misc
             if (!AppResources.OpenFiles.ContainsKey(File.FullName))
             {
                 //ATTEMPT TO OPEN THE FILE AS WELL-FORMED
-                var fxGFX = await SFGFXInterface.OpenCGX(File.FullName);
+                var fxGFX = SFGFXInterface.OpenCGX(File.FullName);
                 if (fxGFX == null)
                 { // NOPE CAN'T DO THAT
                     BPPDepthMenu menu = new()
@@ -222,16 +222,16 @@ namespace StarFoxMapVisualizer.Misc
         /// <param name="File"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        internal static async Task<FXSCRFile> OpenSCR(FileInfo File)
+        internal static FXSCRFile OpenSCR(FileInfo File)
         {
             if (!AppResources.OpenFiles.ContainsKey(File.FullName))
             {
                 //ATTEMPT TO OPEN THE FILE AS WELL-FORMED
-                var fxGFX = await SFGFXInterface.OpenSCR(File.FullName);
+                var fxGFX = SFGFXInterface.OpenSCR(File.FullName);
                 if (fxGFX == null)
                 { // NOPE CAN'T DO THAT
                   //OKAY, TRY TO IMPORT IT
-                    fxGFX = await SFGFXInterface.ImportSCR(File.FullName);
+                    fxGFX = SFGFXInterface.ImportSCR(File.FullName);
                 }
                 if (fxGFX == null) throw new Exception("That file cannot be opened or imported."); // GIVE UP
                 //ADD IT AS AN OPEN FILE

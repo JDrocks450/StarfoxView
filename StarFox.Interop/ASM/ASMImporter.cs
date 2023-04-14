@@ -12,7 +12,7 @@ namespace StarFox.Interop.ASM
     {
         public T[] Includes { get; set; }
         public T CurrentFile { get; set; }
-        public string CurrentFilePath { get; set; }
+        public string? CurrentFilePath { get; set; }
         public int CurrentLine { get; set; }
     }
     public class ASMImporterContext : ImporterContext<ASMFile>

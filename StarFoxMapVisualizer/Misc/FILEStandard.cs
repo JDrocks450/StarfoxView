@@ -188,7 +188,12 @@ namespace StarFoxMapVisualizer.Misc
             if (!await HandleImportMessages(File, MAPImport)) return default;
             if (!MAPImport.MapContextsSet)
                 await MAPImport.ProcessLevelContexts();
-            return await MAPImport.ImportAsync(File.FullName);
+            var rObj = await MAPImport.ImportAsync(File.FullName);
+            var errors = MAPImport.ErrorOut.ToString();
+            if (!string.IsNullOrWhiteSpace(errors))
+                MessageBox.Show(errors + "\nThe file was still imported -- use caution when viewing for inaccuracies.", 
+                    "Errors Occured when Importing this File");
+            return rObj;
         }
         /// <summary>
         /// Will import an *.ASM file into the project's OpenFiles collection and return the parsed result.

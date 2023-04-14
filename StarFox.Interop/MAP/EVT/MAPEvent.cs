@@ -248,4 +248,12 @@ namespace StarFox.Interop.MAP.EVT
         /// </summary>
         string Value { get; }
     }
+    public interface IMAPBGEvent
+    {
+        /// <summary>
+        /// The name of the background as it appears in code.
+        /// <see cref="MAPSetBG.TranslateNameToMAPContext(in string, string)"/>
+        /// </summary>
+        string? Background { get; }
+    }
 }

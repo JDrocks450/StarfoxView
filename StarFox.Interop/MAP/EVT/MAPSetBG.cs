@@ -8,11 +8,12 @@ using System.Threading.Tasks;
 
 namespace StarFox.Interop.MAP.EVT
 {
+
     /// <summary>
     /// Will change the background to the desired selection.
     /// <para>The naming formula for these can be translated using </para>
     /// </summary>
-    public class MAPSetBG : MAPEvent, IMAPNamedEvent
+    public class MAPSetBG : MAPEvent, IMAPNamedEvent, IMAPBGEvent
     {
         protected override string[] CompatibleMacros { get; } =
         {
@@ -44,6 +45,7 @@ namespace StarFox.Interop.MAP.EVT
             Callsite = Line;
             var structure = Line.StructureAsMacroInvokeStructure;
             if (structure == null) return;
+            EventName = structure.MacroReference.Name;
             Background = structure.TryGetParameter(0)?.ParameterContent;
             
             //BEGIN 65c816 -> C#

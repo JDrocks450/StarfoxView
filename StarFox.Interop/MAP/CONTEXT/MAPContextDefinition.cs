@@ -6,7 +6,27 @@
     /// </summary>
     public class MAPContextDefinition
     {
-        
+        /// <summary>
+        /// Describes how to draw a Screen (BG2 or BG3)
+        /// </summary>
+        public class MAPBGDefinition
+        {
+            /// <summary>
+            /// The name of the <c>bgXchr</c> property of the map context. 
+            /// <para>Maps to the macro: <c>bg[2,3]chr</c></para>
+            /// </summary>
+            public string? BGChrFile { get; set; }
+            /// <summary>
+            /// The name of the <c>bgXscr</c> property of the map context. 
+            /// <para>This is the *.SCR reference for this level as background 2.</para>
+            /// <para>Maps to the macro: <c>bg[2,3]scr</c></para>
+            /// </summary>
+            public string? BGScrFile { get; set; }
+            public double ScaleX { get; set; } = 1.0;
+            public double ScaleY { get; set; } = 1.0;
+            public int VerticalOffset { get; set; } = 0;
+            public int HorizontalOffset { get; set; } = 0;
+        }
         /// <summary>
         /// Starfox compatibility with the levelinfo type flags.
         /// <para>The macro this is supplied by is in BGMACS.INC: <code>info params flags</code> </para>
@@ -52,27 +72,35 @@
         /// </summary>
         public string? MapInitName { get; }
         /// <summary>
+        /// Contains all information provided for BG2
+        /// </summary>
+        public MAPBGDefinition BG2 { get; set; } = new();
+        /// <summary>
+        /// Contains all information provided for BG3
+        /// </summary>
+        public MAPBGDefinition BG3 { get; set; } = new();
+        /// <summary>
         /// The name of the bg2chr property of the map context. 
         /// <para>Maps to the macro: <code>bg2chr</code></para>
         /// </summary>
-        public string? BG2ChrFile { get; set; }
+        public string? BG2ChrFile => BG2?.BGChrFile;
         /// <summary>
         /// The name of the bg2scr property of the map context. 
         /// <para>This is the *.SCR reference for this level as background 2.</para>
         /// <para>Maps to the macro: <code>bg2scr</code></para>
         /// </summary>
-        public string? BG2ScrFile { get; set; }
+        public string? BG2ScrFile => BG2?.BGScrFile;
         /// <summary>
         /// The name of the bg3chr property of the map context. 
         /// <para>Maps to the macro: <code>bg3chr</code></para>
         /// </summary>
-        public string? BG3ChrFile { get; set; }
+        public string? BG3ChrFile => BG3?.BGChrFile;
         /// <summary>
         /// The name of the bg3scr property of the map context. 
         /// <para>This is the *.SCR reference for this level as background 3.</para>
         /// <para>Maps to the macro: <code>bg3scr</code></para>
         /// </summary>
-        public string? BG3ScrFile { get; set; }
+        public string? BG3ScrFile => BG3?.BGScrFile;
         /// <summary>
         /// The name of the palette property of the map context. 
         /// <para>This is the *.COL reference for the *.SCR file this level uses as a background.</para>
@@ -138,6 +166,17 @@
         /// </list>
         /// </summary>
         public string? AppearancePreset { get; set; }
+
+        public void SetBackground(int BGNum, MAPBGDefinition Definition)
+        {
+            switch (BGNum)
+            {
+                case 2:
+                    BG2 = Definition;
+                    break;
+                case 3: BG3 = Definition; break;
+            }
+        }
 
         /// <summary>
         /// Takes all submitted parameters in standard form, reflects them into flags in the 
