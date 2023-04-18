@@ -29,7 +29,7 @@ using static StarFox.Interop.GFX.CAD;
 namespace StarFox.Interop.GFX.DAT
 { 
     /// <summary>
-    /// Decrunches a <see cref="FXGraphicsResourcePackFile"/> into CGX and SCR files.
+    /// Decrunches a <see cref="FXPCRFile"/> into CGX and SCR files.
     /// </summary>
     internal static class Decrunch
     {

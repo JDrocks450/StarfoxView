@@ -58,12 +58,17 @@
                                             </Trigger>
                                         </Style.Triggers>
                                         <Setter Property="Margin" Value="10"/>
+                                        <Setter Property="Width" Value="55"/>
                                         <Setter Property="Template">
                                             <Setter.Value>
                                                 <ControlTemplate TargetType="ListViewItem">
                                                     <DockPanel>
                                                         <Border HorizontalAlignment="Center" DockPanel.Dock="Bottom" Background="{TemplateBinding Background}" Padding="5,2">
-                                                            <ContentPresenter />
+                                                            <ContentPresenter>
+                                                                <ContentPresenter.ToolTip>
+                                                                    <TextBlock Text="{TemplateBinding ContentStringFormat}"/>
+                                                                </ContentPresenter.ToolTip>
+                                                            </ContentPresenter>
                                                         </Border>
                                                         <Image Width="50" Source="/Resources/Image/palette.png" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
                                                     </DockPanel>
@@ -81,14 +86,34 @@
             </ContentControl>
         </Grid>
         <GridSplitter Grid.Column="1" Grid.Row="1" HorizontalAlignment="Left" Width="2"/>
-        <Border Grid.Row="1" Grid.Column="1" Margin="2,0,0,0" Background="{StaticResource TransparentImageKey}">
-            <customcontrols:PanAndZoomCanvas Background="#02FFFFFF" x:Name="GraphicDragView" ClipToBounds="True">
+        <Grid Grid.Row="1" Grid.Column="1" Margin="2,0,0,0" Background="{StaticResource TransparentImageKey}">
+            <customcontrols:PanAndZoomCanvas Background="#02FFFFFF" LineColor="Aquamarine" x:Name="GraphicDragView" ClipToBounds="True">
                 <customcontrols:PanAndZoomCanvas.Resources>
                     <Style TargetType="Image">
                         <Setter Property="RenderOptions.BitmapScalingMode" Value="NearestNeighbor"/>
                     </Style>
                 </customcontrols:PanAndZoomCanvas.Resources>
             </customcontrols:PanAndZoomCanvas>
-        </Border>
+            <Button x:Name="CanvasSizeButton" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="0,0,10,10" Background="{DynamicResource WindowBackgroundColor}" Height="40" Width="40" Click="CanvasSizeButton_Click">
+                <Image Source="/Resources/Image/canvas.png" Width="25" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+            </Button>
+        </Grid>
+        <Grid x:Name="ModalMissingCGXDialog" Grid.Column="1" Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Button Background="DarkRed"/>
+            <StackPanel Margin="10">
+                <TextBlock FontFamily="{StaticResource SFFont}" FontSize="14" HorizontalAlignment="Center">Missing Graphics Characters!</TextBlock>
+                <TextBlock FontFamily="{StaticResource SFFont}" Margin="0,10,0,0">include corresponding cgx now</TextBlock>
+                <TextBlock FontFamily="{StaticResource Atlantis}" FontSize="20">
+                    Hey there! In order to view this Screen, include the corresponding *.CGX file. <LineBreak/>
+                        It needs to share the same name as this screen, it just ends with *.CGX!
+                </TextBlock>
+                <TextBlock FontFamily="{StaticResource SFFont}" Margin="0,10,0,0">or manually select one</TextBlock>
+                <TextBlock FontFamily="{StaticResource Atlantis}" FontSize="20">
+                    You can also manually select a *.CGX file that is already opened below.<LineBreak/>
+                        Can't find it? Try opening it on the left first so it appears as a tab.
+                </TextBlock>
+                <ComboBox x:Name="OpenFilesComboBox" SelectionChanged="OpenFilesComboBox_SelectionChanged"/>
+            </StackPanel>
+        </Grid>
     </Grid>
 </UserControl>

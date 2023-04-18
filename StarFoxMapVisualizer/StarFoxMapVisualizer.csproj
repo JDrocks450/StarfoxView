@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <None Remove="Resources\AtlantisInternational-jen0.ttf" />
+    <None Remove="Resources\Image\canvas.png" />
     <None Remove="Resources\Image\colTable.png" />
     <None Remove="Resources\Image\folder_empty.png" />
     <None Remove="Resources\Image\folder_full.png" />
@@ -39,7 +40,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Pages\" />
     <Folder Include="Resources\Model\" />
   </ItemGroup>
 
@@ -50,6 +50,7 @@
 
   <ItemGroup>
     <Resource Include="Resources\AtlantisInternational-jen0.ttf" />
+    <Resource Include="Resources\Image\canvas.png" />
     <Resource Include="Resources\Image\colTable.png" />
     <Resource Include="Resources\Image\folder_empty.png" />
     <Resource Include="Resources\Image\folder_full.png" />

@@ -1,0 +1,40 @@
+﻿<Window x:Class="StarFoxMapVisualizer.Dialogs.GFXCanvasSizeDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:StarFoxMapVisualizer.Dialogs"
+        mc:Ignorable="d" Name="HOST"
+        Title="CANVAS SIZE" Icon="/Resources/Image/canvas.png" SizeToContent="Height" Foreground="White" Height="Auto" Width="300" Style="{StaticResource SFDialogModalStyle}">
+    <Window.Resources>
+        <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="{Binding Background, ElementName=HOST}"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+    </Window.Resources>
+    <DockPanel LastChildFill="False">
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Bottom">
+            <Button x:Name="CancelButton" Width="75"  Click="CancelButton_Click">Cancel</Button>
+            <Button x:Name="OKButton" Margin="10,0" Width="75" Click="OKButton_Click">OK</Button>
+            <Button x:Name="ApplyButton" Width="75" Click="ApplyButton_Click">Apply</Button>
+        </StackPanel>
+        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,10">
+            <UniformGrid  Columns="2">
+                <TextBlock VerticalAlignment="Center">Width</TextBlock>
+                <TextBox x:Name="WBox" Margin="0,5">128</TextBox>
+                <TextBlock VerticalAlignment="Center">Height</TextBlock>
+                <TextBox x:Name="HBox" Margin="0,5">256</TextBox>
+                <TextBlock VerticalAlignment="Center">Character Width</TextBlock>
+                <TextBox x:Name="CWBox" Margin="0,5">8</TextBox>
+                <TextBlock VerticalAlignment="Center">Character Height</TextBlock>
+                <TextBox x:Name="CHBox" Margin="0,5">8</TextBox>
+            </UniformGrid>
+            <GroupBox Header="Basic Templates" Padding="5">
+                <UniformGrid Columns="2">
+                    <Button x:Name="TemplateCGX" Click="TemplateCGX_Click">CGX Sprites</Button>
+                    <Button x:Name="Template3DM" Click="Template3DM_Click">3D MSprites</Button>
+                </UniformGrid>
+            </GroupBox>
+        </StackPanel>
+    </DockPanel>
+</Window>

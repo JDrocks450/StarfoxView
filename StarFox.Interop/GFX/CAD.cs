@@ -124,14 +124,30 @@ namespace StarFox.Interop.GFX
                 }
             }
             #if RENDER
-            public Bitmap Render(COL pal, int palForce = -1)
+            public Bitmap Render(COL pal, int palForce = -1, int CanvasW = 128, int CanvasH = 128 * 4)
             {
-                Bitmap output = new Bitmap(128, 128 * 4);
+                Bitmap output = new Bitmap(CanvasW, CanvasH);
+                if (CanvasW < 128) CanvasW = 128;
+                bool CompatRenderMode = CanvasW == 128;
+                int Columns = (CanvasW / 8);
+                int column = -1;
+                int row = 0;
                 int fmt = GetFormat();
                 for (int i = 0; i < (256 * 4); i++)
-                {
+                {                    
                     int x = ((i % 16) * 8);
                     int y = ((i / 16) * 8);
+                    if (!CompatRenderMode)
+                    {
+                        column++;
+                        if (column >= Columns)
+                        {
+                            column = 0;
+                            row++;
+                        }
+                        x = column * 8;
+                        y = row * 8;
+                    }
                     int s = 8;
                     int p = GetColorBase();
                     if (palForce == -1)
@@ -396,8 +412,8 @@ namespace StarFox.Interop.GFX
                 unk1 = dat[0x2047];
                 unk2 = dat[0x2048];
             }
-            #if RENDER
-            public Bitmap Render(CGX cgx, COL col, bool allvisible = false)
+#if RENDER
+            public Bitmap Render(CGX cgx, COL col, bool allvisible = false, int Screen = -1)
             {
                 //Get CGX Format
                 int fmt = cgx.GetFormat();
@@ -405,18 +421,24 @@ namespace StarFox.Interop.GFX
                 //Tile Size
                 int t = 8 * (scr_mode + 1);
 
-                Bitmap output = new Bitmap(512 * (t / 8), 512 * (t / 8));                
+                bool renderAllScreens = Screen < 0 || Screen > 3;                
 
-                //Screen ID
-                for (int s = 0; s < 4; s++)
+                Bitmap output = default;
+                if (renderAllScreens)                
+                    output = new Bitmap(512 * (t / 8), 512 * (t / 8));      
+                else
+                    output = new Bitmap(512 * (t / 8)/2, 512 * (t / 8)/2);
+                void RenderScreen(int s)
                 {
                     //Screen Data
                     for (int i = 0; i < 0x800; i += 2)
                     {
+                        int sParam = s;
+                        if (!renderAllScreens) sParam = 0;
                         //X Pos
-                        int x = (((s % 2) * (t * 32)) + (((i / 2) % 32) * t));
+                        int x = (((sParam % 2) * (t * 32)) + (((i / 2) % 32) * t));
                         //Y Pos
-                        int y = (((s / 2) * (t * 32)) + (((i / 2) / 32) * t));
+                        int y = (((sParam / 2) * (t * 32)) + (((i / 2) / 32) * t));
                         //Scale
                         int z = t;
 
@@ -445,7 +467,6 @@ namespace StarFox.Interop.GFX
                                 chr = cgx.RenderTile(tile, z, col.GetPalette(fmt, (p_b * 128) + (color * 128)), xflip, yflip);
                                 break;
                         }
-
                         using (Graphics g = Graphics.FromImage(output))
                         {
                             g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
@@ -454,7 +475,16 @@ namespace StarFox.Interop.GFX
                             g.DrawImage(chr, x, y, z, z);
                         }
                     }
-                }                
+                }
+                if (renderAllScreens)
+                {
+                    //Screen ID
+                    for (int s = 0; s < 4; s++)
+                    {
+                        RenderScreen(s);
+                    }
+                }
+                else RenderScreen(Screen);
                 return output;
             }
 #endif

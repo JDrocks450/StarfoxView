@@ -63,8 +63,8 @@ namespace StarFox.Interop.GFX
                         var index = colorID % pal.Length;
                         var column = index % 16;
                         var color = pal[index];
-                        if (column == 0)
-                            color = Color.Transparent;
+                        if (column == 0 && index != 0)
+                            color = Color.Transparent;                        
 
                         tile.SetPixel(xt, yt, color);
                     }

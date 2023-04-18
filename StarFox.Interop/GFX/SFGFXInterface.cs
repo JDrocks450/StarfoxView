@@ -1,9 +1,11 @@
-﻿using StarFox.Interop.GFX.DAT;
+﻿using StarFox.Interop.GFX.CONVERT;
+using StarFox.Interop.GFX.DAT;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace StarFox.Interop.GFX
 {
@@ -13,10 +15,10 @@ namespace StarFox.Interop.GFX
     public static class SFGFXInterface
     {
         /// <summary>
-        /// Opens a Starfox DAT (or BIN) file containing <see cref="FXGraphicsResourcePackFile"/> data
+        /// Opens a Starfox DAT (or BIN) file containing <see cref="FXPCRFile"/> data
         /// </summary>
         /// <returns></returns>
-        public static async Task<FXDatFile> OpenDATFile(string FilePath) => await FX.ExtractGraphics(FilePath);
+        //public static async Task<FXDatFile> OpenDATFile(string FilePath) => await FX.ExtractGraphics(FilePath);
         static async Task<byte[]> ExtractDecrunch(string fullName)
         {
             using (var fs = File.OpenRead(fullName))
@@ -121,11 +123,17 @@ namespace StarFox.Interop.GFX
             }
         }
         /// <summary>
-        /// Opens a Starfox DAT (or BIN) file containing <see cref="FXGraphicsResourcePackFile"/> data
+        /// Opens a Starfox DAT (or BIN) file containing <see cref="FXPCRFile"/> data
         /// and saves it as two *.CGX files (low and high bank).
         /// </summary>
         /// <returns></returns>
-        public static async Task TranslateDATFile(string FilePath) => 
-            await (await FX.ExtractGraphics(FilePath)).Save();
+        public static async Task TranslateDATFile(string FilePath, bool SaveMSXBanks = false)
+        {
+            var hiLowBanks = await FX.ExtractGraphics(FilePath);
+            if (SaveMSXBanks)
+                await hiLowBanks.Save(FilePath);
+            var datFile = new FXDatFile(hiLowBanks, FilePath);
+            await datFile.Save();           
+        }
     }
 }

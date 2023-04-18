@@ -4,24 +4,33 @@
 // https://www.romhacking.net/utilities/346/
 // ********************************
 
+using StarFox.Interop.GFX.CONVERT;
+
 namespace StarFox.Interop.GFX.DAT
 {
     public class FXDatFile : IImporterObject
     {
-        public FXDatFile(byte[] low, byte[] high, string originalFilePath)
+        public FXDatFile(FXConvertImage low, FXConvertImage high, string originalFilePath)
         {
-            Low = new FXGraphicsResourcePackFile(low);
-            High = new FXGraphicsResourcePackFile(high);
+            Low = low;
+            High = high;
             OriginalFilePath = originalFilePath;
+        }
+        public FXDatFile(FXGraphicsHiLowBanks HiLowBanks, string originalFilePath):
+            this(FXImageConverter.ConvertMSXToGeneric(HiLowBanks.LowBank),
+                FXImageConverter.ConvertMSXToGeneric(HiLowBanks.HighBank), 
+                originalFilePath)
+        {
+
         }
         /// <summary>
         /// The raw data of the low portion of this DATFile
         /// </summary>
-        public FXGraphicsResourcePackFile Low { get; set; }
+        public FXConvertImage Low { get; set; }
         /// <summary>
         /// The raw data of the high portion of this DATFile
         /// </summary>
-        public FXGraphicsResourcePackFile High { get; set; }
+        public FXConvertImage High { get; set; }
         public string OriginalFilePath { get; }
         /// <summary>
         /// Writes both banks to the disk as: FileName_low.ccr and FileName_high.ccr
@@ -30,9 +39,9 @@ namespace StarFox.Interop.GFX.DAT
         {
             await File.WriteAllBytesAsync(
                 $"{Path.Combine(Path.GetDirectoryName(OriginalFilePath),Path.GetFileNameWithoutExtension(OriginalFilePath))}_low.cgx"
-                , Low.GraphicsData);
+                , FXImageConverter.ConvertGenericToCGX(Low));
             await File.WriteAllBytesAsync($"{Path.Combine(Path.GetDirectoryName(OriginalFilePath), Path.GetFileNameWithoutExtension(OriginalFilePath))}_high.cgx" 
-                , High.GraphicsData);
+                , FXImageConverter.ConvertGenericToCGX(High));
         }
     }
 }

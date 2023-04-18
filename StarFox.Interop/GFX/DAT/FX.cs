@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,18 +16,18 @@ namespace StarFox.Interop.GFX.DAT
     /// <summary>
     /// Interfaces with *.DAT files to decompress them into asset files.
     /// </summary>
-    internal static class FX
-    {       
+    internal static partial class FX
+    {                
         internal static void Read_8x8(in byte[] buffer, int row, int col, MemoryStream Bank, bool mode)
         {
             // grab 8x8 4-bpp pixels
             for (int lcv2 = 0; lcv2 < 8; lcv2++)
             {
-                int data = 0;
+                uint data = 0;
 
                 for (int lcv = 0; lcv < 8; lcv++)
                 {
-                    byte Byte = buffer[((row + lcv2) * 256) + col + lcv];
+                    byte Byte = buffer[((row + lcv2) * 256) + (col + lcv)];
 
                     // de-interleave
                     if (!mode) { Byte &= 0xf0; Byte >>= 4; }
@@ -36,21 +37,26 @@ namespace StarFox.Interop.GFX.DAT
                     data |= Byte;
                 }
 
-                Bank.WriteByte((byte)(data >> 24));
-                Bank.WriteByte((byte)(data >> 16));
-                Bank.WriteByte((byte)(data >> 8));
-                Bank.WriteByte((byte)(data >> 0));
+                var one = data >> 24;
+                var two = data >> 16;
+                var three = data >> 8;
+                var four = data >> 0;
+
+                Bank.WriteByte((byte)one);
+                Bank.WriteByte((byte)two);
+                Bank.WriteByte((byte)three);
+                Bank.WriteByte((byte)four);
             }
         }
 
-        internal static async Task<FXDatFile> ExtractGraphics(string FilePath, int Offset = 0x90000, int BlockSize = 0x18000)
+        internal static async Task<FXGraphicsHiLowBanks> ExtractGraphics(string FilePath, int Offset = 0x0000, int BlockSize = 0x18000)
         {
-            byte[] fileData = new byte[1024*256]; // 256pixels wide
+            byte[] fileData = new byte[1024*256]; // 256pixels wide H:1024, W:256
 
             using (FileStream ImageStream = File.OpenRead(FilePath))
             {
                 ImageStream.Seek(Offset, SeekOrigin.Begin);
-                await ImageStream.ReadAsync(fileData, 0, BlockSize);
+                await ImageStream.ReadAsync(fileData, 0, fileData.Length);
 
                 ////////////////////////////////////////////////
                 // FX 4-bpp interleaved image ==> 4-bpp linear
@@ -65,7 +71,7 @@ namespace StarFox.Interop.GFX.DAT
                             Read_8x8(fileData, row, col, fx_high, true); // read high bank
                         }
                     }
-                    return new FXDatFile(fx_low.ToArray(), fx_high.ToArray(), FilePath);
+                    return new FXGraphicsHiLowBanks(fx_high.ToArray(),fx_low.ToArray());
                 }
             }
         }

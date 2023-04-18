@@ -9,9 +9,9 @@ namespace StarFox.Interop.GFX.DAT
     /// <summary>
     /// An interface for *.CCR and *.PCR files
     /// </summary>
-    public class FXGraphicsResourcePackFile
+    public class FXPCRFile
     {
-        public FXGraphicsResourcePackFile(byte[] GraphicsData)
+        public FXPCRFile(byte[] GraphicsData)
         {
             this.GraphicsData = GraphicsData;
         }
