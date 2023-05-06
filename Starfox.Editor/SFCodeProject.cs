@@ -1,5 +1,6 @@
 ﻿using StarFox.Interop;
 using StarFox.Interop.ASM;
+using StarFox.Interop.BRR;
 using StarFox.Interop.MAP;
 using System;
 using System.Collections.Generic;
@@ -29,6 +30,11 @@ namespace Starfox.Editor
         /// <para>FilePath, COL</para>
         /// </summary>
         public Dictionary<string, COL> Palettes { get; } = new();
+        /// <summary>
+        /// SampleFiles that have been included in this project
+        /// <para>FilePath, BRR</para>
+        /// </summary>
+        public Dictionary<string, BRRFile> Samples { get; } = new();
         /// <summary>
         /// Files that are marked as *include files, as in containing symbol information
         /// </summary>

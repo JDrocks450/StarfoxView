@@ -2,6 +2,8 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <FontFamily x:Key="SFFont">/Resources/#Star Fox/Starwing</FontFamily>
     <FontFamily x:Key="Atlantis">/Resources/#Atlantis International</FontFamily>
+    <ScaleTransform x:Key="FontStretchCondensed" ScaleX="0.8" />
+    <ScaleTransform x:Key="FontStretchExpanded" ScaleX="1.1" />
 
     <Style x:Key="SFRadioButton" TargetType="RadioButton" BasedOn="{StaticResource {x:Type RadioButton}}">
         <Setter Property="Foreground" Value="White"/>
@@ -36,6 +38,13 @@
         <Setter Property="ClipToBounds" Value="True"/>
     </Style>
     <Style TargetType="Window" x:Key="SFDialogModalStyle">
+        <Style.Resources>
+            <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                <Setter Property="Background" Value="{DynamicResource WindowColor}"/>
+                <Setter Property="Foreground" Value="White"/>
+                <Setter Property="Padding" Value="10,1"/>
+            </Style>
+        </Style.Resources>
         <Setter Property="Background" Value="{DynamicResource WindowColor}"/>
         <Setter Property="WindowStyle" Value="None"/>
         <Setter Property="ResizeMode" Value="NoResize"/>

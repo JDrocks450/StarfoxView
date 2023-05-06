@@ -265,14 +265,13 @@ namespace StarFox.Interop.BSP
     /// Parses and imports the given ASP BSP Tree file into model definitions.
     /// <para>More than one shape per file is completely supported.</para>
     /// </summary>
-    public class BSPImporter : CodeImporter<BSPFile>
+    public class BSPImporter : BasicCodeImporter<BSPFile>
     {
-        private ASMImporter baseImporter = new();
         public override string[] ExpectedIncludes => new string[] {
             "SHMACS.INC", //Shape Macros required
             "STRATEQU.INC" // Used for constants that describe sizing constraints, etc.
         };
-        BSPImporterContext asmContext;        
+        BSPImporterContext? asmContext;        
 
         /// <summary>
         /// Initializes a new <see cref="BSPImporter"/>
@@ -280,9 +279,7 @@ namespace StarFox.Interop.BSP
         public BSPImporter()
         {
 
-        }
-
-        public override void SetImports(params ASMFile[] Includes) => baseImporter.SetImports(Includes);                                  
+        }                             
 
         /// <summary>
         /// After all shapes have been defined and parsed, this function can be used to attempt to turn Blank Shapes
@@ -508,11 +505,6 @@ namespace StarFox.Interop.BSP
         end:
             ErrorOut = file.ImportErrors;
             return file;
-        }
-
-        internal override ImporterContext<IncludeType>? GetCurrentContext<IncludeType>()
-        {
-            return baseImporter.Context as ImporterContext<IncludeType>;
         }
     }
 }

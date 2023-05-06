@@ -1,9 +1,11 @@
 ﻿using Starfox.Editor;
 using StarFox.Interop;
 using StarFox.Interop.ASM;
+using StarFox.Interop.BRR;
 using StarFox.Interop.BSP;
 using StarFox.Interop.GFX.COLTAB;
 using StarFox.Interop.MAP;
+using StarFox.Interop.MSG;
 using StarFoxMapVisualizer.Controls;
 using StarFoxMapVisualizer.Controls.Subcontrols;
 using System;
@@ -24,7 +26,9 @@ namespace StarFoxMapVisualizer.Misc
         internal static readonly ASMImporter ASMImport = new();
         internal static readonly MAPImporter MAPImport = new();
         internal static readonly BSPImporter BSPImport = new();
+        internal static readonly MSGImporter MSGImport = new();
         internal static readonly COLTABImporter COLTImport = new();
+        internal static readonly BRRImporter BRRImport = new();
         /// <summary>
         /// Includes a <see cref="SFCodeProjectFileTypes.Assembly"/>, <see cref="SFCodeProjectFileTypes.Include"/> or 
         /// <see cref="SFCodeProjectFileTypes.Palette"/>.
@@ -33,7 +37,7 @@ namespace StarFoxMapVisualizer.Misc
         /// </summary>
         /// <param name="File"></param>
         /// <returns></returns>
-        public static async Task<T?> IncludeFile<T>(FileInfo File, SFFileType.FileTypes? ContextualFileType = default) where T : class
+        public static async Task<T?> IncludeFile<T>(FileInfo File, SFFileType.ASMFileTypes? ContextualFileType = default) where T : class
         {
             if (!AppResources.IsFileIncluded(File))
             {
@@ -82,6 +86,7 @@ namespace StarFoxMapVisualizer.Misc
             ASMImport.SetImports(AppResources.Includes.ToArray());
             MAPImport.SetImports(AppResources.Includes.ToArray());
             BSPImport.SetImports(AppResources.Includes.ToArray());
+            MSGImport.SetImports(AppResources.Includes.ToArray());
         }
         private static async Task<bool> HandleImportMessages<T>(FileInfo File, CodeImporter<T> importer) where T : IImporterObject
         {
@@ -95,7 +100,7 @@ namespace StarFoxMapVisualizer.Misc
                     foreach (var include in includes)
                     {
                         if (!SearchProjectForFile(include, out var file)) continue;
-                        await IncludeFile<object>(file, SFFileType.FileTypes.ASM);
+                        await IncludeFile<object>(file, SFFileType.ASMFileTypes.ASM);
                         autoIncluded.Add(file.Name);
                     }
                 }
@@ -195,6 +200,17 @@ namespace StarFoxMapVisualizer.Misc
                     "Errors Occured when Importing this File");
             return rObj;
         }
+        public static async Task<ASMFile?> OpenMSGFile(FileInfo File)
+        {
+            //MSG IMPORT LOGIC   
+            if (!await HandleImportMessages(File, MSGImport)) return default;
+            var rObj = await MSGImport.ImportAsync(File.FullName);
+            var errors = MSGImport.ErrorOut.ToString();
+            if (!string.IsNullOrWhiteSpace(errors))
+                MessageBox.Show(errors + "\nThe file was still imported -- use caution when viewing for inaccuracies.",
+                    "Errors Occured when Importing this File");
+            return rObj;
+        }
         /// <summary>
         /// Will import an *.ASM file into the project's OpenFiles collection and return the parsed result.
         /// <para>NOTE: This function WILL call a dialog to have the user select which kind of file this is. 
@@ -205,16 +221,17 @@ namespace StarFoxMapVisualizer.Misc
         /// <param name="ContextualFileType">Will skip the Dialog asking what kind of file this is parsing by using this value
         /// <para>If <see langword="default"/>, the dialog is displayed.</para></param>
         /// <returns></returns>
-        private static async Task<ASMFile?> ParseFile(FileInfo File, SFFileType.FileTypes? ContextualFileType = default)
+        private static async Task<ASMFile?> ParseFile(FileInfo File, SFFileType.ASMFileTypes? ContextualFileType = default)
         {                     
             //GET IMPORTS SET
             ReadyImporters();
             //DO FILE PARSE NOW            
             ASMFile? asmfile = default;
-            if (File.GetSFFileType() is SFCodeProjectFileTypes.Assembly) // assembly file
+            if (File.GetSFFileType() is SFCodeProjectFileTypes.Assembly or
+                                        SFCodeProjectFileTypes.Include) // assembly file
             { // DOUBT AS TO FILE TYPE
                 //CREATE THE MENU WINDOW
-                SFFileType.FileTypes selectFileType = SFFileType.FileTypes.ASM;
+                SFFileType.ASMFileTypes selectFileType = SFFileType.ASMFileTypes.ASM;
                 if (!ContextualFileType.HasValue)
                 {
                     FileImportMenu importMenu = new()
@@ -228,13 +245,16 @@ namespace StarFoxMapVisualizer.Misc
                 switch (selectFileType)
                 {
                     default: return default;
-                    case StarFox.Interop.SFFileType.FileTypes.ASM:
+                    case StarFox.Interop.SFFileType.ASMFileTypes.ASM:
                         goto general;
-                    case StarFox.Interop.SFFileType.FileTypes.MAP:
+                    case StarFox.Interop.SFFileType.ASMFileTypes.MAP:
                         asmfile = await OpenMAPFile(File);
                         break;
-                    case StarFox.Interop.SFFileType.FileTypes.BSP:
+                    case StarFox.Interop.SFFileType.ASMFileTypes.BSP:
                         asmfile = await OpenBSPFile(File);
+                        break;
+                    case SFFileType.ASMFileTypes.MSG:
+                        asmfile = await OpenMSGFile(File);
                         break;
                 }
                 goto import;

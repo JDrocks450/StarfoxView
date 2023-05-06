@@ -20,13 +20,13 @@ namespace StarFoxMapVisualizer.Controls.Subcontrols
     /// <summary>
     /// Interaction logic for FileImportMenu.xaml
     /// </summary>
-    public partial class FileImportMenu : Window
+    public partial class BINImportMenu : Window
     {
         /// <summary>
         /// The selected type of file
         /// </summary>
-        public SFFileType.ASMFileTypes FileType { get; private set; }
-        public FileImportMenu()
+        public SFFileType.BINFileTypes FileType { get; private set; }
+        public BINImportMenu()
         {
             InitializeComponent();
 
@@ -41,7 +41,7 @@ namespace StarFoxMapVisualizer.Controls.Subcontrols
         private void showOptions()
         {
             TypeMenu.Items.Clear();
-            foreach(var type in Enum.GetValues<SFFileType.ASMFileTypes>())
+            foreach(var type in Enum.GetValues<SFFileType.BINFileTypes>())
             {
                 var item = new MenuItem()
                 {
@@ -69,7 +69,7 @@ namespace StarFoxMapVisualizer.Controls.Subcontrols
         /// Dismiss the window with the specified result
         /// </summary>
         /// <param name="FileType"></param>
-        private void Dismiss(ASMFileTypes FileType)
+        private void Dismiss(BINFileTypes FileType)
         {
             DialogResult = true;
             this.FileType = FileType;

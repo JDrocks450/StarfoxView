@@ -17,6 +17,8 @@ namespace Starfox.Editor
         PCR,
         CGX,
         SCR,
+        MSG,
+        BRR,
         /// <summary>
         /// An <see cref="SFOptimizerNode"/>
         /// </summary>

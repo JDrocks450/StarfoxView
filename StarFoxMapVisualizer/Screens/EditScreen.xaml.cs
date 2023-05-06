@@ -7,6 +7,7 @@ using StarFox.Interop.BSP;
 using StarFox.Interop.GFX;
 using StarFox.Interop.GFX.COLTAB;
 using StarFox.Interop.MAP;
+using StarFox.Interop.MSG;
 using StarFoxMapVisualizer.Controls;
 using StarFoxMapVisualizer.Controls.Subcontrols;
 using StarFoxMapVisualizer.Misc;
@@ -31,8 +32,13 @@ namespace StarFoxMapVisualizer.Screens
     {
         public enum ViewMode
         {
-            NONE,ASM,MAP,OBJ,
-            GFX
+            NONE,
+            ASM,
+            MAP,
+            OBJ,
+            GFX,
+            MSG,
+            BRR
         }        
 
         internal static EditScreen Current { get; private set; }
@@ -112,7 +118,7 @@ namespace StarFoxMapVisualizer.Screens
                 importItem.Click += async delegate
                 {
                     //DO INCLUDE
-                    var result = await FILEStandard.IncludeFile<object>(new FileInfo(FileNode.FilePath)) != default;
+                    var result = await FILEStandard.IncludeFile<object>(new FileInfo(FileNode.FilePath), SFFileType.ASMFileTypes.ASM) != default;
                     if (!result)
                     {
                         MessageBox.Show("That file could not be imported at this time.", "File Include Error");
@@ -239,6 +245,7 @@ namespace StarFoxMapVisualizer.Screens
                         }
                         else
                         {
+                            CreateINCContextMenu(FileNode, in contextMenu);
                             CreateCOLTABContextMenu(FileNode, in contextMenu);
                             item.SetResourceReference(StyleProperty, "FileTreeStyle");
                         }
@@ -271,15 +278,27 @@ namespace StarFoxMapVisualizer.Screens
 
         public DispatcherOperation HandleViewModes() => Dispatcher.InvokeAsync(async delegate
         {
+            //UNSUBSCRIBE FROM ALL BUTTONS FIRST 
             ViewASMButton.Checked -= ViewASMButton_Checked;
             ViewMapButton.Checked -= ViewMapButton_Checked;
             ViewBSTButton.Checked -= ViewBSTButton_Checked;
             ViewGFXButton.Checked -= ViewGFXButton_Checked;
+            ViewMSGButton.Checked -= ViewMSGButton_Checked;
+            ViewBRRButton.Checked -= ViewBRRButton_Checked;
+            
+            //UNCHECK EM ALL
             ViewGFXButton.IsChecked = false;
             ViewASMButton.IsChecked = false;
             ViewMapButton.IsChecked = false;
             ViewBSTButton.IsChecked = false;
+            ViewMSGButton.IsChecked = false;
+            ViewBRRButton.IsChecked = false;
+
+            //VIEW MODES ENABLED
             ViewModeHost.Visibility = Visibility.Visible;
+            MAPViewer.Pause();
+            ASMViewer.Pause();
+            OBJViewer.Pause();
             switch (CurrentMode)
             {
                 default:
@@ -287,17 +306,13 @@ namespace StarFoxMapVisualizer.Screens
                     ViewModeHost.Visibility = Visibility.Collapsed;
                     break;
                 case ViewMode.ASM:
-                    OBJViewer.Pause();
-                    await ASMViewer.Unpause();
-                    MAPViewer.Pause();
+                    await ASMViewer.Unpause();                
                     ViewModeHost.SelectedItem = ASMTab;
                     ViewASMButton.IsChecked = true;
                     TitleBlock.Text = "Assembly Viewer";
                     break;
                 case ViewMode.MAP:
-                    OBJViewer.Pause();
                     MAPViewer.Unpause();
-                    ASMViewer.Pause();
                     ViewModeHost.SelectedItem = MAPTab;
                     ViewMapButton.IsChecked = true;
                     TitleBlock.Text = "Map Event Node Viewer";
@@ -311,26 +326,35 @@ namespace StarFoxMapVisualizer.Screens
                     {
                         MessageBox.Show($"The Shape Viewer has reported an error: {ex.Message}");
                     }
-                    MAPViewer.Pause();
-                    ASMViewer.Pause();
                     ViewModeHost.SelectedItem = OBJTab;
                     ViewBSTButton.IsChecked = true;
                     TitleBlock.Text = "Shape Viewer";
                     break;
-                case ViewMode.GFX:
-                    MAPViewer.Pause();
-                    ASMViewer.Pause();
-                    OBJViewer.Pause();
+                case ViewMode.GFX:                    
                     GFXViewer.RefreshFiles();
                     ViewModeHost.SelectedItem = GFXTab;
                     ViewGFXButton.IsChecked = true;
                     TitleBlock.Text = "Graphics Viewer";
+                    break;
+                case ViewMode.MSG:
+                    await MSGViewer.RefreshFiles();
+                    ViewModeHost.SelectedItem = MSGTab;
+                    ViewMSGButton.IsChecked = true;
+                    TitleBlock.Text = "Message Viewer";
+                    break;
+                case ViewMode.BRR:
+                    BRRViewer.RefreshFiles();
+                    ViewModeHost.SelectedItem = BRRTab;
+                    ViewBRRButton.IsChecked = true;
+                    TitleBlock.Text = "SFX Viewer";
                     break;
             }
             ViewASMButton.Checked += ViewASMButton_Checked;
             ViewMapButton.Checked += ViewMapButton_Checked;
             ViewBSTButton.Checked += ViewBSTButton_Checked;
             ViewGFXButton.Checked += ViewGFXButton_Checked;
+            ViewMSGButton.Checked += ViewMSGButton_Checked;
+            ViewBRRButton.Checked += ViewBRRButton_Checked;
         });               
 
         private async Task FileSelected(FileInfo File)
@@ -345,9 +369,32 @@ namespace StarFoxMapVisualizer.Screens
                     UpdateInterface();
                     return;
                 case SFCodeProjectFileTypes.BINFile: // EXTRACT BIN
-                    await SFGFXInterface.TranslateDATFile(File.FullName);            
-                    LoadingSpan.Visibility = Visibility.Collapsed;
-                    UpdateInterface(true); // Files changed!
+                    // DOUBT AS TO FILE TYPE
+                    //CREATE THE MENU WINDOW
+                    SFFileType.BINFileTypes selectFileType = SFFileType.BINFileTypes.COMPRESSED_CGX;
+                    BINImportMenu importMenu = new()
+                    {
+                        Owner = Application.Current.MainWindow
+                    };
+                    if (!importMenu.ShowDialog() ?? true) return; // USER CANCEL
+                    selectFileType = importMenu.FileType;
+                    switch (selectFileType)
+                    {
+                        case SFFileType.BINFileTypes.COMPRESSED_CGX:
+                            await SFGFXInterface.TranslateDATFile(File.FullName);
+                            UpdateInterface(true); // Files changed!
+                            break;
+                        case SFFileType.BINFileTypes.BRR:
+                            {
+                                var file = await FILEStandard.BRRImport.ImportAsync(File.FullName);
+                                AppResources.ImportedProject.Samples.Add(File.FullName, file);                                
+                            }
+                            UpdateInterface();
+                            CurrentMode = ViewMode.BRR;
+                            await HandleViewModes();
+                            break;
+                    }                            
+                    LoadingSpan.Visibility = Visibility.Collapsed;                    
                     return;
                 case SFCodeProjectFileTypes.CCR: // EXTRACT COMPRESSED GRAPHICS
                     {
@@ -388,14 +435,15 @@ namespace StarFoxMapVisualizer.Screens
             var asmfile = await FILEStandard.OpenASMFile(File);
             bool isMap = asmfile is MAPFile;
             bool isObj = asmfile is BSPFile;
+            bool isMSG = asmfile is MSGFile;
             if (asmfile == default)
             {
                 LoadingSpan.Visibility = Visibility.Collapsed;
                 return;
             }
             // FILE INCLUDE ROUTINE
-            if (File.GetSFFileType() is SFCodeProjectFileTypes.Include)
-            { // INC files should be included automatically
+            if (File.GetSFFileType() is SFCodeProjectFileTypes.Include && !isMSG)
+            { // INC files should be included automatically -- generally.
                 FILEStandard.IncludeFile(asmfile);
             }
             // GET DEFAULT ACTION
@@ -404,9 +452,14 @@ namespace StarFoxMapVisualizer.Screens
                 CurrentMode = ViewMode.MAP;
                 await HandleViewModes();
             }
-            if (isObj)
+            else if (isObj)
             { // IF THIS IS AN OBJ -- SWITCH VIEW, INCUR UPDATE. THE OBJ VIEW WILL SEE THE NEWLY ADDED FILE
                 CurrentMode = ViewMode.OBJ;
+                await HandleViewModes();
+            }
+            else if (isMSG)
+            {
+                CurrentMode = ViewMode.MSG;
                 await HandleViewModes();
             }
             else
@@ -518,6 +571,18 @@ namespace StarFoxMapVisualizer.Screens
         private void ViewGFXButton_Checked(object sender, RoutedEventArgs e)
         {
             CurrentMode = ViewMode.GFX;
+            HandleViewModes();
+            UpdateInterface();
+        }
+        private void ViewMSGButton_Checked(object sender, RoutedEventArgs e)
+        {
+            CurrentMode = ViewMode.MSG;
+            HandleViewModes();
+            UpdateInterface();
+        }
+        private void ViewBRRButton_Checked(object sender, RoutedEventArgs e)
+        {
+            CurrentMode = ViewMode.BRR;
             HandleViewModes();
             UpdateInterface();
         }
@@ -649,6 +714,6 @@ namespace StarFoxMapVisualizer.Screens
                 Owner = Application.Current.MainWindow
             };
             viewer.Show();
-        }
+        }        
     }
 }

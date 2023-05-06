@@ -1,0 +1,106 @@
+﻿<UserControl x:Class="StarFoxMapVisualizer.Controls2.MSGViewer"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:StarFoxMapVisualizer.Controls2"
+             mc:Ignorable="d" Background="{DynamicResource WindowBackgroundColor}" Name="HOST"
+             d:DesignHeight="450" d:DesignWidth="800" Foreground="White">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="50"/>
+            <RowDefinition Height="1*"/>
+        </Grid.RowDefinitions>
+        <Border Background="Black">
+            <local:CommunicationMessageControl x:Name="MugshotControl" MaxHeight="225" MaxWidth="710" VerticalAlignment="Top" HorizontalAlignment="Left"/>
+        </Border>
+        <Grid Grid.Row="1">
+            <Grid.Background>
+                <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0" Opacity="0.25">
+                    <GradientStop Color="Black"/>
+                    <GradientStop Color="#00000000" Offset="1"/>
+                </LinearGradientBrush>
+            </Grid.Background>
+            <UniformGrid Rows="1" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <RadioButton Name="EnglishButton" IsChecked="True" Foreground="White" VerticalContentAlignment="Center">English Language</RadioButton>
+                <RadioButton Name="SecondButton" Foreground="White" VerticalContentAlignment="Center">Secondary Language</RadioButton>
+                <ComboBox Name="FilesCombo" Margin="10,0,0,0"></ComboBox>
+            </UniformGrid>
+            <StackPanel HorizontalAlignment="Left" Margin="10,0" Orientation="Horizontal">
+                <Button Height="25" Width="25" Background="{DynamicResource WindowBackgroundColor}">
+                    <Image Source="/Resources/Image/play.png"/>
+                </Button>
+                <Button Margin="10,0" Height="26" Foreground="White" Background="{DynamicResource WindowBackgroundColor}" Width="58" Content="Add..."/>
+            </StackPanel>
+            <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center" Margin="10">
+                SOUND: <Run Name="SoundLabel"/>
+            </TextBlock>
+        </Grid>
+        <ScrollViewer VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Visible" Grid.Row="2" >
+            <StackPanel Name="MessagesItemsHost" CanHorizontallyScroll="True" CanVerticallyScroll="False" Orientation="Horizontal" Margin="0,10">
+                <StackPanel.Resources>
+                    <Style TargetType="ListBox">
+                        <Setter Property="Background" Value="{x:Null}"/>
+                        <Setter Property="BorderThickness" Value="0"/>
+                        <Setter Property="FontFamily" Value="{StaticResource Atlantis}"/>
+                        <Setter Property="FontSize" Value="24"/>
+                        <Style.Resources>
+                            <Style TargetType="ListBoxItem">
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#3F00CA7C"/>
+                                        <Setter Property="Foreground" Value="White"/>
+                                    </Trigger>
+                                    <Trigger Property="IsMouseOver" Value="False">
+                                        <Setter Property="Background" Value="#3F001E40"/>
+                                        <Setter Property="Foreground" Value="White"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                                <Setter Property="Cursor" Value="Hand"/>
+                                <Setter Property="Padding" Value="20,0"/>
+                                <Setter Property="Height" Value="40"/>
+                            </Style>
+                        </Style.Resources>
+                    </Style>
+                    <Style TargetType="HeaderedContentControl">
+                        <Setter Property="Width" Value="400"/>
+                        <Setter Property="MaxHeight" Value="260"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="HeaderedContentControl">
+                                    <DockPanel>
+                                        <Grid DockPanel.Dock="Left">
+                                            <Grid.LayoutTransform>
+                                                <RotateTransform Angle="-90"/>
+                                            </Grid.LayoutTransform>
+                                            <Rectangle VerticalAlignment="Center" Height="2" StrokeThickness="0" Fill="White"/>
+                                            <ContentControl FontFamily="{StaticResource Atlantis}" FontSize="36">
+                                                <Border HorizontalAlignment="Center" Padding="10,5" Background="{Binding Background, ElementName=HOST}">
+                                                    <ContentPresenter ContentSource="Header"/>
+                                                </Border>
+                                            </ContentControl>
+                                        </Grid>
+                                        <ScrollViewer HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Auto">
+                                            <ContentPresenter/>
+                                        </ScrollViewer>
+                                    </DockPanel>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </StackPanel.Resources>
+                <HeaderedContentControl Header="FOX">
+                    <ListBox>
+                        TEST MESSAGE
+                    </ListBox>
+                </HeaderedContentControl>
+                <HeaderedContentControl Header="FALCO">
+                    <ListBox>
+                        TEST MESSAGE
+                    </ListBox>
+                </HeaderedContentControl>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

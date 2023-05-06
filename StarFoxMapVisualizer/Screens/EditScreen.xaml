@@ -3,7 +3,7 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-      xmlns:local="clr-namespace:StarFoxMapVisualizer.Screens" xmlns:controls="clr-namespace:StarFoxMapVisualizer.Controls"
+      xmlns:local="clr-namespace:StarFoxMapVisualizer.Screens" xmlns:controls="clr-namespace:StarFoxMapVisualizer.Controls" xmlns:controls1="clr-namespace:StarFoxMapVisualizer.Controls2"
       mc:Ignorable="d" 
       d:DesignHeight="768" d:DesignWidth="1024"
       Title="EditScreen" Background="{DynamicResource WindowBackgroundColor}" Foreground="White">
@@ -182,17 +182,23 @@
                     <TextBlock x:Name="TitleBlock" DockPanel.Dock="Top" Margin="20,10,0,0" Style="{StaticResource TitleText}" Foreground="White" HorizontalAlignment="Left" VerticalAlignment="Bottom" FontSize="16" Text="Assembly Viewer"/>
                     <StackPanel x:Name="ViewModeStrip" Margin="10,20,10,10" Orientation="Horizontal" HorizontalAlignment="Right">
                         <TextBlock Style="{DynamicResource BodyText}" VerticalAlignment="Center" Margin="0,0,10,0">VIEW MODE:</TextBlock>
+                        <ToggleButton x:Name="ViewBRRButton" Padding="10,0" FontFamily="{StaticResource Atlantis}" FontSize="22" Background="#FF57708E" Foreground="White" Checked="ViewBRRButton_Checked">
+                            SOUNDS
+                        </ToggleButton>
+                        <ToggleButton x:Name="ViewMSGButton" Padding="10,0" FontFamily="{StaticResource Atlantis}" FontSize="22" Background="#FF57708E" Foreground="White" Checked="ViewMSGButton_Checked">
+                            MESSAGES
+                        </ToggleButton>
                         <ToggleButton x:Name="ViewGFXButton" Padding="10,0" FontFamily="{StaticResource Atlantis}" FontSize="22" Background="#FF57708E" Foreground="White" Checked="ViewGFXButton_Checked">
-                            GFX VIEWER
+                            GRAPHICS
                         </ToggleButton>
                         <ToggleButton x:Name="ViewBSTButton" Padding="10,0" FontFamily="{StaticResource Atlantis}" FontSize="22" Background="#FF57708E" Foreground="White" Checked="ViewBSTButton_Checked">
-                            OBJECT VIEWER
+                            SHAPES
                         </ToggleButton>
                         <ToggleButton x:Name="ViewMapButton" Padding="10,0" FontFamily="{StaticResource Atlantis}" FontSize="22" Background="#FF57708E" Foreground="White" Checked="ViewMapButton_Checked">
-                            MAP VIEWER
+                            LEVELS
                         </ToggleButton>
                         <ToggleButton x:Name="ViewASMButton" Padding="10,0" FontFamily="{StaticResource Atlantis}" FontSize="22" Background="#FF57708E" Foreground="White" Checked="ViewASMButton_Checked">
-                            ASM VIEWER
+                            ASSEMBLY
                         </ToggleButton>
                     </StackPanel>
                 </Grid>
@@ -209,6 +215,12 @@
                         </TabItem>
                         <TabItem Name="GFXTab">
                             <controls:GFXControl x:Name="GFXViewer"/>
+                        </TabItem>
+                        <TabItem Name="MSGTab">
+                            <controls1:MSGViewer x:Name="MSGViewer"/>
+                        </TabItem>
+                        <TabItem Name="BRRTab">
+                            <controls1:BRRViewer x:Name="BRRViewer"/>
                         </TabItem>
                     </TabControl>
                 </ContentControl>

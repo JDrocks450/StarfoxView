@@ -1,0 +1,39 @@
+﻿<ContentControl x:Class="StarFoxMapVisualizer.Controls2.CommunicationMessageControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:StarFoxMapVisualizer.Controls2"
+             mc:Ignorable="d" Name="HOST"
+             MinHeight="38" d:DesignWidth="800" Foreground="White" BorderBrush="#FF003B71">
+    <ContentControl.Template>
+        <ControlTemplate TargetType="ContentControl">
+            <Grid Background="{TemplateBinding Background}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="3*"/>
+                </Grid.ColumnDefinitions>
+                <Viewbox RenderOptions.BitmapScalingMode="NearestNeighbor" VerticalAlignment="Top">
+                    <Border Width="30" Height="38">
+                        <Border.Background>
+                            <ImageBrush x:Name="MugshotImage" ImageSource="/Resources/Image/faces.png" Viewbox="{Binding ImageRect, ElementName=HOST}" ViewboxUnits="Absolute"/>
+                        </Border.Background>
+                    </Border>
+                </Viewbox>
+                <Viewbox RenderOptions.BitmapScalingMode="NearestNeighbor" Grid.Column="1" VerticalAlignment="Bottom">
+                    <ContentControl FontFamily="{StaticResource SFFont}">
+                        <Grid>
+                            <TextBlock Margin="5,0,0,0" Width="126" TextWrapping="Wrap" Foreground="{TemplateBinding BorderBrush}" Text="{TemplateBinding Content}"/>
+                            <TextBlock Margin="3,-1,0,0" Width="126" TextWrapping="Wrap"  Foreground="{TemplateBinding Foreground}" Text="{TemplateBinding Content}"/>
+                        </Grid>
+                    </ContentControl>
+                </Viewbox>
+            </Grid>
+        </ControlTemplate>
+    </ContentControl.Template>
+    <ContentControl.Style>
+        <Style TargetType="ContentControl">
+            <Setter Property="Content" Value="all ships check in!!asdhgasjdkhga"/>
+        </Style>
+    </ContentControl.Style>
+</ContentControl>

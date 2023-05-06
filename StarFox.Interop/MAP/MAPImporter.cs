@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace StarFox.Interop.MAP
 {
-    public class MAPImporter : CodeImporter<MAPFile>
+    public class MAPImporter : BasicCodeImporter<MAPFile>
     {
         public override string[] ExpectedIncludes => new string[]
         {
@@ -20,7 +20,6 @@ namespace StarFox.Interop.MAP
             "BGMACS.INC",
             "VARS.INC"
         };
-        private ASMImporter baseImporter = new();
         private MAPContextFile? mapContextDefinitions;
         /// <summary>
         /// Using <see cref="ProcessLevelContexts"/> functions will populate this value.
@@ -88,15 +87,7 @@ namespace StarFox.Interop.MAP
         /// to this MAP import by getting data from <c>BGS.ASM</c> data.
         /// </summary>
         public void ProcessLevelContexts(MAPContextFile MapContextFile) =>
-            mapContextDefinitions = MapContextFile;
-        /// <summary>
-        /// Sets the currently included symbol definitions files.
-        /// </summary>
-        /// <param name="Imports"></param>
-        public override void SetImports(params ASMFile[] Imports)
-        {
-            baseImporter.SetImports(Imports);
-        }
+            mapContextDefinitions = MapContextFile;       
         /// <summary>
         /// Finds the specified <see cref="MAPContextDefinition"/> by name (as it appears in code, not 
         /// <see cref="MAPSetBG.TranslateNameToMAPContext(in string, string)"/>)
@@ -109,7 +100,6 @@ namespace StarFox.Interop.MAP
             return mapContextDefinitions?.Definitions?.FirstOrDefault(
                 x => x.Key.ToLower() == bgname.ToLower()).Value;
         }
-
         /// <summary>
         /// Attempts to import the given file and interpret the code as a MAP file
         /// </summary>
@@ -172,11 +162,6 @@ namespace StarFox.Interop.MAP
                     runningDelay += delay.Delay;
             }
             return ImportedObject;
-        }
-
-        internal override ImporterContext<IncludeType>? GetCurrentContext<IncludeType>()
-        {
-            return baseImporter.Context as ImporterContext<IncludeType>;
-        }
+        }        
     }
 }

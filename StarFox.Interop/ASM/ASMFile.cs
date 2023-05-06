@@ -22,6 +22,16 @@ namespace StarFox.Interop.ASM
         /// </summary>
         public HashSet<ASMConstant> Constants { get; protected set; } = new HashSet<ASMConstant> { };
         /// <summary>
+        /// A macro for getting all <see cref="Chunks"/> that are <see cref="ASMLine"/> instances
+        /// </summary>
+        public IEnumerable<ASMLine> Lines => Chunks.OfType<ASMLine>();
+        /// <summary>
+        /// A macro for getting all <see cref="Chunks"/> that are <see cref="ASMLine"/> instances and have 
+        /// <see cref="ASMLine.StructureAsMacroInvokeStructure"/> set
+        /// </summary>
+        public IEnumerable<ASMMacroInvokeLineStructure> MacroInvokeLines => Lines.Select(x => x.StructureAsMacroInvokeStructure).
+            Where(y => y != default);
+        /// <summary>
         /// Creates a new ASMFile representing the file provided at the specified path
         /// </summary>
         /// <param name="OriginalFilePath"></param>
@@ -30,7 +40,7 @@ namespace StarFox.Interop.ASM
             this.OriginalFilePath = OriginalFilePath;
         }
         /// <summary>
-        /// Shallow copy of One <see cref="ASMFile"/> to another
+        /// Shallow copy of one <see cref="ASMFile"/> to another
         /// </summary>
         /// <param name="From"></param>
         internal ASMFile(ASMFile From)

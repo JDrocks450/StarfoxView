@@ -9,8 +9,10 @@
 
   <ItemGroup>
     <None Remove="Resources\AtlantisInternational-jen0.ttf" />
+    <None Remove="Resources\Image\album.png" />
     <None Remove="Resources\Image\canvas.png" />
     <None Remove="Resources\Image\colTable.png" />
+    <None Remove="Resources\Image\faces.png" />
     <None Remove="Resources\Image\folder_empty.png" />
     <None Remove="Resources\Image\folder_full.png" />
     <None Remove="Resources\Image\macro.png" />
@@ -50,8 +52,10 @@
 
   <ItemGroup>
     <Resource Include="Resources\AtlantisInternational-jen0.ttf" />
+    <Resource Include="Resources\Image\album.png" />
     <Resource Include="Resources\Image\canvas.png" />
     <Resource Include="Resources\Image\colTable.png" />
+    <Resource Include="Resources\Image\faces.png" />
     <Resource Include="Resources\Image\folder_empty.png" />
     <Resource Include="Resources\Image\folder_full.png" />
     <Resource Include="Resources\Image\macro.png" />
@@ -73,6 +77,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Update="Controls\Subcontrols\BINImportMenu.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="Controls\Subcontrols\PCRImportMenu.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
