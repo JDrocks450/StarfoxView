@@ -185,4 +185,36 @@
             </Style>
         </Style.Resources>
     </Style>
+    <!--Circle Buttons-->
+    <ControlTemplate x:Key="CircularButtonTemplate" TargetType="Button">
+        <Grid>
+            <Ellipse Fill="{TemplateBinding Background}"/>
+            <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+        </Grid>
+    </ControlTemplate>
+    <Style x:Key="ModernCircleButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="White"/>
+        <Setter Property="Foreground" Value="Black"/>
+        <Setter Property="Width" Value="50"/>
+        <Setter Property="Height" Value="50"/>
+        <Setter Property="Padding" Value="13"/>
+        <Setter Property="BorderBrush" Value="{x:Null}"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template" Value="{StaticResource CircularButtonTemplate}"/>
+    </Style>
+    <Polygon x:Key="PlayTriangle" x:Shared="False"  Margin="5,0,0,0" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ContentControl}}" Stretch="Uniform">
+        <Polygon.Points>
+            <Point X="0" Y="0"/>
+            <Point X="1.5" Y="1"/>
+            <Point X="0" Y="2"/>
+        </Polygon.Points>
+    </Polygon>
+    <!--PLAY BUTTON STYLE-->
+    <Style x:Key="PlayButtonStyle" TargetType="Button" BasedOn="{StaticResource ModernCircleButtonStyle}">
+        <Setter Property="Content">
+            <Setter.Value>
+                <ContentControl Content="{StaticResource PlayTriangle}"/>
+            </Setter.Value>
+        </Setter>
+    </Style>
 </ResourceDictionary>

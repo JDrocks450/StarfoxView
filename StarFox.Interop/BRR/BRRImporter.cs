@@ -45,7 +45,8 @@ namespace StarFox.Interop.BRR
         /// Creates a new, blank <see cref="BRRFile"/> with no samples.
         /// </summary>
         /// <param name="originalFilePath"></param>
-        public BRRFile(string originalFilePath)        {
+        public BRRFile(string originalFilePath)
+        {
             OriginalFilePath = originalFilePath;
         }
     }
@@ -63,7 +64,7 @@ namespace StarFox.Interop.BRR
         }
         public static void WriteSampleToWAVStream(string FilePath, string Name, in BRRSample Sample, Stream Stream, int SampleRate = (int)WAVSampleRates.MED2)
         {
-            var wav = WAVInterop.CreateDescriptor(FilePath, Name, 2, SampleRate, Sample.SampleData.ToArray());
+            var wav = WAVInterop.CreateDescriptor(FilePath, Name, 1, SampleRate, Sample.SampleData.ToArray());
             WAVInterop.WriteWAV(wav, Stream);
         }
 

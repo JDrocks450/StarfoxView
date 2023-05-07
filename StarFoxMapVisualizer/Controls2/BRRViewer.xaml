@@ -24,42 +24,85 @@
             </ListBox>
         </StackPanel>
         <Grid Grid.Row="1" Grid.ColumnSpan="2">
-            <Border Background="#FF1B1B1B" BorderThickness="0,1,0,0" BorderBrush="#FF3C3C3C"/>
-            <StackPanel Orientation="Horizontal">
-                <Viewbox Grid.Column="1" Margin="20" HorizontalAlignment="Left" VerticalAlignment="Center" MaxHeight="35">
-                    <TextBlock>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="3*"/>
+                <ColumnDefinition MaxWidth="300"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Border Background="#FF1B1B1B" BorderThickness="0,1,0,0" BorderBrush="#FF3C3C3C" Grid.RowSpan="2" Grid.ColumnSpan="2"/>
+            <Viewbox Margin="20,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center" MaxHeight="35">
+                <TextBlock>
                         <Run FontSize="24" Name="SampleField" FontWeight="Bold">FILENAME.BIN</Run>
-                    </TextBlock>
-                </Viewbox>
-                <Button Name="PlayButton" Width="50" Height="50" Padding="13" BorderBrush="{x:Null}" Foreground="Black" Cursor="Hand" Click="PlayButton_Click">
-                    <Button.Template>
-                        <ControlTemplate TargetType="Button">
-                            <Grid>
-                                <Ellipse Fill="{TemplateBinding Background}"/>
-                                <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
-                            </Grid>
-                        </ControlTemplate>
-                    </Button.Template>
-                    <Polygon Margin="5,0,0,0" Fill="{Binding Foreground, ElementName=PlayButton}" Stretch="Uniform">
-                        <Polygon.Points>
-                            <Point X="0" Y="0"/>
-                            <Point X="1.5" Y="1"/>
-                            <Point X="0" Y="2"/>
-                        </Polygon.Points>
-                    </Polygon>
+                </TextBlock>
+            </Viewbox>
+            <Button x:Name="ExportSoundButton" Background="#19131313" Margin="20,0,0,10" Foreground="White" Click="ExportSoundButton_Click" HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="108" Content="Export Sound"/>
+            <Button x:Name="OtherOptionsButton" Background="#19131313" Margin="133,0,0,10" Foreground="White" Click="OtherOptionsButton_Click" HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="25" Content="...">
+                <Button.ContextMenu>
+                    <ContextMenu Name="OtherOptionsContextMenu">
+                        <MenuItem Name="CopyItem" Header="Copy" Click="CopyItem_Click"/>
+                    </ContextMenu>
+                </Button.ContextMenu>
+            </Button>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.ColumnSpan="2">
+                <Button x:Name="SetStartButton" Style="{StaticResource ModernCircleButtonStyle}" Background="{x:Null}" Foreground="White" RenderTransformOrigin="0.5,0.5" Click="SetStartButton_Click">
+                    <Button.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform ScaleX="-1"/>
+                            <SkewTransform/>
+                            <RotateTransform/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </Button.RenderTransform>
+                    <Grid>
+                        <Rectangle Width="5" Fill="{Binding Foreground, ElementName=ForwardButton}" HorizontalAlignment="Left"/>
+                        <ContentControl Margin="3,0,0,0" Content="{StaticResource PlayTriangle}" HorizontalAlignment="Right"/>
+                    </Grid>
+                </Button>
+                <Button x:Name="BackwardButton" Style="{StaticResource ModernCircleButtonStyle}" Background="{x:Null}" Foreground="White" RenderTransformOrigin="0.5,0.5" Margin="20,0,20,0" Click="BackwardButton_Click">
+                    <Button.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform ScaleX="-1"/>
+                            <SkewTransform/>
+                            <RotateTransform/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </Button.RenderTransform>
+                    <Grid>
+                        <ContentControl Margin="0,0,0,0" Content="{StaticResource PlayTriangle}" HorizontalAlignment="Right" Height="21"/>
+                        <ContentControl Margin="12,0,-12,0" Content="{StaticResource PlayTriangle}" HorizontalAlignment="Right" Height="21"/>
+                    </Grid>
+                </Button>
+                <Button Name="PlayButton" Style="{StaticResource PlayButtonStyle}" Foreground="Black" Click="PlayButton_Click"/>
+                <Button x:Name="ForwardButton" Style="{StaticResource ModernCircleButtonStyle}" Background="{x:Null}" Foreground="White" Margin="20,0,20,0" Click="ForwardButton_Click">
+                    <Grid>
+                        <ContentControl Margin="0,0,0,0" Content="{StaticResource PlayTriangle}" HorizontalAlignment="Right" Height="21"/>
+                        <ContentControl Margin="12,0,-12,0" Content="{StaticResource PlayTriangle}" HorizontalAlignment="Right" Height="21"/>
+                    </Grid>
+                </Button>
+                <Button x:Name="SetEndButton" Style="{StaticResource ModernCircleButtonStyle}" Background="{x:Null}" Foreground="White" Click="SetEndButton_Click">
+                    <Grid>
+                        <Rectangle Width="5" Fill="{Binding Foreground, ElementName=ForwardButton}" HorizontalAlignment="Left"/>
+                        <ContentControl Margin="3,0,0,0" Content="{StaticResource PlayTriangle}" HorizontalAlignment="Right"/>
+                    </Grid>
                 </Button>
             </StackPanel>
-            <UniformGrid Rows="1" Name="SampleRates" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="10">
-                <UniformGrid.Resources>
-                    <Style TargetType="RadioButton" BasedOn="{StaticResource {x:Type RadioButton}}">
-                        <Setter Property="Foreground" Value="White"/>
-                    </Style>
-                </UniformGrid.Resources>
-                <RadioButton>5000Hz</RadioButton>
-                <RadioButton>5000Hz</RadioButton>
-                <RadioButton>5000Hz</RadioButton>
-                <RadioButton>5000Hz</RadioButton>
-            </UniformGrid>
+            <local:WaveFormControl x:Name="WaveFormDisplay" Height="75" Grid.Column="1" Margin="0,0,20,0" BorderBrush="White" BorderThickness="0" Foreground="#FF00A7C7" MouseLeftButtonUp="WaveFormDisplay_MouseLeftButtonUp"/>
+            <Border VerticalAlignment="Center" Background="#19FFFFFF" Grid.Row="1" Grid.ColumnSpan="2">
+                <UniformGrid Rows="1" Name="SampleRates" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="10">
+                    <UniformGrid.Resources>
+                        <Style TargetType="RadioButton" BasedOn="{StaticResource {x:Type RadioButton}}">
+                            <Setter Property="Foreground" Value="White"/>
+                        </Style>
+                    </UniformGrid.Resources>
+                    <RadioButton>5000Hz</RadioButton>
+                    <RadioButton>5000Hz</RadioButton>
+                    <RadioButton>5000Hz</RadioButton>
+                    <RadioButton>5000Hz</RadioButton>
+                </UniformGrid>
+            </Border>
         </Grid>
         <Grid Grid.Column="1">
             <Grid.RowDefinitions>
@@ -92,6 +135,10 @@
                         <Run FontSize="12">SNES Sound Effects File (Bit Rate Reduction)</Run>
                         </TextBlock>
                     </Viewbox>
+                    <UniformGrid Grid.Column="1" Rows ="1" VerticalAlignment="Top" HorizontalAlignment="Left" Width="201" Margin="20,0,0,0">
+                        <Button x:Name="ExportButton" Background="{DynamicResource WindowBackgroundColor}" Margin="0,0,5,0" Foreground="White" Click="ExportButton_Click">Export</Button>
+                        <Button x:Name="ExportAs" Background="{DynamicResource WindowBackgroundColor}" Foreground="White" HorizontalAlignment="Left" Width="101" Click="ExportAs_Click">Export As...</Button>
+                    </UniformGrid>
                 </Grid>
             </Border>
             <ListView Name="SamplesList" Grid.Row="1" Margin="20,10" Background="{x:Null}" BorderBrush="{x:Null}" d:ItemsSource="{d:SampleData ItemCount=10}">
