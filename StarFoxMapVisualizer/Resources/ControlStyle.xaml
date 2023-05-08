@@ -40,7 +40,7 @@
     <Style TargetType="Window" x:Key="SFDialogModalStyle">
         <Style.Resources>
             <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                <Setter Property="Background" Value="{DynamicResource WindowColor}"/>
+                <Setter Property="Background" Value="{Binding Background, RelativeSource={RelativeSource AncestorType=Window}}"/>
                 <Setter Property="Foreground" Value="White"/>
                 <Setter Property="Padding" Value="10,1"/>
             </Style>

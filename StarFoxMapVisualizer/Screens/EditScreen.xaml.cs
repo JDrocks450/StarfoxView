@@ -8,6 +8,7 @@ using StarFox.Interop.GFX;
 using StarFox.Interop.GFX.COLTAB;
 using StarFox.Interop.MAP;
 using StarFox.Interop.MSG;
+using StarFox.Interop.SPC;
 using StarFoxMapVisualizer.Controls;
 using StarFoxMapVisualizer.Controls.Subcontrols;
 using StarFoxMapVisualizer.Misc;
@@ -62,11 +63,6 @@ namespace StarFoxMapVisualizer.Screens
             await HandleViewModes();
             UpdateInterface();
             LoadingSpan.Visibility = Visibility.Collapsed;
-        }
-
-        private void ContextEnableDisable()
-        {
-
         }
 
         internal async Task ImportCodeProject(bool Flush = false)
@@ -368,6 +364,17 @@ namespace StarFoxMapVisualizer.Screens
                     LoadingSpan.Visibility = Visibility.Collapsed;
                     UpdateInterface();
                     return;
+                case SFCodeProjectFileTypes.SPC:
+                    {
+                        var file = await FILEStandard.SPCImport.ImportAsync(File.FullName);
+                        Dialogs.SPCInformationDialog dialog = new(file)
+                        {
+                            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                            Owner = Application.Current.MainWindow
+                        };
+                        dialog.ShowDialog();
+                    }
+                    return;
                 case SFCodeProjectFileTypes.BINFile: // EXTRACT BIN
                     // DOUBT AS TO FILE TYPE
                     //CREATE THE MENU WINDOW
@@ -392,6 +399,59 @@ namespace StarFoxMapVisualizer.Screens
                             UpdateInterface();
                             CurrentMode = ViewMode.BRR;
                             await HandleViewModes();
+                            break;
+                        case SFFileType.BINFileTypes.SPC:
+                            {
+                                MessageBox.Show("Review the following information for accuracy.", "Review");
+                                var file = await System.IO.File.ReadAllBytesAsync(File.FullName);
+                                var newPath = File.FullName.Replace(System.IO.Path.GetExtension(File.FullName), ".SPC");
+                                var spcFile = new SPCFile(newPath)
+                                {
+                                    DumperName = "Bisquick",
+                                    SongTitle = System.IO.Path.GetFileNameWithoutExtension(newPath),
+                                    GameTitle = "Star Fox",
+                                    Comments = "Dumped using SFView <3",
+                                    DefaultChannelDisables = 0,
+                                    Emulator = 48,
+                                    ID666Included = 26,
+                                    MinorVersion = 30,
+                                    PC = 1132,
+                                    A = 5,
+                                    X = 69,
+                                    Y = 6,
+                                    SP = 207,
+                                    PSW = 9,
+                                };
+                                Array.Copy(file, spcFile.Data, Math.Min(file.Length, spcFile.Data.Length - 1));
+                                Array.Copy(SPCFile.DefaultDSPRegisters, spcFile.DSPRegisters,
+                                    Math.Min(SPCFile.DefaultDSPRegisters.Length, spcFile.DSPRegisters.Length));
+                                while (true)
+                                {
+                                    Dialogs.SPCInformationDialog dialog = new(spcFile)
+                                    {
+                                        WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                                        Owner = Application.Current.MainWindow
+                                    };
+                                    if (!dialog.ShowDialog() ?? true)
+                                        return;
+                                    using (var fs = new FileStream(newPath, FileMode.Create))
+                                    {
+                                        try
+                                        {
+                                            await FILEStandard.SPCImport.WriteAsync(spcFile, fs);
+                                            break;
+                                        }
+                                        catch (Exception Ex)
+                                        {
+                                            MessageBox.Show($"An error occured when exporting the SPC.\n" +
+                                                $"{Ex.Message}\n" +
+                                                $"\nLet's review the SPC info again to make sure it's correct." +
+                                                $"\nHaving trouble? Pressing 'Cancel' on the Properties window will exit this process.");
+                                        }
+                                    }
+                                }
+                            }
+                            UpdateInterface(true);
                             break;
                     }                            
                     LoadingSpan.Visibility = Visibility.Collapsed;                    

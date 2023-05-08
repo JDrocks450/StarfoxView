@@ -19,6 +19,7 @@ namespace Starfox.Editor
         SCR,
         MSG,
         BRR,
+        SPC,
         /// <summary>
         /// An <see cref="SFOptimizerNode"/>
         /// </summary>
@@ -43,6 +44,8 @@ namespace Starfox.Editor
                 return SFCodeProjectFileTypes.Palette;
             else if (path.EndsWith("BIN"))
                 return SFCodeProjectFileTypes.BINFile;
+            else if (path.EndsWith("SPC"))
+                return SFCodeProjectFileTypes.SPC;
             else if (path.EndsWith("CCR"))
                 return SFCodeProjectFileTypes.CCR;
             else if (path.EndsWith("PCR"))

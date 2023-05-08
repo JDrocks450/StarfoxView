@@ -89,7 +89,7 @@
                     </Grid>
                 </Button>
             </StackPanel>
-            <local:WaveFormControl x:Name="WaveFormDisplay" Height="75" Grid.Column="1" Margin="0,0,20,0" BorderBrush="White" BorderThickness="0" Foreground="#FF00A7C7" MouseLeftButtonUp="WaveFormDisplay_MouseLeftButtonUp"/>
+            <local:WaveFormControl Simplicity=".5" x:Name="WaveFormDisplay" Height="75" Grid.Column="1" Margin="0,0,20,0" BorderBrush="White" BorderThickness="0" Foreground="#FF00A7C7" MouseLeftButtonUp="WaveFormDisplay_MouseLeftButtonUp"/>
             <Border VerticalAlignment="Center" Background="#19FFFFFF" Grid.Row="1" Grid.ColumnSpan="2">
                 <UniformGrid Rows="1" Name="SampleRates" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="10">
                     <UniformGrid.Resources>
@@ -135,36 +135,40 @@
                         <Run FontSize="12">SNES Sound Effects File (Bit Rate Reduction)</Run>
                         </TextBlock>
                     </Viewbox>
-                    <UniformGrid Grid.Column="1" Rows ="1" VerticalAlignment="Top" HorizontalAlignment="Left" Width="201" Margin="20,0,0,0">
+                </Grid>
+            </Border>
+            <ScrollViewer Grid.Row="1">
+                <StackPanel>
+                    <ListView Name="SamplesList" Margin="20,10" Background="{x:Null}" BorderBrush="{x:Null}" d:ItemsSource="{d:SampleData ItemCount=10}">
+                        <ListView.Resources>
+                            <Style TargetType="ListViewItem">
+                                <Setter Property="Foreground" Value="White"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListViewItem">
+                                            <Border Padding="10" Background="{TemplateBinding Background}" Margin="0,0,0,1">
+                                                <ContentPresenter/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#35FFFFFF"/>
+                                    </Trigger>
+                                    <Trigger Property="IsMouseOver" Value="False">
+                                        <Setter Property="Background" Value="#19FFFFFF"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ListView.Resources>
+                    </ListView>
+                    <UniformGrid Rows ="1" VerticalAlignment="Top" HorizontalAlignment="Center" Width="200" Margin="0,0,0,10">
                         <Button x:Name="ExportButton" Background="{DynamicResource WindowBackgroundColor}" Margin="0,0,5,0" Foreground="White" Click="ExportButton_Click">Export</Button>
                         <Button x:Name="ExportAs" Background="{DynamicResource WindowBackgroundColor}" Foreground="White" HorizontalAlignment="Left" Width="101" Click="ExportAs_Click">Export As...</Button>
                     </UniformGrid>
-                </Grid>
-            </Border>
-            <ListView Name="SamplesList" Grid.Row="1" Margin="20,10" Background="{x:Null}" BorderBrush="{x:Null}" d:ItemsSource="{d:SampleData ItemCount=10}">
-                <ListView.Resources>
-                    <Style TargetType="ListViewItem">
-                        <Setter Property="Foreground" Value="White"/>
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="ListViewItem">
-                                    <Border Padding="10" Background="{TemplateBinding Background}" Margin="0,0,0,1">
-                                        <ContentPresenter/>
-                                    </Border>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                        <Style.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#35FFFFFF"/>
-                            </Trigger>
-                            <Trigger Property="IsMouseOver" Value="False">
-                                <Setter Property="Background" Value="#19FFFFFF"/>
-                            </Trigger>
-                        </Style.Triggers>
-                    </Style>
-                </ListView.Resources>
-            </ListView>
+                </StackPanel>
+            </ScrollViewer>
         </Grid>
     </Grid>
 </UserControl>

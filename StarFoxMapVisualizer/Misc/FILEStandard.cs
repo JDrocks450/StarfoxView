@@ -6,6 +6,7 @@ using StarFox.Interop.BSP;
 using StarFox.Interop.GFX.COLTAB;
 using StarFox.Interop.MAP;
 using StarFox.Interop.MSG;
+using StarFox.Interop.SPC;
 using StarFoxMapVisualizer.Controls;
 using StarFoxMapVisualizer.Controls.Subcontrols;
 using System;
@@ -29,6 +30,7 @@ namespace StarFoxMapVisualizer.Misc
         internal static readonly MSGImporter MSGImport = new();
         internal static readonly COLTABImporter COLTImport = new();
         internal static readonly BRRImporter BRRImport = new();
+        internal static readonly SPCImporter SPCImport = new();
         /// <summary>
         /// Includes a <see cref="SFCodeProjectFileTypes.Assembly"/>, <see cref="SFCodeProjectFileTypes.Include"/> or 
         /// <see cref="SFCodeProjectFileTypes.Palette"/>.

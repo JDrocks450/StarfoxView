@@ -5,6 +5,6 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:StarFoxMapVisualizer" xmlns:screens="clr-namespace:StarFoxMapVisualizer.Screens"
         mc:Ignorable="d"
-        Title="MainWindow" Height="768" Width="1024">
+        Title="SFEdit v0.5.15 [BETA]" Height="768" Width="1024">
     <screens:LandingScreen/>
 </Window>

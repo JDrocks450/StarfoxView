@@ -40,9 +40,13 @@ namespace StarFox.Interop
             /// </summary>
             COMPRESSED_CGX,
             /// <summary>
-            /// Sound Effects using the Bit Rate Reduction technique
+            /// Sound Effects (Sampled Audio) using the Bit Rate Reduction technique
             /// </summary>
             BRR,
+            /// <summary>
+            /// Sequence data that dictates the structure of a Song
+            /// </summary>
+            SPC,
         }
         public static string GetSummary(ASMFileTypes Type) => Type switch
         {
@@ -54,8 +58,9 @@ namespace StarFox.Interop
         };
         public static string GetSummary(BINFileTypes Type) => Type switch
         {
-            BINFileTypes.COMPRESSED_CGX => "Crunch'd Graphics",
-            BINFileTypes.BRR => "Sound Effects (SFX)",
+            BINFileTypes.COMPRESSED_CGX => "Crunch'd Graphics (CGX)",
+            BINFileTypes.BRR => "Sound Effects (Samples) (BRR)",
+            BINFileTypes.SPC => "Sequence Data (Songs) (SPC)",
             _ => "Not found", // default case
         };
     }

@@ -22,6 +22,10 @@ namespace StarFox.Interop.BRR
         /// High Quality Audio
         /// </summary>
         DAT = 48000,
+        VERYLOW1 = 2500,
+        VERYLOW3 = 3500,
+        VERYLOW4 = 4000,
+        VERYLOW5 = 4500,
         /// <summary>
         /// Lowest quality
         /// </summary>

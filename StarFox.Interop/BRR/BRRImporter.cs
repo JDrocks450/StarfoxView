@@ -7,49 +7,6 @@ using System.Threading.Tasks;
 
 namespace StarFox.Interop.BRR
 {
-    public class BRRSample
-    {
-        /// <summary>
-        /// A name given to this sample
-        /// </summary>
-        public string Name { get; set; }
-        /// <summary>
-        /// Position of this Sample in the <see cref="BRRFile"/>
-        /// </summary>
-        public long FilePosition { get; set; }
-        /// <summary>
-        /// The length of this sample, in bytes.
-        /// </summary>
-        public long ByteLength { get; set; }
-        /// <summary>
-        /// The RAW samples contained in this file.
-        /// <para>Due to the nature of BRR sound effects, the Frequency at which to play this is not stored here.</para>
-        /// </summary>
-        public List<short> SampleData { get; } = new();
-    }
-
-    /// <summary>
-    /// A file containing BRR (Bit Rate Reduction) samples
-    /// </summary>
-    public class BRRFile : IImporterObject
-    {       
-        /// <summary>
-        /// Provides access to the <see cref="BRRSample"/>s extracted from this <see cref="BRRFile"/>
-        /// </summary>
-        public Dictionary<ushort, BRRSample> Effects { get; } = new();
-        /// <summary>
-        /// The original file path of this object
-        /// </summary>
-        public string OriginalFilePath { get; }
-        /// <summary>
-        /// Creates a new, blank <see cref="BRRFile"/> with no samples.
-        /// </summary>
-        /// <param name="originalFilePath"></param>
-        public BRRFile(string originalFilePath)
-        {
-            OriginalFilePath = originalFilePath;
-        }
-    }
     /// <summary>
     /// A BRRImporter that is written to be compatible with documentation found publicly available at
     /// <see href="https://wiki.superfamicom.org/bit-rate-reduction-(brr)"/>

@@ -62,7 +62,7 @@ namespace StarFoxMapVisualizer.Controls2
             SampleRates.Children.Clear();
             foreach(int rate in Enum.GetValues<WAVSampleRates>())
             {
-                if (rate > 35000) continue;
+                if (rate > 20000) continue;
                 SampleRates.Children.Add(new RadioButton()
                 {
                     IsChecked = rate == DEFAULT_FREQ,
@@ -105,13 +105,15 @@ namespace StarFoxMapVisualizer.Controls2
                 {
                     Columns = 3
                 };
-                grid.Children.Add(new TextBox() 
+                var nameBox = new TextBox()
                 {
                     Background = null,
                     BorderBrush = null,
                     Foreground = Brushes.White,
-                    Text = sample.Name ?? $"Sample {i + 1}" 
-                });
+                    Text = sample.Name ?? $"Sample {i + 1}"
+                };
+                nameBox.KeyUp += FinalizeName;
+                grid.Children.Add(nameBox);
                 grid.Children.Add(new TextBlock(new Run("0:00")));
                 grid.Children.Add(new TextBlock(new Run($"{sample.SampleData.Count} Samples")));
                 ListViewItem item = new()
@@ -122,6 +124,15 @@ namespace StarFoxMapVisualizer.Controls2
                 item.PreviewMouseLeftButtonDown += ItemClicked; ;
                 SamplesList.Items.Add(item);
             }
+        }
+
+        private void FinalizeName(object sender, KeyEventArgs e)
+        {
+            if (e.Key != Key.Enter) return;
+            e.Handled = true;
+            if (SelectedSample == null) return;
+            var name = SelectedSample.Name = (sender as TextBox).Text;
+            SampleField.Text = name;
         }
 
         private void ItemClicked(object sender, MouseButtonEventArgs e)
@@ -346,10 +357,12 @@ namespace StarFoxMapVisualizer.Controls2
                 CreatePrompt = false,
                 EnsureFileExists= false,
                 EnsurePathExists = true,
-                InitialDirectory = Environment.CurrentDirectory,
+                InitialDirectory = AppResources.ImportedProject.WorkspaceDirectory.FullName,
                 Title = $"Save {sample.Name} at {freq}Hz to?",
-                DefaultExtension = ".wav",                
+                DefaultExtension = "wav",   
+                DefaultFileName = (SelectedSample.Name ?? "Untitled") + ".wav"
             };
+            fileDialog.Filters.Add(new CommonFileDialogFilter("Wave Format", "wav"));
             if (fileDialog.ShowDialog() != CommonFileDialogResult.Ok) return; // OOPSIES
             string selectedFolder = fileDialog.FileName;
             ExportOne(selectedFolder, sample, freq);

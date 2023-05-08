@@ -23,10 +23,11 @@ namespace StarFoxMapVisualizer.Controls2
     public partial class WaveFormControl : ContentControl
     {
         /// <summary>
-        /// Multiplied by the width of the control dictates how many samples to display.
-        /// <para>Default is 1.0 -- as in if the control is 200px wide it will display 200 samples as 1px wide lines</para>
+        /// Measures how simple this waveform is in comparison to the amount of lateral space it can fill.
+        /// <para>Default is 1.0 -- as in if the control is 200px wide it will display 200 samples as 1px wide lines. 
+        /// .5 would double this amount, and 2.0 would half it.</para>
         /// </summary>
-        public double Precision = 1.0;
+        public double Simplicity { get; set; } = 1.0;
 
         public WaveFormControl()
         {
@@ -48,7 +49,7 @@ namespace StarFoxMapVisualizer.Controls2
             double heightMeasurement = HOST.ActualHeight == 0 ? HOST.Height : HOST.ActualHeight;
             double halfDesignHeight = 100; // distance from median to top / bottom of control
             double designWidth = 1;
-            double totalSamples = (int)(Math.Max(widthMeasurement, Sample.SampleData.Count) * Precision);
+            double totalSamples = (int)(Math.Max(widthMeasurement, Sample.SampleData.Count) * Simplicity);
             double step = totalSamples / widthMeasurement;            
             short HighBound = Sample.SampleData.Max();
             short LowBound = 0;
@@ -72,7 +73,6 @@ namespace StarFoxMapVisualizer.Controls2
                     Margin = new Thickness(currentX, 0, 0, 0),
                     Width = designWidth,
                     Height = lineHeight,
-                    //Fill = Brushes.Red,
                     VerticalAlignment = VerticalAlignment.Center,
                 };
                 WaveFormHost.Children.Add(rect);
