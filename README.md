@@ -1,8 +1,22 @@
 # StarFox (SNES) Source Code IDE
 SFEdit is an all-in-one interactive development environment for viewing original code, assets, graphics, and levels. 
-While more supported file types are planned, for now only certain file types are compatible and implemented. 
+While more supported file types are planned, for now only certain file types are compatible and implemented.  
 
 See *Compatibility* for details.
+
+## Special Mentions
+Thank you very much to the following projects for being Open-Source and helping to make this Editor possible!
+* NAudio: https://github.com/naudio/NAudio
+    > WAV Audio Player for the Editor
+* Special thanks to Everything! Maker of sf_decrunch: https://www.romhacking.net/utilities/1543/
+    > His work helped me create Decrunch.cs - a C# translation of decrunch.c for interlaced 2D imagery.
+* Special thanks to Matthew Callis! Maker of SF2 FontTools: https://www.romhacking.net/utilities/346/
+    > His work helped me create FX.cs - a C# translation of FX.cpp for compressed CGX imagery.
+* Special thanks to LUIGIBLOOD! Maker of hcgcad: https://github.com/LuigiBlood/hcgcad
+    > His work helped me create CAD.cs - an adaptation of CAD.cs from his project for 2D imagery.
+* Special thanks to Euclidium, Sunlit, segaretro92, Random and kando from the Starfox EX discord for helping with various curiousities.
+
+You are all appreciated.
 
 ## Setup
 Instructions for setup I have split into two user-groups.
