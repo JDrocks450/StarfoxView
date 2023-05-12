@@ -12,7 +12,7 @@ namespace StarFox.Interop.SPC
     /// <see href="http://snesmusic.org/files/spc_file_format.txt."/>
     /// <para>This importer is compatible with emulators that support this standard.</para>
     /// </summary>
-    public class SPCImporter : CodeImporter<SPCFile>
+    public class SPCImporter : BinaryCodeImporter<SPCFile>
     {
         /// <summary>
         /// Writes the specified <see cref="SPCFile"/> to the given stream
@@ -179,17 +179,5 @@ namespace StarFox.Interop.SPC
             if (data != buffer.Length) throw new Exception("Read past edge of file.");
             return Encoding.ASCII.GetString(buffer);
         }
-        /// <summary>
-        /// Not compatible with this importer.
-        /// </summary>
-        /// <param name="Includes"></param>
-        /// <exception cref="NotImplementedException"></exception>
-        public override void SetImports(params ASMFile[] Includes) => _ = 0;
-        /// <summary>
-        /// Not compatible with this importer.
-        /// </summary>
-        /// <typeparam name="IncludeType"></typeparam>
-        /// <returns></returns>
-        internal override ImporterContext<IncludeType>? GetCurrentContext<IncludeType>() => default;
     }
 }

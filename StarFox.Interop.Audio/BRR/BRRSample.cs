@@ -2,6 +2,17 @@
 {
     public class BRRSample
     {
+        public BRRSample() { }
+        public BRRSample(string parentFilePath)
+        {
+            ParentFilePath = parentFilePath ?? throw new ArgumentNullException(nameof(parentFilePath));
+        }
+
+        public BRRSample(string name, string parentFilePath) : this(parentFilePath)
+        {
+            Name = name ?? throw new ArgumentNullException(nameof(name));
+        }
+
         /// <summary>
         /// A name given to this sample
         /// </summary>
@@ -19,5 +30,6 @@
         /// <para>Due to the nature of BRR sound effects, the Frequency at which to play this is not stored here.</para>
         /// </summary>
         public List<short> SampleData { get; } = new();
+        public string ParentFilePath { get; set; } 
     }
 }

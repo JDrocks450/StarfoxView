@@ -121,7 +121,7 @@ namespace StarFox.Interop.ASM
             return chunk;
         }
 
-        internal override ImporterContext<IncludeType>? GetCurrentContext<IncludeType>()
+        public override ImporterContext<IncludeType>? GetCurrentContext<IncludeType>()
         {
             return Context as ImporterContext<IncludeType>;
         }

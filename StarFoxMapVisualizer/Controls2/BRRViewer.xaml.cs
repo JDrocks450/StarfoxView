@@ -35,12 +35,14 @@ namespace StarFoxMapVisualizer.Controls2
         private Stream SelectedSampleStream;
         private int extractedSampleRate = 0;
         private AudioPlaybackEngine playbackEngine;
+        private int SelectedFileIndex = -1;
 
         private BRRFile? SelectedFile
         {
             get
             {
-                var searchRange = FilePathsCache.ElementAtOrDefault(FileBrowser.SelectedIndex);
+                if (SelectedFileIndex < 0) return null;
+                var searchRange = FilePathsCache.ElementAtOrDefault(SelectedFileIndex);
                 if (searchRange == null) return null;
                 AppResources.ImportedProject.Samples.TryGetValue(searchRange, out var val);
                 return val;
@@ -92,12 +94,26 @@ namespace StarFoxMapVisualizer.Controls2
             FileBrowser.SelectionChanged += FileSelected;
         }
 
+        public void SelectFile(string FilePath)
+        {
+            if (!baseOpenFile(FilePathsCache.IndexOf(FilePath)))
+                ; // TODO: HANDLE ERROR HERE
+        }
+
         private void FileSelected(object sender, SelectionChangedEventArgs e)
         {
-            FileField.Text = FileBrowser.SelectedItem.ToString();
+            if (!baseOpenFile(FileBrowser.SelectedIndex))
+                ; // TODO: HANDLE ERROR HERE
+        }
+
+        private bool baseOpenFile(int index)
+        {
+            SelectedFileIndex= index;
+            if (SelectedFile == null) return false;
             SamplesList.Items.Clear();
+            FileField.Text = System.IO.Path.GetFileNameWithoutExtension(SelectedFile.OriginalFilePath).ToUpperInvariant();
             int i = -1;
-            foreach(var sample in SelectedFile.Effects.Values)
+            foreach (var sample in SelectedFile.Effects.Values)
             {
                 if (sample == default) continue;
                 i++;
@@ -115,15 +131,23 @@ namespace StarFoxMapVisualizer.Controls2
                 nameBox.KeyUp += FinalizeName;
                 grid.Children.Add(nameBox);
                 grid.Children.Add(new TextBlock(new Run("0:00")));
-                grid.Children.Add(new TextBlock(new Run($"{sample.SampleData.Count} Samples")));
+                grid.Children.Add(new TextBlock(new Run($"{sample.SampleData.Count} Samples")
+                {
+                    Foreground = sample.SampleData.Count >= 250 ? Brushes.White : Brushes.Coral
+                }));
                 ListViewItem item = new()
                 {
-                    Content= grid,
+                    Content = grid,
                     Tag = sample
                 };
-                item.PreviewMouseLeftButtonDown += ItemClicked; ;
+                item.Selected += ItemClicked;
                 SamplesList.Items.Add(item);
             }
+            //SET FILE BROWSER SELECTION TO BE ON THE CURRENT FILE
+            FileBrowser.SelectionChanged -= FileSelected;
+            FileBrowser.SelectedIndex = index;
+            FileBrowser.SelectionChanged += FileSelected;
+            return true;
         }
 
         private void FinalizeName(object sender, KeyEventArgs e)
@@ -135,7 +159,7 @@ namespace StarFoxMapVisualizer.Controls2
             SampleField.Text = name;
         }
 
-        private void ItemClicked(object sender, MouseButtonEventArgs e)
+        private void ItemClicked(object sender, RoutedEventArgs e)
         {
             SampleSelected(null, null);
         }
@@ -173,7 +197,7 @@ namespace StarFoxMapVisualizer.Controls2
                 //Disable the UI
                 IsEnabled = false;
                 //Dump the contents of the WAV to a Stream
-                BRRImporter.WriteSampleToWAVStream("null", "Preview", sample, ms, sampleRate);                
+                BRRInterface.WriteSample(ms, sample, BRRInterface.BRRExportFileTypes.WaveFormat, sampleRate);                
                 
                 //Set the cached stream and sample rate
                 SelectedSampleStream = ms;
@@ -284,10 +308,9 @@ namespace StarFoxMapVisualizer.Controls2
             var directory = System.IO.Path.GetDirectoryName(file.OriginalFilePath);
             directory = System.IO.Path.Combine(directory, "Export",
                 System.IO.Path.GetFileNameWithoutExtension(file.OriginalFilePath));
-
             ExportAll(file, directory);
-        }
-        private void ExportAll(BRRFile file, string Folder)
+        }        
+        private void ExportAll(BRRFile file, string Folder, BRRInterface.BRRExportFileTypes Format = BRRInterface.BRRExportFileTypes.WaveFormat)
         {
             if (file == default) return;
             try
@@ -300,7 +323,15 @@ namespace StarFoxMapVisualizer.Controls2
                     $"\nPress No to go back now. This may take some time.", "Yo!", MessageBoxButton.YesNo);
                 Directory.CreateDirectory(Folder);
                 foreach (var sample in file.Effects.Values)
-                    ExportOne(System.IO.Path.Combine(Folder, sample.Name + ".wav"), sample, freq);
+                {
+                    string extension = Format switch
+                    {
+                        BRRInterface.BRRExportFileTypes.WaveFormat => ".wav",
+                        BRRInterface.BRRExportFileTypes.BRRFormat => ".brr",
+                        _ => throw new Exception($"{nameof(Format)} was supplied as NoneSelected which is not allowed.")
+                    };
+                    ExportOne(System.IO.Path.Combine(Folder, sample.Name + extension), sample, freq, Format);
+                }
                 IsEnabled = true;
             }
             catch (Exception ex)
@@ -312,11 +343,11 @@ namespace StarFoxMapVisualizer.Controls2
                 IsEnabled = true;
             }
         }
-        private void ExportOne(string FileName, BRRSample Sample, int Freq)
+        private void ExportOne(string FileName, BRRSample Sample, int Freq, BRRInterface.BRRExportFileTypes Format)
         {
             try
             {
-                BRRImporter.WriteSampleToWAV(FileName, "save", Sample, Freq);
+                BRRInterface.WriteSample(FileName, "save", Sample, Format, Freq);
             }
             catch (Exception ex)
             {
@@ -341,7 +372,17 @@ namespace StarFoxMapVisualizer.Controls2
             };
             if (fileDialog.ShowDialog() != CommonFileDialogResult.Ok) return; // OOPSIES
             string selectedFolder = fileDialog.FileName;
-            ExportAll(file, selectedFolder);
+            var result = 
+                MessageBox.Show("Export as Microsoft Wave format?\n\nSelecting No will export to *.BRR format.",
+                "Format Selection", MessageBoxButton.YesNoCancel);
+            var format = BRRInterface.BRRExportFileTypes.NoneSelected;
+            switch (result)
+            {
+                case MessageBoxResult.Yes: format = BRRInterface.BRRExportFileTypes.WaveFormat; break;
+                case MessageBoxResult.No: format = BRRInterface.BRRExportFileTypes.BRRFormat; break;
+                case MessageBoxResult.Cancel: return;
+            }
+            ExportAll(file, selectedFolder, format);
         }
 
         private void ExportSoundButton_Click(object sender, RoutedEventArgs e)
@@ -353,19 +394,25 @@ namespace StarFoxMapVisualizer.Controls2
             var freq = GetSampleRate();
             CommonSaveFileDialog fileDialog = new()
             {                
-                AlwaysAppendDefaultExtension= true,
+                AlwaysAppendDefaultExtension = true,
                 CreatePrompt = false,
                 EnsureFileExists= false,
                 EnsurePathExists = true,
                 InitialDirectory = AppResources.ImportedProject.WorkspaceDirectory.FullName,
-                Title = $"Save {sample.Name} at {freq}Hz to?",
-                DefaultExtension = "wav",   
+                Title = $"Save {sample.Name} at {freq}Hz to?",       
+                DefaultExtension = "wav",
                 DefaultFileName = (SelectedSample.Name ?? "Untitled") + ".wav"
             };
             fileDialog.Filters.Add(new CommonFileDialogFilter("Wave Format", "wav"));
+            fileDialog.Filters.Add(new CommonFileDialogFilter("Bit Rate Reduction Format", "brr"));
             if (fileDialog.ShowDialog() != CommonFileDialogResult.Ok) return; // OOPSIES
-            string selectedFolder = fileDialog.FileName;
-            ExportOne(selectedFolder, sample, freq);
+            string selectedFolder = System.IO.Path.GetDirectoryName(fileDialog.FileName);
+            string fileName = fileDialog.FileAsShellObject.Name;
+            var format = BRRInterface.BRRExportFileTypes.WaveFormat;
+            if (fileName.ToUpper().EndsWith("BRR")) // BRR Selected
+                format = BRRInterface.BRRExportFileTypes.BRRFormat;
+            var path = System.IO.Path.Combine(selectedFolder, fileName);
+            ExportOne(path, sample, freq, format);
         }
 
         private void CopyItem_Click(object sender, RoutedEventArgs e)
@@ -373,7 +420,7 @@ namespace StarFoxMapVisualizer.Controls2
             var sample = SelectedSample;
             if (sample == default) return;
             var file = System.IO.Path.GetTempPath() + $"\\{sample.Name}.wav";
-            ExportOne(file, sample, GetSampleRate());
+            ExportOne(file, sample, GetSampleRate(), BRRInterface.BRRExportFileTypes.WaveFormat);
             var collect = new System.Collections.Specialized.StringCollection();
             collect.Add(file);
             Clipboard.SetFileDropList(collect);

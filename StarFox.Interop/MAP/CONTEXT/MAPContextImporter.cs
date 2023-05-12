@@ -99,6 +99,6 @@ namespace StarFox.Interop.MAP.CONTEXT
             ASMExtensions.EndConstantsContext();
             return file;
         }
-        internal override ImporterContext<IncludeType>? GetCurrentContext<IncludeType>() => _context as ImporterContext<IncludeType>;
+        public override ImporterContext<IncludeType>? GetCurrentContext<IncludeType>() => _context as ImporterContext<IncludeType>;
     }
 }

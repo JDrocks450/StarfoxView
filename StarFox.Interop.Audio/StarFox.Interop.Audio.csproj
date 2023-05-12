@@ -7,7 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\StarFox.Interop.Audio\StarFox.Interop.Audio.csproj" />
     <ProjectReference Include="..\StarFox.Interop\StarFox.Interop.csproj" />
   </ItemGroup>
 

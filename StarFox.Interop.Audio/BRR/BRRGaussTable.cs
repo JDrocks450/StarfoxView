@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace StarFox.Interop.BRR
 {
-    internal static class GaussInterpolation
+    internal static class BRRGaussInterpolation
     {
         internal static int[] GaussInterpolationTable = new int[]
         {

@@ -91,7 +91,7 @@ namespace StarFox.Interop.GFX.COLTAB
             context.Includes = baseImporter.Context.Includes;
         }
 
-        internal override ImporterContext<IncludeType>? GetCurrentContext<IncludeType>()
+        public override ImporterContext<IncludeType>? GetCurrentContext<IncludeType>()
         {
             return context as ImporterContext<IncludeType>;
         }

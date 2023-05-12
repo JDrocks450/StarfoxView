@@ -93,6 +93,18 @@ namespace StarFox.Interop.BRR
             return new WAVDescriptor<T>(FilePath, name, channels, sampleRate, sampleData);
         }
         /// <summary>
+        /// Creates a new <see cref="WAVDescriptor{T}"/> with the given parameters - no FilePath or Name
+        /// </summary>
+        /// <typeparam name="T">The type of data used to store a sample. Valid types are int, byte, short, and long</typeparam>
+        /// <param name="channels">The amount of audio channels</param>
+        /// <param name="sampleRate">The rate at which samples are played back, in HZ</param>
+        /// <param name="sampleData">The samples themselves</param>
+        /// <returns></returns>
+        internal static WAVDescriptor<T> CreateDescriptor<T>(short channels, int sampleRate, params T[] sampleData) where T : struct
+        {
+            return new WAVDescriptor<T>(default, default, channels, sampleRate, sampleData);
+        }
+        /// <summary>
         /// Writes the <paramref name="Descriptor"/> to the <see cref="WAVDescriptor{T}.FilePath"/> property
         /// </summary>
         /// <typeparam name="T"></typeparam>

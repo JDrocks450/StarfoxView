@@ -64,7 +64,13 @@ namespace StarFoxMapVisualizer.Screens
             UpdateInterface();
             LoadingSpan.Visibility = Visibility.Collapsed;
         }
-
+        /// <summary>
+        /// Will Load (or Reload) the current project
+        /// <para></para>
+        /// </summary>
+        /// <param name="Flush"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidDataException"></exception>
         internal async Task ImportCodeProject(bool Flush = false)
         {            
             var currentProject = AppResources.ImportedProject;
@@ -271,7 +277,11 @@ namespace StarFoxMapVisualizer.Screens
             }
             SolutionExplorerView.Items.Add(await AddProjectNode(currentProject.ParentNode));
         }        
-
+        /// <summary>
+        /// Should be called after changing the <see cref="CurrentMode"/> property
+        /// <para>Will update the interface to match the new Mode</para>
+        /// </summary>
+        /// <returns></returns>
         public DispatcherOperation HandleViewModes() => Dispatcher.InvokeAsync(async delegate
         {
             //UNSUBSCRIBE FROM ALL BUTTONS FIRST 
@@ -352,29 +362,33 @@ namespace StarFoxMapVisualizer.Screens
             ViewMSGButton.Checked += ViewMSGButton_Checked;
             ViewBRRButton.Checked += ViewBRRButton_Checked;
         });               
-
-        private async Task FileSelected(FileInfo File)
-        {                        
-            LoadingSpan.Visibility = Visibility.Visible;            
-            //CHECK IF ITS A KNOWN FILE
+        /// <summary>
+        /// Will handle known file types and return true if handled.
+        /// <para>Returns false if not handled. Returns default if the user cancels.</para>
+        /// </summary>
+        /// <param name="File"></param>
+        /// <returns></returns>
+        private async Task<bool?> HandleKnownFileTypes(FileInfo File)
+        {
             switch (File.GetSFFileType())
             { // YEAH?
                 case SFCodeProjectFileTypes.Palette: // HANDLE PALETTE
-                    await FILEStandard.OpenPalette(File);                    
+                    await FILEStandard.OpenPalette(File);
                     LoadingSpan.Visibility = Visibility.Collapsed;
                     UpdateInterface();
-                    return;
+                    return true;
+                case SFCodeProjectFileTypes.BRR:
+                    await AUDIOStandard.OpenBRR(File);
+                    UpdateInterface();
+                    CurrentMode = ViewMode.BRR;
+                    await HandleViewModes();
+                    LoadingSpan.Visibility = Visibility.Collapsed;
+                    BRRViewer.SelectFile(File.FullName);
+                    return true;
                 case SFCodeProjectFileTypes.SPC:
-                    {
-                        var file = await FILEStandard.SPCImport.ImportAsync(File.FullName);
-                        Dialogs.SPCInformationDialog dialog = new(file)
-                        {
-                            WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                            Owner = Application.Current.MainWindow
-                        };
-                        dialog.ShowDialog();
-                    }
-                    return;
+                    await AUDIOStandard.OpenSPCProperties(File);
+                    LoadingSpan.Visibility = Visibility.Collapsed;
+                    return true;
                 case SFCodeProjectFileTypes.BINFile: // EXTRACT BIN
                     // DOUBT AS TO FILE TYPE
                     //CREATE THE MENU WINDOW
@@ -383,7 +397,7 @@ namespace StarFoxMapVisualizer.Screens
                     {
                         Owner = Application.Current.MainWindow
                     };
-                    if (!importMenu.ShowDialog() ?? true) return; // USER CANCEL
+                    if (!importMenu.ShowDialog() ?? true) return default; // USER CANCEL
                     selectFileType = importMenu.FileType;
                     switch (selectFileType)
                     {
@@ -392,84 +406,32 @@ namespace StarFoxMapVisualizer.Screens
                             UpdateInterface(true); // Files changed!
                             break;
                         case SFFileType.BINFileTypes.BRR:
-                            {
-                                var file = await FILEStandard.BRRImport.ImportAsync(File.FullName);
-                                AppResources.ImportedProject.Samples.Add(File.FullName, file);                                
-                            }
+                            await AUDIOStandard.OpenBRR(File);
                             UpdateInterface();
                             CurrentMode = ViewMode.BRR;
                             await HandleViewModes();
                             break;
                         case SFFileType.BINFileTypes.SPC:
-                            {
-                                MessageBox.Show("Review the following information for accuracy.", "Review");
-                                var file = await System.IO.File.ReadAllBytesAsync(File.FullName);
-                                var newPath = File.FullName.Replace(System.IO.Path.GetExtension(File.FullName), ".SPC");
-                                var spcFile = new SPCFile(newPath)
-                                {
-                                    DumperName = "Bisquick",
-                                    SongTitle = System.IO.Path.GetFileNameWithoutExtension(newPath),
-                                    GameTitle = "Star Fox",
-                                    Comments = "Dumped using SFView <3",
-                                    DefaultChannelDisables = 0,
-                                    Emulator = 48,
-                                    ID666Included = 26,
-                                    MinorVersion = 30,
-                                    PC = 1132,
-                                    A = 5,
-                                    X = 69,
-                                    Y = 6,
-                                    SP = 207,
-                                    PSW = 9,
-                                };
-                                Array.Copy(file, spcFile.Data, Math.Min(file.Length, spcFile.Data.Length - 1));
-                                Array.Copy(SPCFile.DefaultDSPRegisters, spcFile.DSPRegisters,
-                                    Math.Min(SPCFile.DefaultDSPRegisters.Length, spcFile.DSPRegisters.Length));
-                                while (true)
-                                {
-                                    Dialogs.SPCInformationDialog dialog = new(spcFile)
-                                    {
-                                        WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                                        Owner = Application.Current.MainWindow
-                                    };
-                                    if (!dialog.ShowDialog() ?? true)
-                                        return;
-                                    using (var fs = new FileStream(newPath, FileMode.Create))
-                                    {
-                                        try
-                                        {
-                                            await FILEStandard.SPCImport.WriteAsync(spcFile, fs);
-                                            break;
-                                        }
-                                        catch (Exception Ex)
-                                        {
-                                            MessageBox.Show($"An error occured when exporting the SPC.\n" +
-                                                $"{Ex.Message}\n" +
-                                                $"\nLet's review the SPC info again to make sure it's correct." +
-                                                $"\nHaving trouble? Pressing 'Cancel' on the Properties window will exit this process.");
-                                        }
-                                    }
-                                }
-                            }
-                            UpdateInterface(true);
+                            if (await AUDIOStandard.ConvertBINToSPC(File))
+                                UpdateInterface(true);
                             break;
-                    }                            
-                    LoadingSpan.Visibility = Visibility.Collapsed;                    
-                    return;
+                    }
+                    LoadingSpan.Visibility = Visibility.Collapsed;
+                    return true;
                 case SFCodeProjectFileTypes.CCR: // EXTRACT COMPRESSED GRAPHICS
                     {
                         await GFXStandard.ExtractCCR(File);
                         LoadingSpan.Visibility = Visibility.Collapsed;
                         UpdateInterface(true); // Files changed!
                     }
-                    return;
+                    return true;
                 case SFCodeProjectFileTypes.PCR: // EXTRACT COMPRESSED GRAPHICS
                     {
                         await SFGFXInterface.TranslateCompressedPCR(File.FullName);
                         LoadingSpan.Visibility = Visibility.Collapsed;
                         UpdateInterface(true); // Files changed!
                     }
-                    return;
+                    return true;
                 case SFCodeProjectFileTypes.SCR: // screens
                     //OPEN THE SCR FILE
                     GFXStandard.OpenSCR(File);
@@ -477,7 +439,7 @@ namespace StarFoxMapVisualizer.Screens
                     UpdateInterface();
                     CurrentMode = ViewMode.GFX;
                     await HandleViewModes();
-                    return;
+                    return true;
                 case SFCodeProjectFileTypes.CGX: // graphics
                     //OPEN THE CGX FILE
                     await GFXStandard.OpenCGX(File);
@@ -485,8 +447,21 @@ namespace StarFoxMapVisualizer.Screens
                     UpdateInterface();
                     CurrentMode = ViewMode.GFX;
                     await HandleViewModes();
-                    return;
+                    return true;
             }
+            return false;
+        }
+        /// <summary>
+        /// A file has been selected in the GUI
+        /// </summary>
+        /// <param name="File"></param>
+        /// <returns></returns>
+        private async Task FileSelected(FileInfo File)
+        {                        
+            LoadingSpan.Visibility = Visibility.Visible;
+            //CHECK IF ITS A KNOWN FILE
+            var result = await HandleKnownFileTypes(File);
+            if (!result.HasValue || result.Value) return; // Handled or User Cancelled
             //SWITCH TO ASM VIEWER IF WE HAVEN'T ALREADY
             CurrentMode = ViewMode.ASM;
             //HANDLE VIEW MODES -- PAUSE / ENABLE VIEW MODE CONTROLS
@@ -542,7 +517,10 @@ namespace StarFoxMapVisualizer.Screens
             if (CurrentMode is ViewMode.MAP) MAPViewer.InvalidateFiles();
             if (CurrentMode is ViewMode.GFX) GFXViewer.RefreshFiles();
         }
-
+        /// <summary>
+        /// Shows what Macros are defined in the current <see cref="ASMFile"/>
+        /// </summary>
+        /// <param name="file"></param>
         private void ShowMacrosForFile(ASMFile file)
         {
             void AddSymbol<T>(T symbol) where T : ASMChunk, IASMNamedSymbol
@@ -587,7 +565,11 @@ namespace StarFoxMapVisualizer.Screens
                         AddSymbol(define);
             }
         }
-
+        /// <summary>
+        /// Raised when the User changes the file they are viewing Macros on.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void FilterFileChanged(object sender, SelectionChangedEventArgs e)
         {
             int newSelection = MacroFileCombo.SelectedIndex;
@@ -596,57 +578,100 @@ namespace StarFoxMapVisualizer.Screens
             if (file == null) return;
             ShowMacrosForFile(file);
         }
-
+        /// <summary>
+        /// Raised when the user selects a Macro to view in the ASMViewer
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private async void MacroExplorerView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (MacroExplorerView.SelectedItem == null) return;
             if (((ListBoxItem)MacroExplorerView.SelectedItem).Tag is ASMChunk chunk)
+            {
+                CurrentMode = ViewMode.ASM;
+                await HandleViewModes();
                 await ASMViewer.OpenSymbol(chunk);
+            }
         }
-
+        /// <summary>
+        /// Raised when the user changes the current file viewing Macros on.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void FilterChanged(object sender, RoutedEventArgs e)
         {
             FilterFileChanged(sender, null);
         }
-
+        /// <summary>
+        /// MapViewer Button Clicked
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void ViewMapButton_Checked(object sender, RoutedEventArgs e)
         {
             CurrentMode = ViewMode.MAP;
             HandleViewModes();
             UpdateInterface();
         }
+        /// <summary>
+        /// ASM Button Clicked
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void ViewASMButton_Checked(object sender, RoutedEventArgs e)
         {
             CurrentMode = ViewMode.ASM;
             HandleViewModes();
             UpdateInterface();
         }
+        /// <summary>
+        /// Model Viewer Button Clicked
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void ViewBSTButton_Checked(object sender, RoutedEventArgs e)
         {
             CurrentMode = ViewMode.OBJ;
             HandleViewModes();
             UpdateInterface();
         }
-
+        /// <summary>
+        /// Graphics Button Clicked
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void ViewGFXButton_Checked(object sender, RoutedEventArgs e)
         {
             CurrentMode = ViewMode.GFX;
             HandleViewModes();
             UpdateInterface();
         }
+        /// <summary>
+        /// Messages Button Clicked
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void ViewMSGButton_Checked(object sender, RoutedEventArgs e)
         {
             CurrentMode = ViewMode.MSG;
             HandleViewModes();
             UpdateInterface();
         }
+        /// <summary>
+        /// Sound (Samples) Button Clicked
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void ViewBRRButton_Checked(object sender, RoutedEventArgs e)
         {
             CurrentMode = ViewMode.BRR;
             HandleViewModes();
             UpdateInterface();
         }
-
+        /// <summary>
+        /// Prompts the user to select a new shapes directory
+        /// </summary>
+        /// <returns></returns>
         private DirectoryInfo? Generic_SelectShapeDirectory()
         {
             if (AppResources.ImportedProject.ShapesDirectoryPathSet)
@@ -664,7 +689,11 @@ namespace StarFoxMapVisualizer.Screens
             AppResources.ImportedProject.ShapesDirectoryPath= directory;
             return new DirectoryInfo(directory);
         }
-
+        /// <summary>
+        /// Prompts the user to export all 3D models and will export them
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private async void ExportAll3DButton_Click(object sender, RoutedEventArgs e)
         {
             // EXPORT 3D FUNCTION -- I MADE HISTORY HERE TODAY. 11:53PM 03/31/2023 JEREMY GLAZEBROOK.
@@ -716,7 +745,12 @@ namespace StarFoxMapVisualizer.Screens
                 Clipboard.SetText(SHAPEStandard.DefaultShapeExtractionDirectory);
             LoadingSpan.Visibility = Visibility.Collapsed;
         }
-
+        /// <summary>
+        /// Refreshes the SHAPESMap SFOptimizer directory with the latest 3D model list
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        /// <exception cref="FileNotFoundException"></exception>
         private async void SHAPEMapRefreshButton_Click(object sender, RoutedEventArgs e)
         {
             //This function will create a SHAPE Map -- a file that links SHAPESX.ASM files to Shape Names
@@ -759,7 +793,11 @@ namespace StarFoxMapVisualizer.Screens
             MessageBox.Show("The ShapesMap Code Project Optimizer has been updated.");
             UpdateInterface(true); // files updated!
         }
-
+        /// <summary>
+        /// Opens the Level Background viewer dialog
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void BGSASMViewerButton_Click(object sender, RoutedEventArgs e)
         {
             var file = FILEStandard.MAPImport?.LoadedContextDefinitions;

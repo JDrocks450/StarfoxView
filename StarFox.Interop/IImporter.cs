@@ -5,6 +5,39 @@ using System.Text;
 namespace StarFox.Interop
 {
     /// <summary>
+    /// A <see cref="CodeImporter{T}"/> that is tailored towards importing Binary files.
+    /// <para><see cref="BasicCodeImporter{T}"/> should be used in the event of importing <see cref="ASMFile"/> (Assembly Files)</para>
+    /// <para>Some types of files in StarFox are not based on Assembly code but instead compiled data in the form of Binary files. 
+    /// This is the proper <see cref="CodeImporter{T}"/> to use in most circumstances involving binary files.</para>
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    public abstract class BinaryCodeImporter<T> : CodeImporter<T> where T : IImporterObject
+    {
+        /// <summary>
+        /// Not compatible with this importer.
+        /// <para>Binary files cannot use Imports as they are not assembly code.</para>
+        /// </summary>
+        /// <param name="Includes"></param>
+        /// <exception cref="InvalidOperationException"></exception>
+        public override void SetImports(params ASMFile[] Includes)
+        {
+            throw new InvalidOperationException("This importer is not compatible with includes. " +
+                "There is no reason to include any files as the source file type (binary) is not assembly code.");
+        }
+        /// <summary>
+        /// Not compatible with this importer.
+        /// <para>Binary files cannot use Imports as they are not assembly code.</para>
+        /// </summary>
+        /// <typeparam name="IncludeType"></typeparam>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        public override ImporterContext<IncludeType>? GetCurrentContext<IncludeType>()
+        {
+            throw new InvalidOperationException("This importer is not compatible with Contexts. " +
+                "This importer cannot use Contexts because it is a binary file.");
+        }
+    }
+    /// <summary>
     /// A <see cref="BasicCodeImporter{T}"/> is a <see cref="CodeImporter{T}"/> that first parses data from a 
     /// <see cref="ASMFile"/> first through the <see cref="ASMImporter"/>
     /// <para>This importer is perfect for if the data you wish to interpret is in the form of assembly, as the 
@@ -24,7 +57,7 @@ namespace StarFox.Interop
         {
             baseImporter.SetImports(Imports);
         }
-        internal override ImporterContext<IncludeType>? GetCurrentContext<IncludeType>()
+        public override ImporterContext<IncludeType>? GetCurrentContext<IncludeType>()
         {
             return baseImporter.Context as ImporterContext<IncludeType>;
         }
@@ -62,7 +95,7 @@ namespace StarFox.Interop
         /// </summary>
         /// <typeparam name="IncludeType">The type of file this <see cref="ImporterContext{T}"/> expects as a file.</typeparam>
         /// <returns></returns>
-        internal abstract ImporterContext<IncludeType>? GetCurrentContext<IncludeType>() where IncludeType : IImporterObject;
+        public abstract ImporterContext<IncludeType>? GetCurrentContext<IncludeType>() where IncludeType : IImporterObject;
         public T? ImportedObject { get; protected set; }
         public StringBuilder ErrorOut { get; protected set; } = new();
         /// <summary>

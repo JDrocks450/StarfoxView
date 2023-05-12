@@ -46,6 +46,8 @@ namespace Starfox.Editor
                 return SFCodeProjectFileTypes.BINFile;
             else if (path.EndsWith("SPC"))
                 return SFCodeProjectFileTypes.SPC;
+            else if (path.EndsWith("BRR"))
+                return SFCodeProjectFileTypes.BRR;
             else if (path.EndsWith("CCR"))
                 return SFCodeProjectFileTypes.CCR;
             else if (path.EndsWith("PCR"))

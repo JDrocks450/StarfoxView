@@ -12,20 +12,9 @@ namespace StarFox.Interop.BRR
     /// <see href="https://wiki.superfamicom.org/bit-rate-reduction-(brr)"/>
     /// <para>This is compliant with procedures implemented in SNESSOR (SNES Sound Ripper)</para>
     /// </summary>
-    public class BRRImporter : CodeImporter<BRRFile>
-    {
-        public static void WriteSampleToWAV(string FilePath, string Name, in BRRSample Sample, int SampleRate = (int)WAVSampleRates.MED2)
-        {
-            var wav = WAVInterop.CreateDescriptor(FilePath, Name, 1, SampleRate, Sample.SampleData.ToArray());
-            WAVInterop.WriteFile(wav);
-        }
-        public static void WriteSampleToWAVStream(string FilePath, string Name, in BRRSample Sample, Stream Stream, int SampleRate = (int)WAVSampleRates.MED2)
-        {
-            var wav = WAVInterop.CreateDescriptor(FilePath, Name, 1, SampleRate, Sample.SampleData.ToArray());
-            WAVInterop.WriteWAV(wav, Stream);
-        }
-
-        public override Task<BRRFile> ImportAsync(string FilePath)
+    public class BRRImporter : BinaryCodeImporter<BRRFile>
+    {        
+        public Task<BRRFile> ImportAsync(string FilePath, bool ErrorChecking)
         {
             BRRFile getFile()
             {
@@ -37,13 +26,14 @@ namespace StarFox.Interop.BRR
                     do
                     {
                         long entryPosition = fs.Position;
-                        var sample = ReadSample(fs, out EOF);
+                        var sample = ReadSample(fs, out EOF, ErrorChecking);                        
                         long endPosition = fs.Position;
                         long distance = endPosition - entryPosition;
                         if (sample == default) continue;
+                        sample.ParentFilePath = FilePath;
                         sample.FilePosition = entryPosition;
                         sample.ByteLength = distance;
-                        if (sample.SampleData.Count < 250) continue;
+                        if (sample.SampleData.Count < 250 && ErrorChecking) continue;
                         rFile.Effects.Add(current++, sample);
                         if (sample.Name == default)
                             sample.Name = $"Sample {rFile.Effects.Count}";
@@ -53,21 +43,17 @@ namespace StarFox.Interop.BRR
                 return rFile;
             }
             // Workaround: Implementation states this has to be async, yet no async functions have been called.
-            return Task.Run(getFile); 
+            return Task.Run(getFile);
         }
-
-        public override void SetImports(params ASMFile[] Includes)
-        {
-            throw new InvalidOperationException("This importer is not compatible with includes. " +
-                "There is no reason to include any files as the source file type (BRR) is not assembly code.");
-        }
-
-        internal override ImporterContext<IncludeType>? GetCurrentContext<IncludeType>()
-        {
-            return default; // Not compatible with this functionality as it is not a ASMImporter
-        }
-
-        private static BRRSample? ReadSample(Stream Data, out bool EOF)
+        /// <summary>
+        /// Attempts to import the given file as a *.BRR file. 
+        /// <para>It will search the whole file for all samples.</para>
+        /// <para>By calling this function, <c>ErrorChecking</c> is on by default. To turn it off, use: <see cref="ImportAsync(string, bool)"/></para>
+        /// </summary>
+        /// <param name="FilePath"></param>
+        /// <returns></returns>
+        public override Task<BRRFile> ImportAsync(string FilePath) => ImportAsync(FilePath, true);             
+        private static BRRSample? ReadSample(Stream Data, out bool EOF, bool ErrorCheck = true)
         {
             // NOT END OF FILE
             EOF = false;
@@ -121,7 +107,7 @@ namespace StarFox.Interop.BRR
                 {
                     int header_r = Data.ReadByte();
                     EOF = true;
-                    if (header_r == -1) return default;
+                    if (header_r == -1) break;
                     EOF = false;
                     /*  HEADER FORMAT:
                      *  xxxxxxxx
@@ -140,7 +126,8 @@ namespace StarFox.Interop.BRR
                     loop = Header & 2;
                     filter = (Header >> 2) & 3;
                     volume = Header >> 4;
-                    if (volume > 12) return default; // ERROR -- Not valid sample!
+                    if (ErrorCheck && volume > 12)
+                        return default; // ERROR -- Not valid sample!
 
                     // Iterate over samples contained in the block
                     for (int i = 0; i < 8; i++)
@@ -148,7 +135,8 @@ namespace StarFox.Interop.BRR
                         //Read Byte in Block
                         var block_r = Data.ReadByte();
                         EOF = true;
-                        if (block_r == -1) return default;
+                        if (block_r == -1) 
+                            break;
                         EOF = false;
                         byte block = (byte)block_r;
                         // FIRST NIBBLE
@@ -164,6 +152,6 @@ namespace StarFox.Interop.BRR
             }
             sample.SampleData.AddRange(sampleData);
             return sample;
-        }        
+        }
     }
 }
