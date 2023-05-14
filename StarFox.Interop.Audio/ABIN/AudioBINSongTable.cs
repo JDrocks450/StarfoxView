@@ -7,6 +7,14 @@ namespace StarFox.Interop.Audio.ABIN
     /// </summary>
     public class AudioBINSongTable : IList<ushort>
     {
+        /// <summary>
+        /// The address in SPC Audio Memory to write this Song Table
+        /// </summary>
+        public ushort SPCAddress { get; set; }
+        /// <summary>
+        /// The length of this song table
+        /// </summary>
+        public int Length => Count * sizeof(ushort);
         public ushort this[int index] { get => ((IList<ushort>)Addresses)[index]; set => ((IList<ushort>)Addresses)[index] = value; }
         private List<ushort> Addresses { get; } = new List<ushort>();
         public int Count => ((ICollection<ushort>)Addresses).Count;

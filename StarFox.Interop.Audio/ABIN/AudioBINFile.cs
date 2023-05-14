@@ -6,14 +6,6 @@
     public class AudioBINFile : IImporterObject
     {
         /// <summary>
-        /// The size of the header data on this <see cref="AudioBINFile"/> -- just the data, not the two Words before it dictating the SPCAddress and Length
-        /// </summary>
-        public int HeaderSize { get; set; }  
-        /// <summary>
-        /// The address to write the header data to on the SPC's Audio Memory
-        /// </summary>
-        public ushort SPCDestination { get; set; }
-        /// <summary>
         /// Contains the data on the songs included in this file
         /// <para>Index, <see cref="AudioBINSongDefinition"/></para>
         /// </summary>

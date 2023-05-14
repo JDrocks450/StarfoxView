@@ -74,17 +74,25 @@ namespace StarFoxMapVisualizer.Misc
         /// <returns></returns>
         public static async Task<bool> ConvertBINToSPC(FileInfo File, string SPCFilePath = default)
         {
+            //IMPORT THE ABIN FILE FIRST
             ABINImporter import = new();
+            //INTERPRET IT INTO AN INSTANCE
             var file = await import.ImportAsync(File.FullName);
             var dir = File.DirectoryName;
             dir = System.IO.Path.Combine(dir, System.IO.Path.GetFileNameWithoutExtension(File.Name));
+            //CREATE DIRECTORIES
             Directory.CreateDirectory(dir);
-            await ABINExport.ExportToDirectory(dir, file);
-#if false
+
+            //EXPORT THE ABIN FILE TO ASM and BIN
+            (string asmFilePath, string binFilePath) paths = await ABINExport.ExportToDirectory(dir, file);
+
+            //CONFIRMATION DIALOG
             MessageBox.Show("Review the following information for accuracy.", "Review");
-            var file = await System.IO.File.ReadAllBytesAsync(File.FullName);
-            var newPath = File.FullName.Replace(System.IO.Path.GetExtension(File.FullName), ".SPC");
+            //EXPORTED BIN FILE DATA            
+            var newFileName = File.Name.Replace(System.IO.Path.GetExtension(File.FullName), ".SPC");
+            var newPath = System.IO.Path.Combine(dir, newFileName);
             if (SPCFilePath != null) newPath = SPCFilePath;
+            //MAKE A SAMPLE SPC FILE
             var spcFile = new SPCFile(newPath)
             {
                 DumperName = "Bisquick",
@@ -102,10 +110,9 @@ namespace StarFoxMapVisualizer.Misc
                 SP = 207,
                 PSW = 9,
             };
-            int offset = 0x1C;
-            Array.Copy(file, offset, spcFile.Data, 0, Math.Min(file.Length - offset, spcFile.Data.Length - 1));
-            Array.Copy(SPCFile.DefaultDSPRegisters, spcFile.DSPRegisters,
-                Math.Min(SPCFile.DefaultDSPRegisters.Length, spcFile.DSPRegisters.Length));
+            //WRITE THE BIN FILE TO THE SPC FILE
+            await SPCImporter.WriteBINtoSPCAsync(spcFile, file, paths.binFilePath, true);
+            //AS MANY TIMES AS IT TAKES TO GET IT RIGHT ...
             while (true)
             {
                 Dialogs.SPCInformationDialog dialog = new(spcFile)
@@ -114,11 +121,11 @@ namespace StarFoxMapVisualizer.Misc
                     Owner = Application.Current.MainWindow
                 };
                 if (!dialog.ShowDialog() ?? true)
-                    return false;
+                    return false; // USER CANCELLED!
+                //TRY TO WRITE THE DATA
                 using (var fs = new FileStream(newPath, FileMode.Create))
-                    if (await baseWriteToStream(spcFile, fs)) break;
+                    if (await baseWriteToStream(spcFile, fs)) break; // UPON FAILURE ... TRY AGAIN!
             }
-#endif
             return true;
         }
         /// <summary>
@@ -132,7 +139,7 @@ namespace StarFoxMapVisualizer.Misc
             try
             {
                 if (spcFile == null) throw new ArgumentNullException("SPCFile was supplied as NULL.");
-                await FILEStandard.SPCImport.WriteAsync(spcFile, fs);
+                await SPCImporter.WriteAsync(spcFile, fs);
                 return true;
             }
             catch (Exception Ex)

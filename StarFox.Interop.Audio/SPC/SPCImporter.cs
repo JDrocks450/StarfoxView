@@ -1,6 +1,9 @@
 ﻿using StarFox.Interop.ASM;
+using StarFox.Interop.Audio.ABIN;
+using StarFox.Interop.BSP;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,13 +18,69 @@ namespace StarFox.Interop.SPC
     public class SPCImporter : BinaryCodeImporter<SPCFile>
     {
         /// <summary>
+        /// Writes the contents of the <paramref name="BINFile"/> to the specified <see cref="SPCFile.Data"/> property
+        /// </summary>
+        /// <param name="SPCFile">The file to write the data to</param>
+        /// <param name="BINFile">The source file to read data from</param>
+        /// <param name="BinFilePath"><see cref="ABINExport.ExportToDirectory(string, AudioBINFile)"/> 
+        /// will dump a *.BIN that is a raw dump of the audio data. 
+        /// <para>Plug the path to that file in here.</para>
+        /// </param>
+        /// <param name="AppendDefaultRegisters">Optionally, will insert default DSP Registers at the end of the SPC</param>
+        /// <returns></returns>
+        public static async Task WriteBINtoSPCAsync(SPCFile SPCFile, AudioBINFile BINFile, string BinFilePath, bool AppendDefaultRegisters = true)        
+        {
+            //FDBE
+            var binFile = await System.IO.File.ReadAllBytesAsync(BinFilePath);
+            int offset = 0;// 0x1C;
+            ushort spcOffset = BINFile.SongDataSPCDestination;
+            string newOffsetString = spcOffset.ToString("X4");
+            //COPY THE SONG DATA
+            Array.Copy(binFile, offset, SPCFile.Data, spcOffset, Math.Min(binFile.Length - offset, SPCFile.Data.Length - spcOffset));
+            //COPY THE SONG TABLES
+            foreach(var table in BINFile.SongTables)
+            {
+                //COPY ALL SONG TABLES
+                spcOffset = table.SPCAddress;
+                using (MemoryStream tableStream = new())
+                { // USE STREAMS TO MAKE BYTE ARRAYS
+                    foreach (var tableEntry in table)
+                    {
+                        var bytes = BitConverter.GetBytes(tableEntry);
+                        await tableStream.WriteAsync(bytes, 0, bytes.Length);
+                    }
+                    var SPCmemory = tableStream.ToArray();                    
+                    Array.Copy(SPCmemory, 0, SPCFile.Data, spcOffset, SPCmemory.Length);
+                    SPCFile.Data[spcOffset - 2] = 0x83; // Identifier? Any way it has to be there.
+                }
+                //CREATE A TABLE POINTER AND ADD IT TO THE FILE
+                int tablePointerOffset = 0x0871;
+                var tablePointerBytes = SPC.SPCFile.CreateSongTablePointer((ushort)(spcOffset - 2));
+                Array.Copy(tablePointerBytes, 0, SPCFile.Data, tablePointerOffset, tablePointerBytes.Length);
+            }
+            //WRITE THE LOOP POINT
+            var loopPointer = BINFile.SongDataSPCDestination + 2;
+            int loopPosition = 0x40;
+            byte[] loopBytes = BitConverter.GetBytes((ushort)loopPointer);
+            Array.Copy(loopBytes,0,SPCFile.Data,loopPosition, loopBytes.Length);
+            //DEFAULT REGISTERS?
+            if (AppendDefaultRegisters)
+                WriteDefaultRegisters(SPCFile);
+        }
+        public static void WriteDefaultRegisters(SPCFile SPCFile)
+        {
+            //APPEND SPC REGISTERS
+            Array.Copy(SPCFile.DefaultDSPRegisters, SPCFile.DSPRegisters,
+                Math.Min(SPCFile.DefaultDSPRegisters.Length, SPCFile.DSPRegisters.Length));
+        }
+        /// <summary>
         /// Writes the specified <see cref="SPCFile"/> to the given stream
         /// </summary>
         /// <param name="File"></param>
         /// <param name="Destination"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public async Task WriteAsync(SPCFile File, Stream Destination)
+        public static async Task WriteAsync(SPCFile File, Stream Destination)
         {            
             var spc = File;
             byte[] array = new byte[(int)SPCFile.FILE_LENGTH];
@@ -71,13 +130,13 @@ namespace StarFox.Interop.SPC
                 await Destination.WriteAsync(fs.ToArray());
             }                 
         }
-        private void WriteString(Stream stream, string Data, byte ByteLength)
+        private static void WriteString(Stream stream, string Data, byte ByteLength)
         {
             var buffer = Encoding.ASCII.GetBytes(Data);
             Array.Resize(ref buffer, ByteLength);
             stream.Write(buffer, 0, ByteLength);
         }
-        private void WriteValue(Stream stream, object Data)
+        private static void WriteValue(Stream stream, object Data)
         {
             var buffer = new byte[0];
             if (Data is int i)

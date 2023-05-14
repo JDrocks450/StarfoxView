@@ -18,24 +18,45 @@ namespace StarFox.Interop.Audio.ABIN
     public static class ABINExport
     {
         /// <summary>
+        /// Makes a new path to an *.ASM file in the chosen directory
+        /// </summary>
+        /// <param name="DirectoryPath"></param>
+        /// <param name="BINFileName"></param>
+        /// <returns></returns>
+        public static string MakeASMPathFromDirectory(string DirectoryPath, string BINFileName) => 
+            Path.Combine(DirectoryPath, $"{BINFileName}.ASM");
+        /// <summary>
         /// Exports a given <see cref="AudioBINFile"/> to a directory.
         /// </summary>
         /// <param name="DirectoryPath">The directory. It has to be existing before calling this method.</param>
         /// <param name="File"></param>
         /// <returns></returns>
-        public static async Task ExportToDirectory(string DirectoryPath, AudioBINFile File)
+        public static async Task<(string asmFilePath, string binFilePath)> ExportToDirectory(string DirectoryPath, AudioBINFile File)
+        {
+            //Create file names / paths
+            string asmFilePath = MakeASMPathFromDirectory(DirectoryPath, File.FileName);
+            var binFileName = $"SONG_DATA_{File.FileName}_{File.SongDataSPCDestination.ToString("X4")}.BIN";
+            string binFilePath = Path.Combine(DirectoryPath, binFileName);
+
+            //Export Assembly File first and foremost
+            await baseExportASM(asmFilePath, binFileName, File);
+            //Next, Export the BIN file containing the raw song data
+            await baseExportSongDataBin(binFilePath, File);
+
+            return (asmFilePath, binFilePath);
+        }
+        private static Task baseExportSongDataBin(string binFilePath, AudioBINFile File) =>
+            System.IO.File.WriteAllBytesAsync(binFilePath, File.SongData);
+        private static async Task baseExportASM(string asmFilePath, string binFileName, AudioBINFile File)
         {
             const int def_Pad = 50;
             string GetHexDWString(ushort word, int Pad = def_Pad) => $"dw ${word:X4}".PadRight(Pad, ' ');
             string GetDecimalDWString(ushort word, int Pad = def_Pad) => $"dw {word}".PadRight(Pad, ' ');
             string GetLabelDWString(string label, int Pad = def_Pad) => $"dw {label}".PadRight(Pad, ' ');
             string GetLabelString(string label, int Pad = def_Pad) => $"{label}:".PadRight(Pad, ' ');
-            string GetIncBinString(string fileName) => $"  incbin {fileName}:";
+            string GetIncBinString(string fileName) => $"  incbin {fileName}";
             string GetCommentString(string comment) => $"//{comment}";
-
-            var asmFilePath = Path.Combine(DirectoryPath, $"{File.FileName}.ASM");
-            var binFileName = $"SONG_DATA_{File.FileName}_{File.SongDataSPCDestination.ToString("X4")}.BIN";
-            var binFilePath = Path.Combine(DirectoryPath, binFileName);
+            
             //ASM data
             using (FileStream fs = new FileStream(asmFilePath, FileMode.Create, FileAccess.ReadWrite))
             {
@@ -60,7 +81,7 @@ namespace StarFox.Interop.Audio.ABIN
                         sw.Write($"dw {endTableLabel}-{startTableLabel}"); sw.WriteLine(GetCommentString("Calc Transfer Size (in Bytes)"));
                         sw.Write(GetHexDWString(chunk.SPCAddress)); sw.WriteLine(GetCommentString("SPC Destination Address"));
                         sw.WriteLine();
-                        ushort songAddr = File.SongDataSPCDestination;                                           
+                        ushort songAddr = File.SongDataSPCDestination;
                         int subIndex = -1;
                         //Set Table Start Address Label
                         sw.WriteLine(GetLabelString(startTableLabel));
@@ -69,13 +90,13 @@ namespace StarFox.Interop.Audio.ABIN
                         {
                             subIndex++;
                             string text = GetHexDWString(songEntry);
-                            if(songEntry == songAddr)
+                            if (songEntry == songAddr)
                                 text = GetLabelDWString(songLabel);
                             sw.Write(text); sw.WriteLine(GetCommentString($"Pointer to Sub {subIndex}"));
                         }
                         sw.WriteLine();
                         //Set Table End Address Label
-                        sw.WriteLine(GetLabelString(endTableLabel));                        
+                        sw.WriteLine(GetLabelString(endTableLabel));
                     }
                     //WRITE SONG DATA
                     sw.WriteLine();
@@ -134,13 +155,11 @@ namespace StarFox.Interop.Audio.ABIN
                 for (int i = 0; i < Chunks.Count-1; i++)
                 {
                     var chunk = Chunks[i];    
-                    if(i == 0) // FIRST CHUNK
-                    {
-                        File.SPCDestination = chunk.SPCAddress;
-                        File.HeaderSize = chunk.Length;
-                    }
                     Reader.BaseStream.Seek(chunk.FilePosition + (2 * sizeof(ushort)), SeekOrigin.Begin);
-                    AudioBINSongTable table = new();
+                    AudioBINSongTable table = new()
+                    {
+                        SPCAddress = chunk.SPCAddress
+                    };
                     for (int j = 0; j < chunk.Length; j += sizeof(ushort))
                     {
                         ushort tableAddress = Reader.ReadUInt16();

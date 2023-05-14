@@ -2,6 +2,43 @@
 {
     public partial class SPCFile : IImporterObject
     {
+        public static byte[] SongTablePointerSignal = new byte[] { 0x1C, 0x5D, 0xF5 };
+        public static byte[] StarFoxTableIdentifier = new byte[] { 0xD0, 0x03, 0xC4 };
+        /// <summary>
+        /// Creates a well-formed song table pointer for use in an *.SPC file
+        /// </summary>
+        /// <param name="TableSPCAddress"></param>
+        /// <returns></returns>
+        public static byte[] CreateSongTablePointer(ushort TableSPCAddress)
+        {
+            byte[] AddressBytes = BitConverter.GetBytes(TableSPCAddress); // sizeof(ushort) is 2.
+            byte[] Hi_AddressBytes = BitConverter.GetBytes(TableSPCAddress+1); // sizeof(ushort) is 2.
+            byte[] array = new byte[]
+            {
+                0x00,0x00,0x00, // RESERVED FOR SIGNAL
+                0x00, 0x00, // RESERVED FOR HI SONG TABLE ADDRESS
+                0xFD, //UNKNOWN
+                0x00, 0x00, 0x00, // RESERVED FOR STARFOX TABLE IDENTIFIER
+                0x04, 0x6F, //UNKNOWN
+                0xF5, // HAS TO BE 0xF5 !
+                0x00, 0x00, // RESERVED FOR THE SONG TABLE ADDRESS
+                0xDA, 0x40 // NEEDS TO BE 0xDA and 0x40 !
+            };
+            int currentOffset = 0;
+            //COPY THE TABLE SIGNAL
+            Array.Copy(SongTablePointerSignal, 0, array, 0, 3);
+            //NEXT, COPY THE HI_ADDRESS
+            Array.Copy(Hi_AddressBytes, 0, array, 3, 2); 
+            //THEN, COPY THE STARFOX IDENTIFIER
+            Array.Copy(StarFoxTableIdentifier, 0, array, 6, 3); 
+            currentOffset += 5;
+            //FINALLY, COPY THE TABLE ADDRESS
+            Array.Copy(AddressBytes, 0, array, currentOffset + 7, 2);
+            return array;
+        }
+        /// <summary>
+        /// A default DSP Registers dump
+        /// </summary>
         public static byte[] DefaultDSPRegisters = new byte[]
         {
             41,41,247,2,26,255,224,184,0,0,0,0,
