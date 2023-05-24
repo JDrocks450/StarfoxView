@@ -4,8 +4,10 @@ using StarFox.Interop.ASM;
 using StarFox.Interop.MAP;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -18,6 +20,24 @@ namespace StarFoxMapVisualizer
     /// </summary>
     internal static class AppResources
     {
+        public const string ApplicationName = "SF-View";
+        public static string GetTitleLabel
+        {
+            get
+            {
+                try
+                {
+                    string? version = FileVersionInfo.GetVersionInfo(Environment.ProcessPath ?? "")?.FileVersion;
+                    return $"{ApplicationName} | v{version ?? "Error"} [BETA]";
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Polling for a version number did not complete successfully.\n" +
+                        ex.Message);
+                }
+                return $"{ApplicationName}";
+            }
+        }
         /// <summary>
         /// Dictates whether the <see cref="MAPImporter"/> can automatically find refernenced level sections and populate them
         /// </summary>

@@ -5,10 +5,14 @@
     <TargetFramework>net6.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
+    <AssemblyVersion>0.5.24.128</AssemblyVersion>
+    <FileVersion>0.5.24.128</FileVersion>
+    <ApplicationIcon>Resources\SFViewLogoSmall.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <None Remove="Resources\AtlantisInternational-jen0.ttf" />
+    <None Remove="Resources\Background.png" />
     <None Remove="Resources\Image\album.png" />
     <None Remove="Resources\Image\canvas.png" />
     <None Remove="Resources\Image\colTable.png" />
@@ -23,6 +27,8 @@
     <None Remove="Resources\Image\screenIcon.png" />
     <None Remove="Resources\Image\SectorY.png" />
     <None Remove="Resources\Image\sflogo.png" />
+    <None Remove="Resources\Image\SFViewLogoLarge.png" />
+    <None Remove="Resources\Image\SFViewLogoSmall.png" />
     <None Remove="Resources\Image\sf_frame.png" />
     <None Remove="Resources\Image\sf_frame_cn.png" />
     <None Remove="Resources\Image\sf_small.png" />
@@ -31,7 +37,14 @@
     <None Remove="Resources\Image\transparent.png" />
     <None Remove="Resources\Image\view3d.png" />
     <None Remove="Resources\Model\Arwing.fbx" />
+    <None Remove="Resources\SFviewLogo.png" />
+    <None Remove="Resources\SFViewLogoSmall.ico" />
     <None Remove="Resources\Star-Fox-Starwing.ttf" />
+    <None Remove="Resources\Tribute.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Resources\SFViewLogoSmall.ico" />
   </ItemGroup>
 
   <ItemGroup>
@@ -54,6 +67,7 @@
 
   <ItemGroup>
     <Resource Include="Resources\AtlantisInternational-jen0.ttf" />
+    <Resource Include="Resources\Background.png" />
     <Resource Include="Resources\Image\album.png" />
     <Resource Include="Resources\Image\canvas.png" />
     <Resource Include="Resources\Image\colTable.png" />
@@ -68,6 +82,8 @@
     <Resource Include="Resources\Image\screenIcon.png" />
     <Resource Include="Resources\Image\SectorY.png" />
     <Resource Include="Resources\Image\sflogo.png" />
+    <Resource Include="Resources\Image\SFViewLogoLarge.png" />
+    <Resource Include="Resources\Image\SFViewLogoSmall.png" />
     <Resource Include="Resources\Image\sf_frame.png" />
     <Resource Include="Resources\Image\sf_frame_cn.png" />
     <Resource Include="Resources\Image\sf_small.png" />
@@ -75,7 +91,10 @@
     <Resource Include="Resources\Image\threedtransparent.png" />
     <Resource Include="Resources\Image\transparent.png" />
     <Resource Include="Resources\Image\view3d.png" />
+    <Resource Include="Resources\SFviewLogo.png" />
+    <Resource Include="Resources\SFViewLogoSmall.ico" />
     <Resource Include="Resources\Star-Fox-Starwing.ttf" />
+    <Resource Include="Resources\Tribute.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -88,6 +107,18 @@
     <Compile Update="Controls\Subcontrols\BPPDepthMenu.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="Properties\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
 
 </Project>

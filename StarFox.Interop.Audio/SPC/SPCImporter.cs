@@ -22,34 +22,36 @@ namespace StarFox.Interop.SPC
         /// </summary>
         /// <param name="SPCFile">The file to write the data to</param>
         /// <param name="BINFile">The source file to read data from</param>
-        /// <param name="BinFilePath"><see cref="ABINExport.ExportToDirectory(string, AudioBINFile)"/> 
-        /// will dump a *.BIN that is a raw dump of the audio data. 
-        /// <para>Plug the path to that file in here.</para>
-        /// </param>
         /// <param name="AppendDefaultRegisters">Optionally, will insert default DSP Registers at the end of the SPC</param>
         /// <returns></returns>
-        public static async Task WriteBINtoSPCAsync(SPCFile SPCFile, AudioBINFile BINFile, string BinFilePath, bool AppendDefaultRegisters = true)        
-        {
-            //FDBE
-            var binFile = await System.IO.File.ReadAllBytesAsync(BinFilePath);
+        public static async Task WriteBINtoSPCAsync(SPCFile SPCFile, AudioBINFile BINFile, AudioBINSongData Song, bool AppendDefaultRegisters = true)
+        {            
             int offset = 0;// 0x1C;
-            ushort spcOffset = BINFile.SongDataSPCDestination;
+            ushort spcOffset = 0x00;
+            //COPY JUST THE SONG WE WANT
+            var song = Song;
+            offset = (int)song.FilePosition;
+            spcOffset = song.SPCAddress;
+            int length = song.Length;
             string newOffsetString = spcOffset.ToString("X4");
-            //COPY THE SONG DATA
-            Array.Copy(binFile, offset, SPCFile.Data, spcOffset, Math.Min(binFile.Length - offset, SPCFile.Data.Length - spcOffset));
-            //COPY THE SONG TABLES
-            foreach(var table in BINFile.SongTables)
+            using (FileStream fs = File.OpenRead(BINFile.OriginalFilePath))
             {
-                //COPY ALL SONG TABLES
+                fs.Seek(offset, SeekOrigin.Begin);
+                fs.Read(SPCFile.Data, spcOffset, Math.Min((int)(fs.Length - offset), length));
+            }
+            //COPY THE SONG TABLES
+            foreach (var table in BINFile.SongTables)
+            {
+                if (!table.Contains(new AudioBINSongTableEntry(Song.SPCAddress))) continue;
                 spcOffset = table.SPCAddress;
                 using (MemoryStream tableStream = new())
                 { // USE STREAMS TO MAKE BYTE ARRAYS
                     foreach (var tableEntry in table)
                     {
-                        var bytes = BitConverter.GetBytes(tableEntry);
+                        var bytes = BitConverter.GetBytes(tableEntry.SPCAddress);
                         await tableStream.WriteAsync(bytes, 0, bytes.Length);
                     }
-                    var SPCmemory = tableStream.ToArray();                    
+                    var SPCmemory = tableStream.ToArray();
                     Array.Copy(SPCmemory, 0, SPCFile.Data, spcOffset, SPCmemory.Length);
                     SPCFile.Data[spcOffset - 2] = 0x83; // Identifier? Any way it has to be there.
                 }
@@ -59,10 +61,10 @@ namespace StarFox.Interop.SPC
                 Array.Copy(tablePointerBytes, 0, SPCFile.Data, tablePointerOffset, tablePointerBytes.Length);
             }
             //WRITE THE LOOP POINT
-            var loopPointer = BINFile.SongDataSPCDestination + 2;
+            var loopPointer = Song.SPCAddress + 2;
             int loopPosition = 0x40;
             byte[] loopBytes = BitConverter.GetBytes((ushort)loopPointer);
-            Array.Copy(loopBytes,0,SPCFile.Data,loopPosition, loopBytes.Length);
+            Array.Copy(loopBytes, 0, SPCFile.Data, loopPosition, loopBytes.Length);
             //DEFAULT REGISTERS?
             if (AppendDefaultRegisters)
                 WriteDefaultRegisters(SPCFile);

@@ -1,0 +1,160 @@
+﻿<Page x:Class="StarFoxMapVisualizer.Controls2.InstrumentPackerControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:StarFoxMapVisualizer.Controls2"
+             mc:Ignorable="d" Title="Instrument Packer"
+             d:DesignHeight="500" Foreground="White" d:DesignWidth="800" RenderOptions.BitmapScalingMode="NearestNeighbor">
+    <Page.Resources>
+        <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="{DynamicResource WindowBackgroundColor}"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+    </Page.Resources>
+    <Page.Background>
+        <ImageBrush ImageSource="/Resources/Background.png" Stretch="UniformToFill" />
+    </Page.Background>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="35"/>
+            <RowDefinition/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="100"/>
+            <ColumnDefinition Width="1*"/>
+        </Grid.ColumnDefinitions>
+        <Border Background="{DynamicResource WindowAccentBackgroundColor}" BorderThickness="0,0,0,1" BorderBrush="Silver" Grid.ColumnSpan="3"/>
+        <TextBlock Margin="20,0" VerticalAlignment="Center" Style="{StaticResource TitleText}">SAMPLES</TextBlock>
+        <TextBlock Margin="20,0" Grid.Column="2" VerticalAlignment="Center" Style="{StaticResource TitleText}">INSTRUMENT PARAMETERS</TextBlock>
+        <DockPanel Grid.Row="1" Margin="20,10">
+            <Grid DockPanel.Dock="Bottom" Height="30">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="40"/>
+                    <ColumnDefinition Width="40"/>
+                </Grid.ColumnDefinitions>
+                <Button>Import...</Button>
+                <Button Grid.Column="1">Delete</Button>
+                <Button Grid.Column="2">
+                    <TextBlock RenderTransformOrigin="0.5,0.5">
+                        <TextBlock.RenderTransform>
+                            <TransformGroup>
+                                <ScaleTransform ScaleY="-1"/>
+                                <SkewTransform/>
+                                <RotateTransform/>
+                                <TranslateTransform/>
+                            </TransformGroup>
+                        </TextBlock.RenderTransform>^</TextBlock>
+                </Button>
+                <Button Grid.Column="3">^</Button>
+            </Grid>
+            <ListBox Foreground="White" Background="#D8273442"  d:ItemsSource="{d:SampleData ItemCount=5}"></ListBox>
+        </DockPanel>
+        <DockPanel Grid.Row="1" Grid.Column="2" Margin="20,10">
+            <Grid DockPanel.Dock="Bottom" Height="30">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="40"/>
+                    <ColumnDefinition Width="40"/>
+                </Grid.ColumnDefinitions>
+                <Button Content="Duplicate"/>
+                <Button Grid.Column="1">Delete</Button>
+                <Button Grid.Column="2">
+                    <TextBlock RenderTransformOrigin="0.5,0.5">
+                        <TextBlock.RenderTransform>
+                            <TransformGroup>
+                                <ScaleTransform ScaleY="-1"/>
+                                <SkewTransform/>
+                                <RotateTransform/>
+                                <TranslateTransform/>
+                            </TransformGroup>
+                        </TextBlock.RenderTransform>^</TextBlock>
+                </Button>
+                <Button Grid.Column="3">^</Button>
+            </Grid>
+            <ListBox Foreground="White" Background="#D8273442"  d:ItemsSource="{d:SampleData ItemCount=5}"></ListBox>
+        </DockPanel>
+        <StackPanel Grid.Row="1" Grid.Column="1" VerticalAlignment="Center">
+            <Viewbox Margin="0,10">
+                <Grid Width="50" Height="10">
+                    <Rectangle Height="2" Fill="White" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                    <Polygon Fill="White" Stretch="Uniform" HorizontalAlignment="Right">
+                        <Polygon.Points>
+                            <Point X="0" Y="0"/>
+                            <Point X="1" Y=".5"/>
+                            <Point X="0" Y="1"/>
+                        </Polygon.Points>
+                    </Polygon>
+                </Grid>
+            </Viewbox>
+            <Button Height="34" Content="ADD &gt;&gt;"/>
+        </StackPanel>
+        <Grid Grid.Row="2" Grid.ColumnSpan="3" Background="{DynamicResource WindowAccentBackgroundColor}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="35"/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+            <Rectangle Fill="Silver" Height="1" VerticalAlignment="Top"/>
+            <TextBlock Margin="20,0,0,0" VerticalAlignment="Center" Style="{StaticResource TitleText}"><Run Text="EDIT PARAMETERS"/></TextBlock>
+            <DockPanel Grid.Row="1" Margin="10">
+                <Grid DockPanel.Dock="Right">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="1*"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock HorizontalAlignment="Center" Style="{StaticResource TitleText}">ASDR</TextBlock>
+                        <TextBlock Style="{StaticResource BodyText}" Foreground="#FF0090FF">XX XX XX</TextBlock>
+                        <TextBlock HorizontalAlignment="Center" Margin="0,5,0,0" Style="{StaticResource TitleText}">PITCH</TextBlock>
+                        <TextBlock Style="{StaticResource BodyText}" Foreground="Coral">XX XX</TextBlock>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Margin="20,0" VerticalAlignment="Center">
+                        <Button Style="{StaticResource PlayButtonStyle}" Foreground="{DynamicResource WindowAccentBackgroundColor}" />
+                        <TextBlock HorizontalAlignment="Center" Margin="0,5,0,0">Test</TextBlock>
+                    </StackPanel>
+                </Grid>
+                <Viewbox DockPanel.Dock="Right" Margin="0,0,20,0" Width="50">
+                    <Grid Width="50" Height="10">
+                        <Rectangle Height="2" Fill="White" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                        <Polygon Fill="White" Stretch="Uniform" HorizontalAlignment="Right">
+                            <Polygon.Points>
+                                <Point X="0" Y="0"/>
+                                <Point X="1" Y=".5"/>
+                                <Point X="0" Y="1"/>
+                            </Polygon.Points>
+                        </Polygon>
+                    </Grid>
+                </Viewbox>
+                <UniformGrid Margin="10,0,0,0"  Columns="5" Rows="2" VerticalAlignment="Top">
+                    <UniformGrid.Resources>
+                        <Style TargetType="Ellipse">
+                            <Setter Property="Fill" Value="Gray"/>
+                            <Setter Property="Width" Value="30"/>
+                            <Setter Property="Height" Value="30"/>
+                        </Style>
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource BodyText}">
+                            <Setter Property="FontSize" Value="22"/>
+                            <Setter Property="HorizontalAlignment" Value="Center"/>
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                        </Style>
+                    </UniformGrid.Resources>
+                    <TextBlock>A</TextBlock>
+                    <TextBlock>D</TextBlock>
+                    <TextBlock>S</TextBlock>
+                    <TextBlock>D2</TextBlock>
+                    <TextBlock>R</TextBlock>
+                    <Ellipse/>
+                    <Ellipse/>
+                    <Ellipse/>
+                    <Ellipse/>
+                    <Ellipse/>
+                </UniformGrid>
+            </DockPanel>
+        </Grid>
+    </Grid>
+</Page>

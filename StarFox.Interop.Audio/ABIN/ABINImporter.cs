@@ -3,118 +3,12 @@ using StarFox.Interop.GFX;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace StarFox.Interop.Audio.ABIN
 {
-    /// <summary>
-    /// Exports a given <see cref="AudioBINFile"/> to a directory.
-    /// <para>The means in which it will do this is by exporting an assembly file, and a *.BIN
-    /// file which contains the raw Song data.</para>
-    /// <para>The assembly file can then be used to reassemble the original *.BIN file you extracted from here.</para>
-    /// <para>You would need this if you were replacing an existing *.BIN file's music with new music, for example.</para>
-    /// </summary>
-    public static class ABINExport
-    {
-        /// <summary>
-        /// Makes a new path to an *.ASM file in the chosen directory
-        /// </summary>
-        /// <param name="DirectoryPath"></param>
-        /// <param name="BINFileName"></param>
-        /// <returns></returns>
-        public static string MakeASMPathFromDirectory(string DirectoryPath, string BINFileName) => 
-            Path.Combine(DirectoryPath, $"{BINFileName}.ASM");
-        /// <summary>
-        /// Exports a given <see cref="AudioBINFile"/> to a directory.
-        /// </summary>
-        /// <param name="DirectoryPath">The directory. It has to be existing before calling this method.</param>
-        /// <param name="File"></param>
-        /// <returns></returns>
-        public static async Task<(string asmFilePath, string binFilePath)> ExportToDirectory(string DirectoryPath, AudioBINFile File)
-        {
-            //Create file names / paths
-            string asmFilePath = MakeASMPathFromDirectory(DirectoryPath, File.FileName);
-            var binFileName = $"SONG_DATA_{File.FileName}_{File.SongDataSPCDestination.ToString("X4")}.BIN";
-            string binFilePath = Path.Combine(DirectoryPath, binFileName);
-
-            //Export Assembly File first and foremost
-            await baseExportASM(asmFilePath, binFileName, File);
-            //Next, Export the BIN file containing the raw song data
-            await baseExportSongDataBin(binFilePath, File);
-
-            return (asmFilePath, binFilePath);
-        }
-        private static Task baseExportSongDataBin(string binFilePath, AudioBINFile File) =>
-            System.IO.File.WriteAllBytesAsync(binFilePath, File.SongData);
-        private static async Task baseExportASM(string asmFilePath, string binFileName, AudioBINFile File)
-        {
-            const int def_Pad = 50;
-            string GetHexDWString(ushort word, int Pad = def_Pad) => $"dw ${word:X4}".PadRight(Pad, ' ');
-            string GetDecimalDWString(ushort word, int Pad = def_Pad) => $"dw {word}".PadRight(Pad, ' ');
-            string GetLabelDWString(string label, int Pad = def_Pad) => $"dw {label}".PadRight(Pad, ' ');
-            string GetLabelString(string label, int Pad = def_Pad) => $"{label}:".PadRight(Pad, ' ');
-            string GetIncBinString(string fileName) => $"  incbin {fileName}";
-            string GetCommentString(string comment) => $"//{comment}";
-            
-            //ASM data
-            using (FileStream fs = new FileStream(asmFilePath, FileMode.Create, FileAccess.ReadWrite))
-            {
-                using (StreamWriter sw = new StreamWriter(fs))
-                {
-                    //Header :3
-                    sw.WriteLine("Dumped with love using SFEdit ... Love Bisquick <3 Happy Hacking!\n\n");
-                    //ASM start
-                    int index = -1;
-                    //SONG TABLES
-                    string songLabel = "song0";
-                    foreach (var table in File.SongTables)
-                    {
-                        index++;
-                        var chunk = File.Chunks[index];
-                        //Get Table Labels
-                        string tableLabel = $"table{index}";
-                        var startTableLabel = $"start_{tableLabel}";
-                        var endTableLabel = $"end_{tableLabel}";
-                        //Write Chunk Header and Song Tables
-                        sw.WriteLine(GetCommentString("===== SONG TABLES =====\n"));
-                        sw.Write($"dw {endTableLabel}-{startTableLabel}"); sw.WriteLine(GetCommentString("Calc Transfer Size (in Bytes)"));
-                        sw.Write(GetHexDWString(chunk.SPCAddress)); sw.WriteLine(GetCommentString("SPC Destination Address"));
-                        sw.WriteLine();
-                        ushort songAddr = File.SongDataSPCDestination;
-                        int subIndex = -1;
-                        //Set Table Start Address Label
-                        sw.WriteLine(GetLabelString(startTableLabel));
-                        sw.WriteLine();
-                        foreach (var songEntry in table)
-                        {
-                            subIndex++;
-                            string text = GetHexDWString(songEntry);
-                            if (songEntry == songAddr)
-                                text = GetLabelDWString(songLabel);
-                            sw.Write(text); sw.WriteLine(GetCommentString($"Pointer to Sub {subIndex}"));
-                        }
-                        sw.WriteLine();
-                        //Set Table End Address Label
-                        sw.WriteLine(GetLabelString(endTableLabel));
-                    }
-                    //WRITE SONG DATA
-                    sw.WriteLine();
-                    sw.WriteLine(GetCommentString("===== SONG DATA =====\n"));
-                    sw.Write(GetDecimalDWString((ushort)File.SongLength)); sw.WriteLine(GetCommentString("Song Length (in Bytes)"));
-                    sw.Write(GetHexDWString(File.SongDataSPCDestination)); sw.WriteLine(GetCommentString("Song SPC Dest Address"));
-                    sw.WriteLine();
-                    sw.Write(GetLabelString(songLabel)); sw.WriteLine(GetCommentString("<- Song Points Here"));
-                    sw.WriteLine(GetIncBinString(binFileName));
-                    sw.WriteLine();
-                    sw.WriteLine(GetCommentString("===== EXECUTE =====\n"));
-                    sw.WriteLine(GetHexDWString(0x0));
-                    sw.WriteLine(GetHexDWString(0x0400));
-                    //DONE.
-                }
-            }
-        }
-    }
     /// <summary>
     /// A <see cref="CodeImporter{T}"/> that will take in a *.BIN file and interpret it as a <see cref="AudioBINFile"/>
     /// <para><see cref="AudioBINFile"/> instances contain the addresses of Songs and Samples in which the SPC can then use to produce music</para>
@@ -147,32 +41,182 @@ namespace StarFox.Interop.Audio.ABIN
             }
             return Task.Run(doWork);
         }
+        private void baseAddTable(ref AudioBINFile File, AudioBINChunk chunk, BinaryReader Reader)
+        {
+            if (!chunk.IsTable())
+                throw new Exception($"Oh no! It would appear that a {chunk.ChunkType} was attempted to be imported as a Song Table!");
+            chunk.SeekStart(Reader.BaseStream);
+            bool samples = chunk.ChunkType == AudioBINChunk.ChunkTypes.SampleTable; // samples are formatted differently as ranges
+            AudioBINTable table = new()
+            {
+                TableType = chunk.ChunkType,
+                SPCAddress = chunk.SPCAddress
+            };
+            for (int j = 0; j < chunk.Length; j += sizeof(ushort))
+            {
+                ushort tableAddress = Reader.ReadUInt16();
+                string tableAddrHexStr = tableAddress.ToString("X4");
+                if (samples)
+                { // Format as a range instead of a singleton (loops)
+                    ushort loopAddress = Reader.ReadUInt16();
+                    string tableloopAddrHexStr = tableAddress.ToString("X4");
+                    j +=sizeof(ushort);
+                    table.Add(tableAddress, loopAddress);
+                }
+                else // Format as simply a Sub or a singleton
+                    table.Add(tableAddress);
+            }
+            if(samples)
+                File.SampleTables.Add(table); // ADD SAMPLE
+            else
+                File.SongTables.Add(table); // ADD SONG
+        }
+        private void baseAddSampleData(ref AudioBINFile File, AudioBINChunk chunk, BinaryReader Reader)
+        {
+            //Set Sample Data by splitting up the chunks            
+            List<AudioBINSongTableRangeEntry> distinctRanges = new();
+            //Set the file stream to where the raw data begins
+            int RawDataOffset = chunk.FilePosition + (2 * sizeof(ushort));
+            Reader.BaseStream.Seek(RawDataOffset, SeekOrigin.Begin);
+            byte[] rawData = Reader.ReadBytes(chunk.Length);
+            if (chunk.GetChunkType(Reader.BaseStream) != AudioBINChunk.ChunkTypes.SampleData)
+                throw new InvalidOperationException($"Expected Sample Data but received {chunk.ChunkType}");
+            //Find all song entries, sort them by their address (ascending)
+            {
+                IOrderedEnumerable<AudioBINSongTableRangeEntry> sampleEntries =
+                    File.SampleTables.SelectMany(x => x.OfType<AudioBINSongTableRangeEntry>()).OrderBy(y => y.SPCAddress);
+                // add in order
+                foreach (var address in sampleEntries)
+                    distinctRanges.Add(address);
+            }
+            //Begin reading song data
+            using (MemoryStream ms = new MemoryStream(rawData))
+            {
+                long filePos = ms.Position;
+                //by default, the length is from where we are in the song data to the end
+                int length = (int)(rawData.Length - ms.Position);
+                if (!distinctRanges.Any())
+                { // FAILSAFE! In the event there isn't a song table here, dump the whole SongData to defaultSong0
+                    byte[] songData = new byte[length];
+                    _ = ms.Read(songData, 0, length);
+                    AudioBINSampleData sampleDataItem = new(new AudioBINSongTableRangeEntry(chunk.SPCAddress, length), songData)
+                    {
+                        IsDefaultItem0 = true,
+                        FilePosition = filePos + RawDataOffset,
+                    };
+                    File.Samples.Add(sampleDataItem);
+                }
+                for (int e = 0; e < distinctRanges.Count(); e++)
+                { // iterate through all song addresses found
+                    //the current address we're on
+                    AudioBINSongTableRangeEntry currentAddress = distinctRanges[e];
+                    length = currentAddress.Length;
+                    //read the song data from here to the length calculated above
+                    byte[] sampledata = new byte[length];
+                    _ = ms.Read(sampledata, 0, length);
+                    AudioBINSampleData sampleDataItem = new(currentAddress, sampledata)
+                    {
+                        FilePosition = filePos + RawDataOffset,
+                    };
+                    File.Samples.Add(sampleDataItem);
+                    //mark this as completed                    
+                }
+            }
+        }
+        private void baseAddSongData(ref AudioBINFile File, AudioBINChunk chunk, BinaryReader Reader)
+        {
+            //Set Song Data by splitting up the chunks            
+            //Keep track of duplicates
+            List<ushort> distinctAddresses = new List<ushort>();
+            //Set the file stream to where the raw data begins
+            int RawDataOffset = chunk.FilePosition + (2 * sizeof(ushort));
+            Reader.BaseStream.Seek(RawDataOffset, SeekOrigin.Begin);
+            byte[] rawData = Reader.ReadBytes(chunk.Length);
+            if (chunk.GetChunkType(Reader.BaseStream) != AudioBINChunk.ChunkTypes.SongData)
+                throw new InvalidOperationException($"Expected Song Data but received {chunk.ChunkType}");
+            //Find all song entries, sort them by their address (ascending)
+            {
+                IOrderedEnumerable<AudioBINSongTableEntry> songEntries =
+                    File.SongTables.SelectMany(x => x.OfType<AudioBINSongTableEntry>()).OrderBy(y => y.SPCAddress);
+                //Filter duplicates
+                foreach (var address in songEntries)
+                {
+                    if (address.SPCAddress == 0x00) continue; // ignore 0x00      
+                    if (distinctAddresses.Contains(address.SPCAddress)) continue;
+                    distinctAddresses.Add(address.SPCAddress);
+                }
+            }            
+            //Begin reading song data
+            using (MemoryStream ms = new MemoryStream(rawData))
+            {
+                long filePos = ms.Position;
+                //by default, the length is from where we are in the song data to the end
+                int length = (int)(rawData.Length - ms.Position);
+                if (!distinctAddresses.Any())
+                { // FAILSAFE! In the event there isn't a song table here, dump the whole SongData to defaultSong0
+                    byte[] songData = new byte[length];
+                    _ = ms.Read(songData, 0, length);
+                    AudioBINSongData songDataItem = new(new AudioBINSongTableRangeEntry(chunk.SPCAddress, length), songData)
+                    {
+                        IsDefaultSong0 = true,
+                        FilePosition = filePos + RawDataOffset,
+                    };
+                    File.Songs.Add(songDataItem);
+                }
+                for (int e = 0; e < distinctAddresses.Count(); e++)
+                { // iterate through all song addresses found
+                    //the current address we're on
+                    ushort currentAddress = distinctAddresses[e];
+                    length = (int)(rawData.Length - ms.Position);
+                    if (currentAddress == 0x00) continue; // ignore 0x00                                     
+                    //are there any addresses after this one?
+                    if (e < distinctAddresses.Count() - 1)
+                    { // yes.
+                        ushort nextAddress = distinctAddresses[e + 1];
+                        length = nextAddress - currentAddress; // calculate the distance between them
+                    }
+                    //read the song data from here to the length calculated above
+                    byte[] songData = new byte[length];
+                    _ = ms.Read(songData, 0, length);
+                    AudioBINSongData songDataItem = new(new AudioBINSongTableRangeEntry(currentAddress, length), songData)
+                    {
+                        FilePosition = filePos + RawDataOffset,
+                    };
+                    File.Songs.Add(songDataItem);
+                    //mark this as completed                    
+                }
+            }
+        }
         private void InterpretChunks(AudioBINFile File, List<AudioBINChunk> Chunks, BinaryReader Reader)
         {
             if (Chunks.Count < 1) return;
-            if (Chunks.Count > 1)
-            { // SET SONG TABLES
-                for (int i = 0; i < Chunks.Count-1; i++)
+            //PASS 1: Determine the chunk type for every chunk in the file
+            foreach (AudioBINChunk chunk in Chunks)            
+                _ = chunk.GetChunkType(Reader.BaseStream); // This sets ChunkType property on the chunk
+            //PASS 2: Solve ambiguity and interpret the data
+            foreach (AudioBINChunk chunk in Chunks)
+            {
+                var type = chunk.ChunkType;
+                //Solve ambiguity by looking at the data around this table
+                if (type == AudioBINChunk.ChunkTypes.AmbiguousTables)
+                    type = chunk.AmbiguityConjecture(Chunks.ToArray());
+                switch (type)
                 {
-                    var chunk = Chunks[i];    
-                    Reader.BaseStream.Seek(chunk.FilePosition + (2 * sizeof(ushort)), SeekOrigin.Begin);
-                    AudioBINSongTable table = new()
-                    {
-                        SPCAddress = chunk.SPCAddress
-                    };
-                    for (int j = 0; j < chunk.Length; j += sizeof(ushort))
-                    {
-                        ushort tableAddress = Reader.ReadUInt16();
-                        table.Add(tableAddress);
-                    }
-                    File.SongTables.Add(table);
+                    case AudioBINChunk.ChunkTypes.SampleTable:
+                    case AudioBINChunk.ChunkTypes.SongTable:
+                        baseAddTable(ref File, chunk, Reader);
+                        break;
+                    case AudioBINChunk.ChunkTypes.SampleData:
+                        baseAddSampleData(ref File, chunk, Reader);
+                        break;
+                    case AudioBINChunk.ChunkTypes.SongData:
+                        baseAddSongData(ref File, chunk, Reader);
+                        break;
+                    case AudioBINChunk.ChunkTypes.InstrumentParameters:
+                        ; // TODO: InstPrms here
+                        break;
                 }
-            }
-            //Set Song Data
-            var finalchunk = Chunks.Last();
-            Reader.BaseStream.Seek(finalchunk.FilePosition + (2 * sizeof(ushort)), SeekOrigin.Begin);
-            byte[] SongData = Reader.ReadBytes(finalchunk.Length);
-            File.SetSongData(finalchunk.SPCAddress,SongData);
+            }                        
         }
         private List<AudioBINChunk> ReadChunks(BinaryReader Reader)
         {
@@ -184,6 +228,7 @@ namespace StarFox.Interop.Audio.ABIN
                 int filePosition = (int)br.BaseStream.Position;
                 ushort headSize = br.ReadUInt16();
                 ushort spcAddr = br.ReadUInt16();
+                string spcAddrStr = spcAddr.ToString("X4");
                 if (headSize == 0x0 && spcAddr == 0x0400) // END OF DATA MARKER
                     break;
                 //Add the chunk to the chunks collection

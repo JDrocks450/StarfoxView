@@ -12,7 +12,7 @@
         public static byte[] CreateSongTablePointer(ushort TableSPCAddress)
         {
             byte[] AddressBytes = BitConverter.GetBytes(TableSPCAddress); // sizeof(ushort) is 2.
-            byte[] Hi_AddressBytes = BitConverter.GetBytes(TableSPCAddress+1); // sizeof(ushort) is 2.
+            byte[] Hi_AddressBytes = BitConverter.GetBytes(TableSPCAddress + 1); // sizeof(ushort) is 2.
             byte[] array = new byte[]
             {
                 0x00,0x00,0x00, // RESERVED FOR SIGNAL
@@ -28,9 +28,9 @@
             //COPY THE TABLE SIGNAL
             Array.Copy(SongTablePointerSignal, 0, array, 0, 3);
             //NEXT, COPY THE HI_ADDRESS
-            Array.Copy(Hi_AddressBytes, 0, array, 3, 2); 
+            Array.Copy(Hi_AddressBytes, 0, array, 3, 2);
             //THEN, COPY THE STARFOX IDENTIFIER
-            Array.Copy(StarFoxTableIdentifier, 0, array, 6, 3); 
+            Array.Copy(StarFoxTableIdentifier, 0, array, 6, 3);
             currentOffset += 5;
             //FINALLY, COPY THE TABLE ADDRESS
             Array.Copy(AddressBytes, 0, array, currentOffset + 7, 2);

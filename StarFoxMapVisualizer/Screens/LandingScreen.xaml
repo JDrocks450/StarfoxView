@@ -14,12 +14,8 @@
     <Grid>
         <backgrounds:SpacePanel/>
         <StackPanel Margin="100,50" HorizontalAlignment="Center" VerticalAlignment="Center">
-            <Viewbox MaxWidth="451" >
-                <Border Width="903" Height="318">
-                    <Border.Background>
-                        <ImageBrush ImageSource="/Resources/Image/sflogo.png" Stretch="Fill"/>
-                    </Border.Background>
-                </Border>
+            <Viewbox MaxWidth="451">
+                <Image Source="/Resources/SFviewLogo.png" Stretch="Uniform"/>
             </Viewbox>
             <TextBlock Style="{StaticResource TitleText}" Foreground="White" Margin="0,50,0,10" Text="INCLUDE SOURCE FILES TO GET STARTED" HorizontalAlignment="Center"/>
             <Button x:Name="GetStartedButton" HorizontalAlignment="Center" Padding="50,10"  FontFamily="{StaticResource SFFont}"  RenderOptions.EdgeMode="Aliased" Background="#FF787880" Foreground="#FF99FDFC" FontSize="18" Click="GetStartedButton_Click">IMPORT SOURCE CODE</Button>

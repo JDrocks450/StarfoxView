@@ -6,22 +6,23 @@
     public class AudioBINFile : IImporterObject
     {
         /// <summary>
-        /// Contains the data on the songs included in this file
-        /// <para>Index, <see cref="AudioBINSongDefinition"/></para>
+        /// Contains the tables mapping where the song data lives in this file
+        /// <para>Index, <see cref="AudioBINSongData"/></para>
         /// </summary>
-        public HashSet<AudioBINSongTable> SongTables { get; } = new(); 
+        public HashSet<AudioBINTable> SongTables { get; } = new();
         /// <summary>
-        /// The address to write the song data itself to on the SPC Audio Memory
+        /// Contains the tables mapping where the sample data lives in this file
+        /// <para>Index, <see cref="AudioBINSampleData"/></para>
         /// </summary>
-        public ushort SongDataSPCDestination { get; set; }
+        public HashSet<AudioBINTable> SampleTables { get; } = new();
         /// <summary>
-        /// The raw song data
+        /// A collection of songs that this file contains
         /// </summary>
-        public byte[] SongData { get; private set; }
+        public List<AudioBINSongData> Songs { get; } = new();
         /// <summary>
-        /// The length of the Song data in bytes
+        /// A collection of samples that this file contains
         /// </summary>
-        public int SongLength => SongData.Length;
+        public List<AudioBINSampleData> Samples { get; } = new();
         /// <summary>
         /// The raw chunk data taken from the BIN file
         /// </summary>
@@ -37,10 +38,17 @@
         }
 
         public string OriginalFilePath { get; }
-        public void SetSongData(ushort SongDataSPCDestination, byte[] SongData)
+        /// <summary>
+        /// Combines <see cref="SampleTables"/> and <see cref="SongTables"/> and orders the result by <see cref="AudioBINTable.SPCAddress"/>
+        /// <para/>By default, all Tables are split into <see cref="SampleTables"/> and <see cref="SongTables"/> and unordered
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<AudioBINTable> GetAllTablesOrdered()
         {
-            this.SongDataSPCDestination = SongDataSPCDestination;
-            this.SongData = SongData;
+            List<AudioBINTable> allTables = new();
+            allTables.AddRange(SongTables);
+            allTables.AddRange(SampleTables);
+            return allTables.OrderBy(t => t.SPCAddress);
         }
     }
 }

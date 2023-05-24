@@ -22,7 +22,7 @@ namespace StarFoxMapVisualizer.Misc
         /// <param name="File">The filename of the BRR file to import</param>
         /// <param name="ShowWarnings">If <see langword="true"/> then a warning will appear if the loaded Sample file has no samples inside.</param>
         /// <returns>The Imported Samples File</returns>
-        public static async Task<BRRFile> OpenBRR(FileInfo File, bool ShowWarnings = true, bool ReloadFromDisk = false)
+        public static async Task<BRRFile> OpenBRR(FileInfo File, bool ShowWarnings = true, bool ReloadFromDisk = false, bool Experimental = false)
         {
             //set samples dictionary
             var samples = AppResources.ImportedProject.Samples;
@@ -33,15 +33,21 @@ namespace StarFoxMapVisualizer.Misc
                     samples.Remove(File.FullName); // SO REMOVE THE REFERENCE!
                 else return BRRFile; // Loaded from cache
             }
-            var file = await FILEStandard.BRRImport.ImportAsync(File.FullName);     
-            if (ShowWarnings && !file.Effects.Any()) // Huh, no samples! Let's ask the user what they wanna do about this.
-            { // Warning Dialog
-                if (MessageBox.Show("This file doesn't have any samples in it.\n\n" +
-                    "Want to try experimental loading without error checking to find samples?", "No Samples Found", 
-                    MessageBoxButton.YesNo) == MessageBoxResult.Yes)
-                    file = await FILEStandard.BRRImport.ImportAsync(File.FullName, false); // load without error checking
-                // If the user cancels, the file with no samples is loaded any way.
+            var file = await FILEStandard.BRRImport.ImportAsync(File.FullName);
+            if (!file.Effects.Any())
+            {                
+                if (!Experimental && ShowWarnings) // Huh, no samples! Let's ask the user what they wanna do about this.
+                { // Warning Dialog
+                    if (MessageBox.Show("This file doesn't have any samples in it.\n\n" +
+                        "Want to try experimental loading without error checking to find samples?", "No Samples Found",
+                        MessageBoxButton.YesNo) == MessageBoxResult.No)
+                        goto normal;// If the user cancels, the file with no samples is loaded any way.
+                    Experimental = true;
+                }
+                if (Experimental)
+                    file = await FILEStandard.BRRImport.ImportAsync(File.FullName, false); // load without error checking 
             }
+            normal:
             samples.Add(File.FullName, file); // add it to the cache
             return file;
         }
@@ -72,7 +78,7 @@ namespace StarFoxMapVisualizer.Misc
         /// </summary>
         /// <param name="File"></param>
         /// <returns></returns>
-        public static async Task<bool> ConvertBINToSPC(FileInfo File, string SPCFilePath = default)
+        public static async Task<bool> ConvertBINToSPC(FileInfo File)
         {
             //IMPORT THE ABIN FILE FIRST
             ABINImporter import = new();
@@ -83,49 +89,66 @@ namespace StarFoxMapVisualizer.Misc
             //CREATE DIRECTORIES
             Directory.CreateDirectory(dir);
 
-            //EXPORT THE ABIN FILE TO ASM and BIN
-            (string asmFilePath, string binFilePath) paths = await ABINExport.ExportToDirectory(dir, file);
+            //EXPORT THE ABIN FILE TO ASM, BIN(s) and BRR(s) IN THE SPECIFIED DIRECTORY
+            ABINExport.ABINExportDescriptor paths = await ABINExport.ExportToDirectory(dir, file);
 
-            //CONFIRMATION DIALOG
-            MessageBox.Show("Review the following information for accuracy.", "Review");
-            //EXPORTED BIN FILE DATA            
-            var newFileName = File.Name.Replace(System.IO.Path.GetExtension(File.FullName), ".SPC");
-            var newPath = System.IO.Path.Combine(dir, newFileName);
-            if (SPCFilePath != null) newPath = SPCFilePath;
-            //MAKE A SAMPLE SPC FILE
-            var spcFile = new SPCFile(newPath)
-            {
-                DumperName = "Bisquick",
-                SongTitle = System.IO.Path.GetFileNameWithoutExtension(newPath),
-                GameTitle = "Star Fox",
-                Comments = "Dumped using SFView <3",
-                DefaultChannelDisables = 0,
-                Emulator = 48,
-                ID666Included = 26,
-                MinorVersion = 30,
-                PC = 1132,
-                A = 5,
-                X = 69,
-                Y = 6,
-                SP = 207,
-                PSW = 9,
-            };
-            //WRITE THE BIN FILE TO THE SPC FILE
-            await SPCImporter.WriteBINtoSPCAsync(spcFile, file, paths.binFilePath, true);
-            //AS MANY TIMES AS IT TAKES TO GET IT RIGHT ...
-            while (true)
-            {
-                Dialogs.SPCInformationDialog dialog = new(spcFile)
+            //DIALOGS
+            //WARNING (NO SONGS!) DIALOG
+                if (!file.Songs.Any())
                 {
-                    WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                    Owner = Application.Current.MainWindow
+                    MessageBox.Show("There were no songs found. Any data found in the file has been dumped to:\n" +
+                        $"{paths.ASMFilePath}", "No Songs Found");
+                    return true;
+                }
+                //CONFIRMATION DIALOG
+                MessageBox.Show("Review the following information for accuracy.", "Review");     
+            
+            //WRITE EACH SONG IN THE BIN FILE TO A SPC FILE
+            int songIndex = -1;
+            foreach (var song in file.Songs)
+            {
+                songIndex++;
+                string sampleName = System.IO.Path.GetFileNameWithoutExtension(File.FullName);
+                sampleName = $"{sampleName}_SONG_{songIndex}";
+                string newFileName = sampleName + ".SPC";
+                string newPath = System.IO.Path.Combine(dir, newFileName);                
+                //MAKE A SAMPLE SPC FILE
+                var spcFile = new SPCFile(newPath)
+                {
+                    DumperName = "Bisquick",
+                    SongTitle = sampleName,
+                    GameTitle = "Star Fox",
+                    Comments = "Dumped using SFView <3",
+                    DefaultChannelDisables = 0,
+                    Emulator = 48,
+                    ID666Included = 26,
+                    MinorVersion = 30,
+                    PC = 1132,
+                    A = 5,
+                    X = 69,
+                    Y = 6,
+                    SP = 207,
+                    PSW = 9,
                 };
-                if (!dialog.ShowDialog() ?? true)
-                    return false; // USER CANCELLED!
-                //TRY TO WRITE THE DATA
-                using (var fs = new FileStream(newPath, FileMode.Create))
-                    if (await baseWriteToStream(spcFile, fs)) break; // UPON FAILURE ... TRY AGAIN!
-            }
+                //FOREACH SONG
+                await SPCImporter.WriteBINtoSPCAsync(spcFile, file, song, true);
+                //AS MANY TIMES AS IT TAKES TO GET IT RIGHT ...
+                while (true)
+                {
+                    //DIALOG for SPC HEADER INFO
+                    Dialogs.SPCInformationDialog dialog = new(spcFile)
+                    {
+                        WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                        Owner = Application.Current.MainWindow
+                    };
+                    if (!dialog.ShowDialog() ?? true)
+                        return false; // USER CANCELLED!
+                    //TRY TO WRITE THE DATA
+                    using (var fs = new FileStream(newPath, FileMode.Create))
+                        if (await baseWriteToStream(spcFile, fs)) 
+                            break; // UPON FAILURE ... TRY AGAIN. SHOW THE DIALOG AGAIN.
+                }
+            }            
             return true;
         }
         /// <summary>

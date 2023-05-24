@@ -60,7 +60,7 @@ namespace StarFox.Interop
         {
             BINFileTypes.COMPRESSED_CGX => "Crunch'd Graphics (CGX)",
             BINFileTypes.BRR => "Sound Effects (Samples) (BRR)",
-            BINFileTypes.SPC => "Sequence Data (Songs) (SPC)",
+            BINFileTypes.SPC => "Unpack Audio BIN (ABIN)",
             _ => "Not found", // default case
         };
     }

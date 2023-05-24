@@ -124,18 +124,50 @@
             <ColumnDefinition Width="2*" MaxWidth="400" MinWidth="250"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
+            <RowDefinition Height="35"/>
             <RowDefinition/>
-            <RowDefinition Height="50"/>
+            <RowDefinition Height="0"/>
         </Grid.RowDefinitions>
-        <Grid Background="#3F000000">
+        <!--MENU BAR-->
+        <Border Grid.ColumnSpan="3" Background="#FF333333">
+            <Menu Background="{x:Null}" Foreground="White" Name="MenuStrip" Margin="10,0" VerticalAlignment="Center">
+                <Menu.Resources>
+                    <Style TargetType="MenuItem" x:Key="Base"  BasedOn="{StaticResource {x:Type MenuItem}}">
+                        <Setter Property="Foreground" Value="{Binding Foreground, ElementName=MenuStrip}"/>
+                        <!--<Setter Property="Width" Value="40"/>-->
+                    </Style>
+                </Menu.Resources>
+                <MenuItem Header="File" Style="{StaticResource Base}">
+                    <MenuItem Header="Open..." Name="OpenItem" Click="OpenItem_Click"/>
+                    <Separator/>
+                    <MenuItem Header="Open Project Folder"/>
+                    <MenuItem Header="Close Project"/>
+                    <Separator/>
+                    <MenuItem Header="Exit" Name="ExitItem" Click="ExitItem_Click"/>
+                </MenuItem>
+                <MenuItem Header="View" Style="{StaticResource Base}">
+                    <MenuItem Header="Level Backgrounds (Context Viewer)" Click="BGSASMViewerButton_Click"/>
+                    <Separator/>
+                    <MenuItem Header="Refresh Workspace"/>
+                </MenuItem>
+                <MenuItem Header="Editor" Style="{StaticResource Base}">
+                    <MenuItem Header="Export All 3D Data..." Click="ExportAll3DButton_Click"/>
+                    <MenuItem Header="Refresh Editor SHAPE Map..." Click="SHAPEMapRefreshButton_Click"/>
+                </MenuItem>
+            </Menu>
+        </Border>
+        <Grid DockPanel.Dock="Top" Grid.Column="1" Grid.ColumnSpan="2">
+            <TextBlock x:Name="TitleBlock" DockPanel.Dock="Top" Margin="20,0,0,0" Style="{StaticResource TitleText}" Foreground="White" HorizontalAlignment="Left" VerticalAlignment="Center" Text="Assembly Viewer"/>
+            <!--<TextBlock Style="{DynamicResource BodyText}" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,10,0">VIEW MODE SELECTOR</TextBlock>-->
+        </Grid>
+        <Grid Background="{DynamicResource WindowAccentBackgroundColor}" Grid.Row="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" MinHeight="100"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*" MinHeight="100"/>
             </Grid.RowDefinitions>
-            <Border Grid.RowSpan="3" BorderThickness="0,0,1,0" BorderBrush="White"/>
             <DockPanel>
-                <TextBlock DockPanel.Dock="Top" Margin="10,10,0,0" Style="{StaticResource TitleText}" Foreground="White">Source Files:</TextBlock>
+                <TextBlock DockPanel.Dock="Top" Margin="10,10,0,0" Style="{StaticResource TitleText}" Foreground="White" Text="MY WORKSPACE:"/>
                 <ContentControl DockPanel.Dock="Top" Style="{StaticResource SFContentBorder}" Margin="10,10,10,10" Background="Black">
                     <TreeView FontSize="22" x:Name="SolutionExplorerView" BorderThickness="0" Background="{x:Null}" FontFamily="{StaticResource Atlantis}">
                         <TreeView.Resources>
@@ -153,9 +185,9 @@
                     </TreeView>
                 </ContentControl>
             </DockPanel>
-            <GridSplitter Height="2" Grid.Row="1" HorizontalAlignment="Stretch" Background="#FF465D79" ResizeDirection="Rows"/>
+            <GridSplitter Height="2" Grid.Row="1" HorizontalAlignment="Stretch" Background="{Binding Background, ElementName=MainSplitter}" ResizeDirection="Rows"/>
             <DockPanel Grid.Row="2">
-                <TextBlock DockPanel.Dock="Top" Margin="10,10,0,0" Style="{StaticResource TitleText}" Foreground="White" Text="Symbols:"/>
+                <TextBlock DockPanel.Dock="Top" Margin="10,10,0,0" Style="{StaticResource TitleText}" Foreground="White" Text="SYMBOLS:"/>
                 <GroupBox Header="VIEW OPTIONS" FontFamily="{StaticResource Atlantis}" FontSize="18" DockPanel.Dock="Top" Margin="10,10,10,0">
                     <StackPanel>
                         <ComboBox x:Name="MacroFileCombo"  Margin="10" SelectionChanged="FilterFileChanged"/>
@@ -175,34 +207,45 @@
                 </ContentControl>
             </DockPanel>
         </Grid>
-        <GridSplitter Width="2" Grid.Column="1" HorizontalAlignment="Left" ResizeDirection="Columns" Background="#FFA5A5A5"/>
-        <Grid Grid.Column="1" Grid.ColumnSpan="2">
-            <DockPanel Margin="10,0,0,0">
-                <Grid DockPanel.Dock="Top">
-                    <TextBlock x:Name="TitleBlock" DockPanel.Dock="Top" Margin="20,10,0,0" Style="{StaticResource TitleText}" Foreground="White" HorizontalAlignment="Left" VerticalAlignment="Bottom" FontSize="16" Text="Assembly Viewer"/>
-                    <StackPanel x:Name="ViewModeStrip" Margin="10,20,10,10" Orientation="Horizontal" HorizontalAlignment="Right">
-                        <TextBlock Style="{DynamicResource BodyText}" VerticalAlignment="Center" Margin="0,0,10,0">VIEW MODE:</TextBlock>
-                        <ToggleButton x:Name="ViewBRRButton" Padding="10,0" FontFamily="{StaticResource Atlantis}" FontSize="22" Background="#FF57708E" Foreground="White" Checked="ViewBRRButton_Checked">
-                            SOUNDS
-                        </ToggleButton>
-                        <ToggleButton x:Name="ViewMSGButton" Padding="10,0" FontFamily="{StaticResource Atlantis}" FontSize="22" Background="#FF57708E" Foreground="White" Checked="ViewMSGButton_Checked">
-                            MESSAGES
-                        </ToggleButton>
-                        <ToggleButton x:Name="ViewGFXButton" Padding="10,0" FontFamily="{StaticResource Atlantis}" FontSize="22" Background="#FF57708E" Foreground="White" Checked="ViewGFXButton_Checked">
-                            GRAPHICS
-                        </ToggleButton>
-                        <ToggleButton x:Name="ViewBSTButton" Padding="10,0" FontFamily="{StaticResource Atlantis}" FontSize="22" Background="#FF57708E" Foreground="White" Checked="ViewBSTButton_Checked">
-                            SHAPES
-                        </ToggleButton>
-                        <ToggleButton x:Name="ViewMapButton" Padding="10,0" FontFamily="{StaticResource Atlantis}" FontSize="22" Background="#FF57708E" Foreground="White" Checked="ViewMapButton_Checked">
-                            LEVELS
-                        </ToggleButton>
-                        <ToggleButton x:Name="ViewASMButton" Padding="10,0" FontFamily="{StaticResource Atlantis}" FontSize="22" Background="#FF57708E" Foreground="White" Checked="ViewASMButton_Checked">
-                            ASSEMBLY
-                        </ToggleButton>
-                    </StackPanel>
-                </Grid>
-                <ContentControl DockPanel.Dock="Top" Style="{StaticResource SFContentBorder}" Margin="10,0,10,10" Background="Black">
+        <GridSplitter x:Name="MainSplitter" Panel.ZIndex="1" Width="2" Grid.Column="1" Grid.Row="1" HorizontalAlignment="Left" ResizeDirection="Columns" Background="#FF888888"/>
+        <Grid Grid.Column="1" Grid.Row="1" Grid.ColumnSpan="2" RenderOptions.BitmapScalingMode="NearestNeighbor">
+            <Grid.Background>
+                <ImageBrush Stretch="Fill" TileMode="FlipX" ImageSource="/Resources/Background.png" Viewport="0,0,.5,.5"/>
+            </Grid.Background>
+            <Rectangle VerticalAlignment="Top" HorizontalAlignment="Stretch" Height="2" Fill="{Binding Background, ElementName=MainSplitter}"/>
+            <Image Source="/Resources/SFviewLogo.png" MaxWidth="260" Margin="10,10,504,0" VerticalAlignment="Top" HorizontalAlignment="Left" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+            <Image Source="/Resources/Tribute.png" Margin="10" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="174" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+            <DockPanel Margin="10,5,0,0">
+                <StackPanel DockPanel.Dock="Top" x:Name="ViewModeStrip" Margin="10" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <StackPanel.Resources>
+                        <Style TargetType="ToggleButton" BasedOn="{StaticResource {x:Type ToggleButton}}">
+                            <Setter Property="Background" Value="#FF3B5E69"/>
+                            <Setter Property="Padding" Value="10,0"/>
+                            <Setter Property="FontFamily" Value="{StaticResource Atlantis}"/>
+                            <Setter Property="FontSize" Value="20"/>
+                            <Setter Property="Foreground" Value="White"/>
+                        </Style>
+                    </StackPanel.Resources>
+                    <ToggleButton x:Name="ViewBRRButton" Checked="ViewBRRButton_Checked">
+                        SOUNDS
+                    </ToggleButton>
+                    <ToggleButton x:Name="ViewMSGButton" Checked="ViewMSGButton_Checked">
+                        MESSAGES
+                    </ToggleButton>
+                    <ToggleButton x:Name="ViewGFXButton" Checked="ViewGFXButton_Checked">
+                        GRAPHICS
+                    </ToggleButton>
+                    <ToggleButton x:Name="ViewBSTButton" Checked="ViewBSTButton_Checked">
+                        SHAPES
+                    </ToggleButton>
+                    <ToggleButton x:Name="ViewMapButton" Checked="ViewMapButton_Checked">
+                        LEVELS
+                    </ToggleButton>
+                    <ToggleButton x:Name="ViewASMButton" Checked="ViewASMButton_Checked">
+                        ASSEMBLY
+                    </ToggleButton>
+                </StackPanel>
+                <ContentControl x:Name="MainViewerBorder" Visibility="Collapsed" DockPanel.Dock="Top" Style="{StaticResource SFContentBorder}" Margin="10,0,10,10" Background="Black">
                     <TabControl x:Name="ViewModeHost" Style="{DynamicResource NakedTabControl}">
                         <TabItem Name="ASMTab">
                             <controls:ASMControl x:Name="ASMViewer"/>
@@ -233,14 +276,6 @@
                     <ProgressBar Margin="0,5,0,0" IsIndeterminate="True" Height="20"/>
                 </StackPanel>
             </Button>
-        </Border>
-        <Border Grid.Row="1" Grid.ColumnSpan="3" Background="#FF333333">
-            <StackPanel Margin="10,0" VerticalAlignment="Center" Orientation="Horizontal">
-                <TextBlock VerticalAlignment="Center">Super Secret Functions: </TextBlock>
-                <Button x:Name="ExportAll3DButton" Margin="10,0,0,0" Padding="10,5" Background="DarkRed" Foreground="White" Click="ExportAll3DButton_Click">Export All 3D Data</Button>
-                <Button x:Name="SHAPEMapRefreshButton" Padding="10,5" Background="Gray" Foreground="White" Click="SHAPEMapRefreshButton_Click" Content="Refresh Editor SHAPE Map"/>
-                <Button x:Name="BGSASMViewerButton" Padding="10,5" Background="#FF00A76E" Foreground="White" Click="BGSASMViewerButton_Click" Content="View Level Contexts"/>
-            </StackPanel>
         </Border>
     </Grid>
 </Page>

@@ -43,8 +43,9 @@ namespace StarFoxMapVisualizer.Controls2
         }
 
         public void Display(BRRSample Sample)
-        {
+        {            
             WaveFormHost.Children.Clear();
+            if (Sample.SampleData.Count < 1) return;
             double widthMeasurement = HOST.ActualWidth == 0 ? HOST.Width : HOST.ActualWidth;
             double heightMeasurement = HOST.ActualHeight == 0 ? HOST.Height : HOST.ActualHeight;
             double halfDesignHeight = 100; // distance from median to top / bottom of control

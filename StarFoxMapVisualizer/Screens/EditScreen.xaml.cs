@@ -129,6 +129,25 @@ namespace StarFoxMapVisualizer.Screens
                 };
                 contextMenu.Items.Add(importItem);
             }
+            void CreateIncludeDirectoryAsBRRContextMenu(SFCodeProjectNode FileNode, in ContextMenu contextMenu, string Message = "Open All *.BRR Files")
+            {
+                //INCLUDE FILE ITEM
+                var importItem = new MenuItem()
+                {
+                    Header = Message
+                };
+                importItem.Click += async delegate
+                {
+                    LoadingSpan.Visibility = Visibility.Visible;
+                    foreach (var brrNode in FileNode.ChildNodes.Where(x => x.RecognizedFileType is SFCodeProjectFileTypes.BRR))
+                        await AUDIOStandard.OpenBRR(new FileInfo(brrNode.FilePath), false, false, true);
+                    UpdateInterface();
+                    CurrentMode = ViewMode.BRR;
+                    await HandleViewModes();
+                    LoadingSpan.Visibility = Visibility.Collapsed;                    
+                };
+                contextMenu.Items.Add(importItem);
+            }
             void CreateCOLTABContextMenu(SFCodeProjectNode FileNode, in ContextMenu contextMenu, string Message = "Include File as Color Table")
             {
                 //INCLUDE FILE ITEM
@@ -172,12 +191,15 @@ namespace StarFoxMapVisualizer.Screens
             }
             async Task AddDirectory(TreeViewItem Parent, SFCodeProjectNode DirNode)
             {
+                ContextMenu menu = new();
                 TreeViewItem thisTreeNode = new()
                 {
                     Header = System.IO.Path.GetFileName(DirNode.FilePath),
-                    Tag = DirNode
+                    Tag = DirNode,
+                    ContextMenu = menu
                 };
                 thisTreeNode.SetResourceReference(TreeViewItem.StyleProperty, "FolderTreeStyle");
+                CreateIncludeDirectoryAsBRRContextMenu(DirNode, menu);
                 foreach (var child in DirNode.ChildNodes)
                 {
                     switch (child.Type)
@@ -284,6 +306,9 @@ namespace StarFoxMapVisualizer.Screens
         /// <returns></returns>
         public DispatcherOperation HandleViewModes() => Dispatcher.InvokeAsync(async delegate
         {
+            //FIRST LOAD
+            MainViewerBorder.Visibility = Visibility.Visible;
+
             //UNSUBSCRIBE FROM ALL BUTTONS FIRST 
             ViewASMButton.Checked -= ViewASMButton_Checked;
             ViewMapButton.Checked -= ViewMapButton_Checked;
@@ -309,7 +334,8 @@ namespace StarFoxMapVisualizer.Screens
             {
                 default:
                 case ViewMode.NONE:
-                    ViewModeHost.Visibility = Visibility.Collapsed;
+                    //ViewModeHost.Visibility = Visibility.Collapsed;
+                    MainViewerBorder.Visibility = Visibility.Collapsed;
                     break;
                 case ViewMode.ASM:
                     await ASMViewer.Unpause();                
@@ -697,7 +723,7 @@ namespace StarFoxMapVisualizer.Screens
         private async void ExportAll3DButton_Click(object sender, RoutedEventArgs e)
         {
             // EXPORT 3D FUNCTION -- I MADE HISTORY HERE TODAY. 11:53PM 03/31/2023 JEREMY GLAZEBROOK.
-            // I EXTRACTED STARFOX SHAPES SUCCESSFULLY AND DUMPED THEM ALL IN READABLE FORMAT.
+            // I MADE A GUI PROGRAM THAT EXTRACTED STARFOX SHAPES SUCCESSFULLY AND DUMPED THEM ALL IN READABLE FORMAT.
             var r = MessageBox.Show($"Welcome to the Export 3D Assets Wizard!\n" +
                 $"This tool will do the following: Export all 3D assets from the selected directory to *.sfshape files and palettes.\n" +
                 $"It will dump them to the exports/models directory.\n" +
@@ -812,6 +838,13 @@ namespace StarFoxMapVisualizer.Screens
                 Owner = Application.Current.MainWindow
             };
             viewer.Show();
-        }        
+        }
+
+        private void ExitItem_Click(object sender, RoutedEventArgs e) => Application.Current.Shutdown();
+
+        private void OpenItem_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 }

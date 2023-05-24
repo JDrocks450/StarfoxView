@@ -48,7 +48,7 @@ namespace StarFoxMapVisualizer.Controls2
                 return val;
             }
         }
-        private BRRSample? SelectedSample => ((ListViewItem)SamplesList.SelectedItem)?.Tag as BRRSample;
+        private BRRSample? SelectedSample { get; set; }
 
         public BRRViewer()
         {
@@ -147,6 +147,8 @@ namespace StarFoxMapVisualizer.Controls2
             FileBrowser.SelectionChanged -= FileSelected;
             FileBrowser.SelectedIndex = index;
             FileBrowser.SelectionChanged += FileSelected;
+            if (SelectedFile.Effects.Count == 1)
+                SelectSample(SelectedFile.Effects[0]);
             return true;
         }
 
@@ -167,7 +169,13 @@ namespace StarFoxMapVisualizer.Controls2
         private void SampleSelected(object sender, SelectionChangedEventArgs e)
         {            
             if (SamplesList.SelectedItem == null) return;
-            var sample = SelectedSample;
+            var sample = ((ListViewItem)SamplesList.SelectedItem)?.Tag as BRRSample;
+            SelectSample(sample);
+        }
+        public void SelectSample(BRRSample Sample)
+        {
+            var sample = Sample;
+            SelectedSample = sample;
             SampleField.Text = sample.Name;
             Extract();
             Play();
