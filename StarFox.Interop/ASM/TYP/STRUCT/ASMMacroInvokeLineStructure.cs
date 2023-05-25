@@ -53,6 +53,13 @@ namespace StarFox.Interop.ASM.TYP.STRUCT
                                 parameters.Add(parameterBuilder.ToString());
                                 parameterBuilder.Clear();
                                 break;
+                            case '$':
+                            case '-':
+                            case '+':
+                            case '/':
+                            case '*':
+                                parameterBuilder.Append(current);
+                                break;
                             default:
                                 if (char.IsLetterOrDigit(current))
                                     parameterBuilder.Append(current);

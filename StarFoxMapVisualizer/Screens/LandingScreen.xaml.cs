@@ -61,8 +61,8 @@ namespace StarFoxMapVisualizer.Screens
             if (!await AppResources.TryImportProject(new System.IO.DirectoryInfo(fileLoc))) 
                 return; // loading the project failed, bail out of this function
 
-            //EditScreen screen = new EditScreen();
-            InstrumentPackerControl screen = new();
+            EditScreen screen = new EditScreen();
+            //InstrumentPackerControl screen = new();
             ((MainWindow)Application.Current.MainWindow).Content = screen;
         }
     }

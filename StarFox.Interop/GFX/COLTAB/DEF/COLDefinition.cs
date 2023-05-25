@@ -48,5 +48,9 @@ namespace StarFox.Interop.GFX.COLTAB.DEF
                 default: return null;
             }
         }
+        public override string ToString()
+        {
+            return $"{CallType} {(this is ICOLColorIndexDefinition def ? def.ColorByte : "")}";
+        }
     }
 }

@@ -81,7 +81,7 @@ namespace StarFoxMapVisualizer.Controls
         /// <returns></returns>
         private bool CreateSFPalette(string ColorPaletteName)
         {
-            if (currentGroup != null && currentGroup.Name == ColorPaletteName) return true;            
+            if (currentGroup != null && currentGroup.Name.ToUpper() == ColorPaletteName.ToUpper()) return true;            
             try
             {
                 return SHAPEStandard.CreateSFPalette(ColorPaletteName, out currentSFPalette, out currentGroup);
