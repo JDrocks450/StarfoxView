@@ -1,0 +1,21 @@
+﻿<UserControl x:Class="WPF.UI.Extensions.Backgrounds.SnowFallPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800" ClipToBounds="False">
+    <Grid x:Name="SnowGrid" RenderTransformOrigin="0,0">
+        <Grid.RenderTransform>
+            <TransformGroup>
+                <ScaleTransform/>
+                <SkewTransform/>
+                <RotateTransform/>
+                <TranslateTransform x:Name="TRANSLATION" X="0" Y="0"/>
+            </TransformGroup>
+        </Grid.RenderTransform>
+        <Grid.Background>
+            <ImageBrush x:Name="TiledBG" TileMode="FlipX" RenderOptions.BitmapScalingMode="NearestNeighbor" Stretch="Uniform" Viewbox="0,0,1,1" Viewport="0,0,50,50" ViewportUnits="Absolute" ViewboxUnits="RelativeToBoundingBox" ImageSource="/WPF.UI.Extensions;component/Resources/Graphics/Snow.png"/>
+        </Grid.Background>
+    </Grid>
+</UserControl>
