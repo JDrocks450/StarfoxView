@@ -4,6 +4,7 @@ using StarFox.Interop.ASM;
 using StarFoxMapVisualizer.Controls2;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -24,11 +25,17 @@ namespace StarFoxMapVisualizer.Screens
     /// </summary>
     public partial class LandingScreen : Page
     {
+        const string RecentTXTFileName = "recent.txt";
+        bool RecentExists => File.Exists(RecentTXTFileName);
+
         private NavigationService _service;
 
         public LandingScreen()
         {
             InitializeComponent();
+
+            if (!RecentExists)
+                ClearRecentFile.Visibility = Visibility.Collapsed;
         }
 
         private void LandingScreen_Loaded(object sender, RoutedEventArgs e)
@@ -40,30 +47,50 @@ namespace StarFoxMapVisualizer.Screens
         {
             GetStartedButton.IsEnabled = false;
             string fileLoc = default;
-#if DEBUG
-            fileLoc = @"E:\Solutions\repos\Starfox Source Code\ultrastarfox-master\SF";
-#endif
-            if (fileLoc == default)
+            if (RecentExists)
+                fileLoc = File.ReadAllText(RecentTXTFileName);
+
+            bool result = false;
+            for (int retries = 0; retries < 1; retries++)
             {
-                CommonOpenFileDialog dialog = new()
-                {
-                    IsFolderPicker = true,
-                    InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
-                };
-                if (dialog.ShowDialog() is not CommonFileDialogResult.Ok)
-                {
-                    GetStartedButton.IsEnabled = true;
-                    return;
+                if (fileLoc == default)
+                { // SHOW FILE BROWSER
+                    CommonOpenFileDialog dialog = new()
+                    {
+                        IsFolderPicker = true,
+                        InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
+                    };
+                    if (dialog.ShowDialog() is not CommonFileDialogResult.Ok)
+                    {
+                        GetStartedButton.IsEnabled = true;
+                        return; // USER CANCELLED
+                    }
+                    fileLoc = dialog.FileName;
                 }
-                fileLoc = dialog.FileName;
+
+                //TRY TO LOAD THE PROJECT
+                if (await AppResources.TryImportProject(new System.IO.DirectoryInfo(fileLoc)))
+                {
+                    result = true;
+                    break; // loading the project success, break out
+                }
+                fileLoc = default;
             }
-            //TRY TO LOAD THE PROJECT
-            if (!await AppResources.TryImportProject(new System.IO.DirectoryInfo(fileLoc))) 
-                return; // loading the project failed, bail out of this function
+
+            if (!result) return;
+
+            //SET NEW RECENT FILE
+            await File.WriteAllTextAsync(RecentTXTFileName, fileLoc);
 
             EditScreen screen = new EditScreen();
             //InstrumentPackerControl screen = new();
             ((MainWindow)Application.Current.MainWindow).Content = screen;
+        }
+
+        private void ClearRecentFile_Click(object sender, RoutedEventArgs e)
+        {
+            File.Delete(RecentTXTFileName);
+            ClearRecentFile.Visibility = Visibility.Collapsed;
         }
     }
 }

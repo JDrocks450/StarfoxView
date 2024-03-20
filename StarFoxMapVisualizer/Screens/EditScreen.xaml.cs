@@ -846,5 +846,13 @@ namespace StarFoxMapVisualizer.Screens
         {
 
         }
+
+        private void CloseProjectMenuItem_Click(object sender, RoutedEventArgs e)
+        {            
+            //Delete old project
+            AppResources.ImportedProject = null;
+            //switch to landing screen
+            ((MainWindow)Application.Current.MainWindow).Content = new LandingScreen();
+        }
     }
 }

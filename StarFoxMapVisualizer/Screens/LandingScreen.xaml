@@ -19,6 +19,7 @@
             </Viewbox>
             <TextBlock Style="{StaticResource TitleText}" Foreground="White" Margin="0,50,0,10" Text="INCLUDE SOURCE FILES TO GET STARTED" HorizontalAlignment="Center"/>
             <Button x:Name="GetStartedButton" HorizontalAlignment="Center" Padding="50,10"  FontFamily="{StaticResource SFFont}"  RenderOptions.EdgeMode="Aliased" Background="#FF787880" Foreground="#FF99FDFC" FontSize="18" Click="GetStartedButton_Click">IMPORT SOURCE CODE</Button>
+            <Button x:Name="ClearRecentFile" HorizontalAlignment="Center" Padding="20,5"  RenderOptions.EdgeMode="Aliased" Background="#FF787880" Foreground="#FF99FDFC" FontSize="18" Click="ClearRecentFile_Click">CLEAR AUTO-LOAD</Button>
         </StackPanel>
     </Grid>
 </Page>

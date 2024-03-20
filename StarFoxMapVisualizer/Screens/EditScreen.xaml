@@ -141,7 +141,7 @@
                     <MenuItem Header="Open..." Name="OpenItem" Click="OpenItem_Click"/>
                     <Separator/>
                     <MenuItem Header="Open Project Folder"/>
-                    <MenuItem Header="Close Project"/>
+                    <MenuItem Name="CloseProjectMenuItem" Header="Close Project" Click="CloseProjectMenuItem_Click"/>
                     <Separator/>
                     <MenuItem Header="Exit" Name="ExitItem" Click="ExitItem_Click"/>
                 </MenuItem>
