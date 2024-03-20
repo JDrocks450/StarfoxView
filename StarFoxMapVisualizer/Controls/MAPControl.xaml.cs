@@ -302,7 +302,7 @@ namespace StarFoxMapVisualizer.Controls
             //SWITCH BACKGROUND TO THIS
             if (MapEvent is IMAPBGEvent BGEvent)
             {
-                SwitchEditorBackground(FILEStandard.MAPImport.FindContext(BGEvent.Background));
+                await SwitchEditorBackground(FILEStandard.MAPImport.FindContext(BGEvent.Background));
                 return;
             }
             //CHECK 3D VIEWER OPENED

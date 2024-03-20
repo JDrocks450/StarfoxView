@@ -58,6 +58,7 @@ namespace StarFox.Interop.ASM.TYP.STRUCT
                             case '+':
                             case '/':
                             case '*':
+                            case '_':
                                 parameterBuilder.Append(current);
                                 break;
                             default:

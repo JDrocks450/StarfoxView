@@ -380,7 +380,7 @@ namespace StarFoxMapVisualizer.Controls
                 FrameSelector.ItemsSource = selectedShape.Frames.Select(x => x.Value);
                 FrameSelector.SelectionChanged += FrameSelector_SelectionChanged;
                 FrameSelector.SelectedIndex = selectedShape.Frames.Any() ? 0 : -1;
-                if (!selectedShape.Frames.Any())
+                //if (selectedShape.Frames.Any())
                     ShowShape(selectedShape);
                 PopulateBSPTreeView(selectedShape);
                 ErrorText.Text = (CurrentFile as BSPFile).ImportErrors.ToString();

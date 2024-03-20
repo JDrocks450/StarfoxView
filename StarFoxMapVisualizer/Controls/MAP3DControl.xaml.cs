@@ -149,7 +149,7 @@ namespace StarFoxMapVisualizer.Controls
             if (!await LoadContent())
                 return;
             //**CREATE MAP CONTENT (up until wherever the camera is!)
-            CreateMap(Camera.Position.Z + 5000);            
+            CreateMap(Camera.Position.Z + 15000);            
             await UpdateUI();
         }
 
@@ -239,7 +239,7 @@ namespace StarFoxMapVisualizer.Controls
             }
             var result = results.First();
             //INCLUDE the file -- if it's already included, it will be loaded from cache
-            STRATEQU_Constants = await FILEStandard.IncludeFile<ASMFile>(new FileInfo(result.FilePath));
+            STRATEQU_Constants = await FILEStandard.IncludeFile<ASMFile>(new FileInfo(result.FilePath), StarFox.Interop.SFFileType.ASMFileTypes.ASM);
             if (STRATEQU_Constants == default)
             {
                 MessageBox.Show("STRATEQU.INC was found in the project, yet not able to be opened.");
