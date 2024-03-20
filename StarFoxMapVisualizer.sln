@@ -7,15 +7,15 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StarFoxMapVisualizer", "Sta
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StarFox.Interop", "StarFox.Interop\StarFox.Interop.csproj", "{7561929D-6DB4-42AD-B7AB-2321C8513D4E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WPF.UI.Extensions", "..\ControlExtensions\WPF.UI.Extensions\WPF.UI.Extensions.csproj", "{251EAC4B-DE0D-4A95-8012-800DB08527BF}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Starfox.Editor", "Starfox.Editor\Starfox.Editor.csproj", "{C600A465-2D4D-4FD8-8DAC-748CC7C5B254}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WpfPanAndZoom", "PanCanvas\WpfPanAndZoom.csproj", "{175E04A4-F286-4462-AF44-02E94D232122}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EarClipperLib", "EarClipperLib\EarClipperLib.csproj", "{DEB59262-3D4D-46B1-9934-71AA91C92714}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StarFox.Interop.Audio", "StarFox.Interop.Audio\StarFox.Interop.Audio.csproj", "{DC7C6A09-A58F-48FE-BE3F-E3402DC0377E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StarFox.Interop.Audio", "StarFox.Interop.Audio\StarFox.Interop.Audio.csproj", "{DC7C6A09-A58F-48FE-BE3F-E3402DC0377E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WPF.UI.Extensions", "WPF.UI.Extensions\WPF.UI.Extensions.csproj", "{90DE3893-69EE-4B05-9750-2DE56F43B1D5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -41,14 +41,6 @@ Global
 		{7561929D-6DB4-42AD-B7AB-2321C8513D4E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{7561929D-6DB4-42AD-B7AB-2321C8513D4E}.Release|x64.ActiveCfg = Release|Any CPU
 		{7561929D-6DB4-42AD-B7AB-2321C8513D4E}.Release|x64.Build.0 = Release|Any CPU
-		{251EAC4B-DE0D-4A95-8012-800DB08527BF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{251EAC4B-DE0D-4A95-8012-800DB08527BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{251EAC4B-DE0D-4A95-8012-800DB08527BF}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{251EAC4B-DE0D-4A95-8012-800DB08527BF}.Debug|x64.Build.0 = Debug|Any CPU
-		{251EAC4B-DE0D-4A95-8012-800DB08527BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{251EAC4B-DE0D-4A95-8012-800DB08527BF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{251EAC4B-DE0D-4A95-8012-800DB08527BF}.Release|x64.ActiveCfg = Release|Any CPU
-		{251EAC4B-DE0D-4A95-8012-800DB08527BF}.Release|x64.Build.0 = Release|Any CPU
 		{C600A465-2D4D-4FD8-8DAC-748CC7C5B254}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{C600A465-2D4D-4FD8-8DAC-748CC7C5B254}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C600A465-2D4D-4FD8-8DAC-748CC7C5B254}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -81,6 +73,14 @@ Global
 		{DC7C6A09-A58F-48FE-BE3F-E3402DC0377E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{DC7C6A09-A58F-48FE-BE3F-E3402DC0377E}.Release|x64.ActiveCfg = Release|Any CPU
 		{DC7C6A09-A58F-48FE-BE3F-E3402DC0377E}.Release|x64.Build.0 = Release|Any CPU
+		{90DE3893-69EE-4B05-9750-2DE56F43B1D5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{90DE3893-69EE-4B05-9750-2DE56F43B1D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{90DE3893-69EE-4B05-9750-2DE56F43B1D5}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{90DE3893-69EE-4B05-9750-2DE56F43B1D5}.Debug|x64.Build.0 = Debug|Any CPU
+		{90DE3893-69EE-4B05-9750-2DE56F43B1D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{90DE3893-69EE-4B05-9750-2DE56F43B1D5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{90DE3893-69EE-4B05-9750-2DE56F43B1D5}.Release|x64.ActiveCfg = Release|Any CPU
+		{90DE3893-69EE-4B05-9750-2DE56F43B1D5}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
