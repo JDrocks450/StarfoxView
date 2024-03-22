@@ -160,6 +160,7 @@ namespace StarFox.Interop.MAP
                 var latestNode = file.LevelData.Events.Last();
                 if (latestNode is IMAPDelayEvent delay)
                     runningDelay += delay.Delay;
+                latestNode.LevelDelay = runningDelay;
             }
             return ImportedObject;
         }        

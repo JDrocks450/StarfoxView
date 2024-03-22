@@ -57,7 +57,7 @@ namespace StarFoxMapVisualizer.Controls.Subcontrols
             {
                 Header = "Cancel"
             };
-            citem.Click += delegate
+            citem.PreviewMouseLeftButtonUp += delegate
             {
                 DialogResult = false;
                 Close();
@@ -73,6 +73,11 @@ namespace StarFoxMapVisualizer.Controls.Subcontrols
         {
             DialogResult = true;
             this.FileType = FileType;
+            Close();
+        }
+
+        private void CancelItem_Click(object sender, RoutedEventArgs e)
+        {
             Close();
         }
     }

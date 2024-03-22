@@ -28,6 +28,7 @@ namespace StarFoxMapVisualizer.Controls2
         private Dictionary<string, IEnumerable<MSGEntry>> fileMap = new();
         public string SelectedFileName { get; private set; }
         private Characters CurrentSpeaker = Characters.FOX;
+        MSGEntry currentMessage;
 
         public MSGViewer()
         {
@@ -116,6 +117,17 @@ namespace StarFoxMapVisualizer.Controls2
         private void MessageChanged(object sender, SelectionChangedEventArgs e)
         {
             var messageEntry = (((ListBox)sender).SelectedItem as ListBoxItem).Tag as MSGEntry;
+            MessageChanged(messageEntry);
+        }
+        private async void MessageChanged(MSGEntry Entry)
+        {
+            if (Entry == null)
+            {
+                //**REFRESH UI MESSAGES
+                await ClearUIMessages("pick a message!!"); // have fox prompt the user to pick a message
+                return;
+            }
+            var messageEntry = currentMessage = Entry;
             MugshotControl.Content = EnglishButton.IsChecked ?? false ? messageEntry.English : messageEntry.SecondaryLanguage;
             CurrentSpeaker = MapSpeakerToCharacter(messageEntry.Speaker);
             SoundLabel.Text = messageEntry.Sound;
@@ -151,6 +163,11 @@ namespace StarFoxMapVisualizer.Controls2
             if (animationTimer == null)
                 animationTimer = new Timer(Callback, null, dueTime, dueTime); // create timer since none exists rn
             else loops = 0; // reset animation again
+        }
+
+        private void EnglishButton_Checked(object sender, RoutedEventArgs e)
+        {
+            MessageChanged(currentMessage);
         }
     }
 }

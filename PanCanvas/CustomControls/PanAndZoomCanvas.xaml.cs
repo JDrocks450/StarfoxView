@@ -180,6 +180,18 @@ namespace WpfPanAndZoom.CustomControls
             Dragging = false;
         }
 
+        public void MoveCanvas(Vector Offset)
+        {
+            var translate = new TranslateTransform(Offset.X, Offset.Y);
+            _transform.Matrix = translate.Value * _transform.Matrix;
+
+            foreach (UIElement child in this.Children)
+            {
+                child.RenderTransform = _transform;
+            }
+        }
+        public void MoveCanvas(Point Offset) => MoveCanvas(new Vector(Offset.X,Offset.Y));
+
         private void PanAndZoomCanvas_MouseMove(object sender, MouseEventArgs e)
         {
             if (e.Handled) return;
@@ -190,13 +202,7 @@ namespace WpfPanAndZoom.CustomControls
                 e.Handled = true;
                 Point mousePosition = _transform.Inverse.Transform(e.GetPosition(this));
                 Vector delta = Point.Subtract(mousePosition, _initialMousePosition);
-                var translate = new TranslateTransform(delta.X, delta.Y);
-                _transform.Matrix = translate.Value * _transform.Matrix;
-
-                foreach (UIElement child in this.Children)
-                {
-                    child.RenderTransform = _transform;
-                }
+                MoveCanvas(delta);
             }
 
             if (_dragging && e.RightButton == MouseButtonState.Pressed)

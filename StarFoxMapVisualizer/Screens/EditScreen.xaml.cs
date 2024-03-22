@@ -14,6 +14,7 @@ using StarFoxMapVisualizer.Controls.Subcontrols;
 using StarFoxMapVisualizer.Misc;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -93,7 +94,7 @@ namespace StarFoxMapVisualizer.Screens
             if (currentProject == null) return;
             void CreateClosableContextMenu(SFCodeProjectNode FileNode, in ContextMenu contextMenu, string Message = "Close File")
             {
-                //INCLUDE FILE ITEM
+                //CLOSABLE FILE ITEM
                 var importItem = new MenuItem()
                 {
                     Header = Message
@@ -131,7 +132,7 @@ namespace StarFoxMapVisualizer.Screens
             }
             void CreateIncludeDirectoryAsBRRContextMenu(SFCodeProjectNode FileNode, in ContextMenu contextMenu, string Message = "Open All *.BRR Files")
             {
-                //INCLUDE FILE ITEM
+                //INCLUDE DIRECTORY ITEM
                 var importItem = new MenuItem()
                 {
                     Header = Message
@@ -167,6 +168,21 @@ namespace StarFoxMapVisualizer.Screens
                 };
                 contextMenu.Items.Add(importItem);
             }
+            void CreateExploreContextMenu(SFCodeProjectNode FileNode, in ContextMenu contextMenu, string Message = "Show in File Explorer")
+            {
+                //FILE EXPLORER CONTEXT MENU
+                var importItem = new MenuItem()
+                {
+                    Header = Message
+                };
+                importItem.Click += async delegate
+                {
+                    //DO ACTION
+                    Process.Start("explorer.exe", $"/select,\"{FileNode.FilePath}\"");
+                };
+                contextMenu.Items.Add(importItem);
+            }
+
             async Task<TreeViewItem> AddProjectNode(SFCodeProjectNode Node)
             {
                 TreeViewItem node = new()
@@ -200,6 +216,7 @@ namespace StarFoxMapVisualizer.Screens
                 };
                 thisTreeNode.SetResourceReference(TreeViewItem.StyleProperty, "FolderTreeStyle");
                 CreateIncludeDirectoryAsBRRContextMenu(DirNode, menu);
+                CreateExploreContextMenu(DirNode, menu);
                 foreach (var child in DirNode.ChildNodes)
                 {
                     switch (child.Type)
@@ -226,6 +243,7 @@ namespace StarFoxMapVisualizer.Screens
                     Tag = FileNode,
                     ContextMenu= contextMenu
                 };
+                CreateExploreContextMenu(FileNode, contextMenu);
                 switch (FileNode.RecognizedFileType)
                 {
                     case SFCodeProjectFileTypes.Palette:
@@ -283,9 +301,7 @@ namespace StarFoxMapVisualizer.Screens
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show($"The importer responsible for this type of file says: \n" +
-                            $"{ex}\n" +
-                            $"Sorry!", "Error Loading File");
+                        AppResources.ShowCrash(ex, false, "The plug-in selected could not complete that task.");
                         return;
                     }
                     finally
@@ -845,6 +861,14 @@ namespace StarFoxMapVisualizer.Screens
         private void OpenItem_Click(object sender, RoutedEventArgs e)
         {
 
+        }
+
+        private void CloseProjectMenuItem_Click(object sender, RoutedEventArgs e)
+        {            
+            //Delete old project
+            AppResources.ImportedProject = null;
+            //switch to landing screen
+            ((MainWindow)Application.Current.MainWindow).Content = new LandingScreen();
         }
     }
 }

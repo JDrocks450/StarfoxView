@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:StarFoxMapVisualizer.Controls" xmlns:subcontrols="clr-namespace:StarFoxMapVisualizer.Controls.Subcontrols"
         mc:Ignorable="d" Name="HOST"
-        Title="Context Name" Foreground="White" Height="500" Width="800" Style="{StaticResource SFDialogModalStyle}" Background="{DynamicResource WindowBackgroundColor}"
+        Title="Context Name" Foreground="White" Height="500" Width="1024" Style="{StaticResource SFDialogModalStyle}" Background="{DynamicResource WindowBackgroundColor}"
         MouseLeftButtonDown="HOST_MouseLeftButtonDown" MouseLeftButtonUp="HOST_MouseLeftButtonUp">
     <DockPanel>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,10,0" DockPanel.Dock="Bottom">

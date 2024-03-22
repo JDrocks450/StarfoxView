@@ -114,6 +114,10 @@ namespace StarFox.Interop.MAP.EVT
     [Serializable]
     public abstract class MAPEvent
     {
+        /// <summary>
+        /// The time in the level script this event appears at
+        /// </summary>
+        public int LevelDelay { get; set; }
         public MAPCtrlVars CtrlOptCode = MAPCtrlVars.None;
         public virtual string EventName { get; set; }
         [JsonIgnore]

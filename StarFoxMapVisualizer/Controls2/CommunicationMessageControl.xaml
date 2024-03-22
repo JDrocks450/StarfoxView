@@ -14,11 +14,18 @@
                     <ColumnDefinition Width="3*"/>
                 </Grid.ColumnDefinitions>
                 <Viewbox RenderOptions.BitmapScalingMode="NearestNeighbor" VerticalAlignment="Top">
-                    <Border Width="30" Height="38">
-                        <Border.Background>
-                            <ImageBrush x:Name="MugshotImage" ImageSource="/Resources/Image/faces.png" Viewbox="{Binding ImageRect, ElementName=HOST}" ViewboxUnits="Absolute"/>
-                        </Border.Background>
-                    </Border>
+                    <Grid>
+                        <Border Width="30" Height="38">
+                            <Border.Background>
+                                <ImageBrush x:Name="MissingImage" ImageSource="/Resources/Image/missingfaces.png"/>
+                            </Border.Background>
+                        </Border>
+                        <Border Width="30" Height="38" Visibility="{Binding MugshotVisibility, ElementName=HOST}">
+                            <Border.Background>
+                                <ImageBrush x:Name="MugshotImage" ImageSource="/Resources/Image/faces.png" Viewbox="{Binding ImageRect, ElementName=HOST}" ViewboxUnits="Absolute"/>
+                            </Border.Background>
+                        </Border>
+                    </Grid>
                 </Viewbox>
                 <Viewbox RenderOptions.BitmapScalingMode="NearestNeighbor" Grid.Column="1" VerticalAlignment="Bottom">
                     <ContentControl FontFamily="{StaticResource SFFont}">

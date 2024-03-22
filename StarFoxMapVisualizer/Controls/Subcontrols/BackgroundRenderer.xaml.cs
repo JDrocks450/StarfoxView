@@ -82,6 +82,7 @@ namespace StarFoxMapVisualizer.Controls.Subcontrols
             {                
                 case "water":
                 case "tunnel":
+                case "undergnd":
                     //Base calculations on the Width of the control
                     awidth = ViewableWidth;                    
                     nwidth = awidth * 1.60;
@@ -98,6 +99,15 @@ namespace StarFoxMapVisualizer.Controls.Subcontrols
                         new Rect(-ScreenBG3XScroll, -ScreenBG3YScroll, awidth, awidth));
                     break;
             }
+        }
+
+        public void ResizeViewports(int Width, int Height)
+        {
+            var BG3X = LevelContext.BG3.HorizontalOffset;
+            var BG3Y = LevelContext.BG3.VerticalOffset;
+            var BG2X = LevelContext.BG2.HorizontalOffset;
+            var BG2Y = LevelContext.BG2.VerticalOffset;
+            SetViewportsToUniformSize(Width, Height, BG2X, BG2Y, BG3X, BG3Y);
         }
 
         public async Task Attach(MAPContextDefinition? SelectedContext, bool ExtractCCR = false, bool ExtractPCR = false) { 

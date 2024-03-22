@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -8,11 +9,35 @@ namespace StarFox.Interop.MISC
 {
     public static class StreamReaderExtensions
     {
-        public static long GetPosition(this StreamReader reader)
+        public static long GetBufferedPosition(this StreamReader reader)
         {
             return reader.BaseStream.Position;
         }
-        public static long GetActualPosition(this StreamReader reader)
+        /// <summary>
+        /// Returns the character position of this buffered stream
+        /// </summary>
+        /// <param name="reader"></param>
+        /// <returns></returns>
+        public static long GetCharPosition(this StreamReader reader)
+        {
+            var s = reader;
+            //https://stackoverflow.com/questions/10189270/tracking-the-position-of-the-line-of-a-streamreader
+            Int32 charpos = (Int32)s.GetType().InvokeMember("_charPos",
+BindingFlags.DeclaredOnly |
+BindingFlags.Public | BindingFlags.NonPublic |
+BindingFlags.Instance | BindingFlags.GetField
+ , null, s, null);
+
+            Int32 charlen = (Int32)s.GetType().InvokeMember("_charLen",
+            BindingFlags.DeclaredOnly |
+            BindingFlags.Public | BindingFlags.NonPublic |
+            BindingFlags.Instance | BindingFlags.GetField
+             , null, s, null);
+
+            return (Int32)s.BaseStream.Position - charlen + charpos;
+        }
+
+        [Obsolete] public static long GetActualPosition(this StreamReader reader)
         {
             System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.DeclaredOnly | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.GetField;
 
