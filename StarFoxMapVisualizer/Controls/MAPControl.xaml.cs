@@ -42,12 +42,17 @@ namespace StarFoxMapVisualizer.Controls
             MAPTabViewer.Items.Clear();            
         }
 
-        double linePositionX = -600;
-
-        private Dictionary<MAPFile, TabItem> tabMap = new();
-        private const double DEF_X = 200;
-        private double currentX = DEF_X, currentY = 500, yStep = -1d;
+        private Dictionary<MAPFile, MAP_FINST> tabMap = new();
+        private MAP_FINST? CurrentState {
+            get
+            {
+                if (selectedFile == null) return null;
+                tabMap.TryGetValue(selectedFile, out var val);
+                return val;
+            }
+        }
         private MAPFile? selectedFile => ((TabItem)MAPTabViewer.SelectedItem).Tag as MAPFile;
+        
 
         //3D VIEWER VARS
         private MAP3DControl? MapWindow;
@@ -100,7 +105,52 @@ namespace StarFoxMapVisualizer.Controls
             View3DButton.Visibility = Visibility.Collapsed;
         }
 
-        private void SetupPlayField(PanAndZoomCanvas PanCanvas, double CenterFieldX, double LevelYStart, Brush Foreground, double LevelYEnd = -100000000,
+        private void SetupPlayFieldHorizontal(Panel PanCanvas, int Layer, int Time, Brush Foreground, double LevelEnd = 100000000,
+            string StartText = "DELAY", string EndText = "FINISH")
+        {
+            TextBlock AddFieldText(string Text, double X, double Y, bool major = false)
+            {
+                var textControl = new TextBlock()
+                {
+                    Text = Text,
+                    FontSize = major ? 28 : 22,
+                    FontFamily = new FontFamily("Consolas"),
+                    Padding = new Thickness(10, 5, 10, 5),
+                    Foreground = Foreground
+                };
+                Canvas.SetTop(textControl, Y);
+                Canvas.SetLeft(textControl, X);
+                Panel.SetZIndex(textControl, 0);
+                return textControl;
+            }
+
+            double YPosition = Layer * 100;
+
+            Line delayLine = new Line()
+            {
+                X1 = Time,
+                X2 = LevelEnd,
+                Y1 = YPosition,
+                Y2 = YPosition,
+                StrokeThickness = 4,
+                Stroke = Foreground,
+                Fill = Foreground,
+            };
+            double TextYPosition = YPosition + 25;
+            
+            PanCanvas.Children.Add(delayLine);
+            PanCanvas.Children.Add(AddFieldText(StartText, Time + 50, TextYPosition-50));
+            
+            for (double x = Time; x <= LevelEnd; x += 100)
+            {
+                bool major = x % 1000 == 0;
+                PanCanvas.Children.Add(AddFieldText(Time.ToString(), x, TextYPosition, major));
+                Time += 100;
+            }
+            PanCanvas.Children.Add(AddFieldText(EndText, LevelEnd + 50, TextYPosition-50));
+        }
+
+        private void SetupPlayFieldVertical(Panel PanCanvas, double CenterFieldX, double LevelYStart, Brush Foreground, double LevelYEnd = -100000000,
             string StartText = "DELAY", string EndText = "FINISH", int currentDelay = 0)
         {
             TextBlock AddFieldText(string Text, double X, double Y, bool major = false)
@@ -125,7 +175,7 @@ namespace StarFoxMapVisualizer.Controls
                 X2 = CenterFieldX,
                 Y1 = LevelYStart,
                 Y2 = LevelYEnd,
-                StrokeThickness = 2,
+                StrokeThickness = 4,
                 Stroke = Foreground,
                 Fill = Foreground,                
             };
@@ -168,61 +218,65 @@ namespace StarFoxMapVisualizer.Controls
 
         Brush MapNodeLineBrush = Brushes.Yellow;
 
-        private void EnumerateEvents(MAPFile File, PanAndZoomCanvas EventCanvas, ref double levelStartY, ref double currentY, ref int runningDelay, bool autoDereference = true, 
-            int Layer = 0)
-        {            
-            int getLayerXShift(int Layer) => Layer * 100; 
-            var newDefX = ActualWidth / 2;
-            if (newDefX <= 0) newDefX = DEF_X;
-            currentX = newDefX;           
-            double lastNodeWidth = 0;
-            int previousDelay = 0;
+        private void EnumerateEvents(MAPFile File, Panel EventCanvas, ref int currentTime, bool autoDereference = true, int Layer = 0)
+            
+        {
+            double LayerShift = (Layer * 100);
 
             if (Layer == 0) MapNodeLineBrush = Brushes.Yellow;
             else MapNodeLineBrush = Brushes.DeepSkyBlue;
+            
+            int treeLayer = 0;
+            double YOffset() => treeLayer * 75;
+            double expandedX = 0;
+            double lastX = 0, lastY = LayerShift;
 
             foreach (var evt in File.LevelData.Events)
             {
                 var control = new MapEventNodeControl(evt);
-                EventCanvas.Children.Add(control);
-                
-                previousDelay = runningDelay;
+                EventCanvas.Children.Add(control);               
 
                 control.Measure(new Size(5000, 5000));                
                 
-                if (evt is IMAPDelayEvent delay)
-                {
-                    runningDelay += delay.Delay;
-                    var desiredCurY = levelStartY - runningDelay - (control.DesiredSize.Height / 2);
-                    //if (desiredCurY > currentY)
-                        currentY = desiredCurY;
-                    currentX = newDefX;
-                }
-                else
-                {
-                    currentX += lastNodeWidth + 20;
-                    currentY -= 100;
-                }
+                if (evt is IMAPDelayEvent delay)                
+                    currentTime += delay.Delay;
 
-                double drawY = currentY;
-                Canvas.SetTop(control, drawY);
+                double middleX = currentTime;                
+                double rightEdge = middleX + (control.DesiredSize.Width / 2);
+                double leftEdge = middleX - (control.DesiredSize.Width / 2);
 
-                lastNodeWidth = control.DesiredSize.Width;
-                double drawX = 200 + currentX + getLayerXShift(Layer);
+                treeLayer++;
+
+                if (leftEdge > expandedX)
+                {
+                    treeLayer = 0;
+                    lastX = currentTime;
+                    lastY = LayerShift;
+                }
+                if (rightEdge > expandedX) expandedX = rightEdge;                  
+
+                double drawX = middleX - (control.DesiredSize.Width / 2);
                 Canvas.SetLeft(control, drawX);
+
+                double drawY = (200 + LayerShift + YOffset());
+                Canvas.SetTop(control, drawY);
 
                 Panel.SetZIndex(control, 1);
 
                 Line delayLine = new Line()
                 {
-                    X1 = linePositionX + getLayerXShift(Layer),
-                    X2 = drawX,
-                    Y1 = -runningDelay + levelStartY,
-                    Y2 = drawY + 50,
-                    StrokeThickness = 1,
+                    X1 = lastX,
+                    X2 = middleX,
+                    Y1 = lastY,
+                    Y2 = drawY,
+                    StrokeThickness = 2,
                     Stroke = MapNodeLineBrush,
                     Fill = MapNodeLineBrush,
                 };
+
+                lastX = middleX;
+                lastY = drawY;
+
                 EventCanvas.Children.Add(delayLine);
 
                 if(evt is MAPJSREvent mapjsr && autoDereference) // SUBSECTION FOUND!!
@@ -231,11 +285,10 @@ namespace StarFoxMapVisualizer.Controls
                         continue; // FAILED! Couldn't find the map.
                     var sub_map = FILEStandard.OpenMAPFile(MAPInfo).Result as MAPFile;
                     if (sub_map == default) continue; // FAILED! Couldn't open the map.
-                    var sub_levelStartY = currentY;
-                    var sub_runningDelay = runningDelay;
-                    EnumerateEvents(sub_map, EventCanvas, ref sub_levelStartY, ref currentY, ref runningDelay, autoDereference, Layer+1);
-                    SetupPlayField(EventCanvas, linePositionX + getLayerXShift(Layer+1), sub_levelStartY, Brushes.DeepSkyBlue, currentY - 200, 
-                        mapjsr.SubroutineName, "RETURN", sub_runningDelay);
+                    int section_StartTime = currentTime;
+                    EnumerateEvents(sub_map, EventCanvas, ref currentTime, autoDereference, Layer+1);
+                    SetupPlayFieldHorizontal(EventCanvas, Layer+1, section_StartTime, Brushes.DeepSkyBlue, currentTime, 
+                        mapjsr.SubroutineName, "RETURN");
                 }
             }
             MapNodeLineBrush = Brushes.Yellow;
@@ -243,21 +296,31 @@ namespace StarFoxMapVisualizer.Controls
 
         private async Task OpenFile(MAPFile File)
         {
+            if (File == null) return;
+
+            //ASYNC DISABLE
+            IsEnabled = false;
+
+            MAP_FINST state = new MAP_FINST();
+
             if (tabMap.ContainsKey(File))
-                return;
-            var EventCanvas = new PanAndZoomCanvas()
+                state = tabMap[File];
+
+            if (state.Tab == default)
             {
-                Background = new SolidColorBrush(Color.FromArgb(1,255,255,255))
-            };
-            var tabItem = new TabItem()
-            {
-                Header = System.IO.Path.GetFileNameWithoutExtension(File.OriginalFilePath),
-                Content = EventCanvas,
-                Tag = File
-            };
-            MAPTabViewer.Items.Add(tabItem);
+                state.Tab = new TabItem()
+                {
+                    Header = System.IO.Path.GetFileNameWithoutExtension(File.OriginalFilePath),
+                    Tag = File
+                };                
+                MAPTabViewer.Items.Add(state.Tab);
+            }
+
+            var tabItem = state.Tab;
+            MAPTabViewer.SelectionChanged -= ChangeFile;
             MAPTabViewer.SelectedItem = tabItem;
-            tabMap.Add(File, tabItem);
+            MAPTabViewer.SelectionChanged += ChangeFile;
+            tabMap.TryAdd(File, state);
 
             bool autoDereference = File.ReferencedSubSections.Any();
             if (!AppResources.MapImporterAutoDereferenceMode && autoDereference)
@@ -268,22 +331,44 @@ namespace StarFoxMapVisualizer.Controls
                     "Auto-Include Sub-Sections?", MessageBoxButton.YesNo) == MessageBoxResult.No)
                     autoDereference = false;
             }
-            await SetupEditor(File, EventCanvas, autoDereference);
+
+            Panel EventCanvas = default;
+
+            if (!state.StateObject.Loaded)
+            {
+                state.StateObject.ContentControl = new PanAndZoomCanvas()
+                {
+                    Background = new SolidColorBrush(Color.FromArgb(1, 255, 255, 255))
+                };
+                EventCanvas = state.StateObject.ContentControl;  
+                int Width = await SetupEditor(File, EventCanvas, autoDereference) + 200;
+                state.StateObject.LevelWidth = Width;
+            }
+            EventCanvas = state.StateObject.ContentControl;
+
+            CurrentEditorControl.Content = EventCanvas;
+            //ASYNC DISABLE
+            IsEnabled = true;
         }
 
-        private async Task SetupEditor(MAPFile File, PanAndZoomCanvas EventCanvas, bool autoDereference)
+        private async void ChangeFile(object sender, SelectionChangedEventArgs e)
+        {            
+            var file = (MAPTabViewer.SelectedItem as TabItem).Tag as MAPFile;
+            await OpenFile(file);
+        }
+
+        private async Task<int> SetupEditor(MAPFile File, Panel EventCanvas, bool autoDereference)
         {
-            double levelStartY = 500;
-            currentY = levelStartY;
-            int runningDelay = 0;
-            EnumerateEvents(File, EventCanvas, ref levelStartY, ref currentY, ref runningDelay, autoDereference);
-            SetupPlayField(EventCanvas, linePositionX, levelStartY, Brushes.Yellow, currentY - 200);
+            int Time = 0;
+            EnumerateEvents(File, EventCanvas, ref Time, autoDereference);
+            SetupPlayFieldHorizontal(EventCanvas, 0, 0, Brushes.Yellow, Time);
             await SwitchEditorBackground(File.LevelContext);
+            return Time;
         }        
 
         private void UserControl_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            BackgroundRender.ResetViewports(new Rect(0,0,ActualWidth, ActualHeight));
+            BackgroundRender.ResizeViewports((int)ActualWidth, (int)ActualHeight);
         }
 
         private async void RefreshEditorButton_Click(object sender, RoutedEventArgs e)
@@ -294,7 +379,7 @@ namespace StarFoxMapVisualizer.Controls
         private async Task SwitchEditorBackground(MAPContextDefinition? Definition)
         {
             await BackgroundRender.Attach(Definition);
-            BackgroundRender.ResetViewports(new Rect(0, 0, ActualWidth, ActualHeight));
+            BackgroundRender.ResizeViewports((int)ActualWidth, (int)ActualHeight);
         }
 
         internal async Task MapNodeSelected(MAPEvent MapEvent)
@@ -316,6 +401,16 @@ namespace StarFoxMapVisualizer.Controls
             await screen.ASMViewer.OpenSymbol(MapEvent.Callsite); // open the symbol in the assembly viewer
             screen.CurrentMode = EditScreen.ViewMode.ASM; // switch to this viewer
             await screen.HandleViewModes(); // update the view
+        }
+
+        double oldScrollValue = 0;
+        private void ChronologySlider_Scroll(object sender, System.Windows.Controls.Primitives.ScrollEventArgs e)
+        {
+            double delta = (ChronologySlider.Value - oldScrollValue);
+            oldScrollValue = ChronologySlider.Value;
+            double value = CurrentState.StateObject.LevelWidth * delta;
+            ((PanAndZoomCanvas)CurrentState.StateObject.ContentControl).MoveCanvas(new Vector(-value, 0));
+
         }
     }
 }

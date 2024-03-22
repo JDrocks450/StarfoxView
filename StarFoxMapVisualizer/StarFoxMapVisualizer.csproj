@@ -5,9 +5,9 @@
     <TargetFramework>net6.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
-    <AssemblyVersion>0.5.24.128</AssemblyVersion>
-    <FileVersion>0.5.24.128</FileVersion>
+    <FileVersion>0.5.3</FileVersion>
     <ApplicationIcon>Resources\SFViewLogoSmall.ico</ApplicationIcon>
+    <AssemblyVersion>0.5.3</AssemblyVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,6 +20,7 @@
     <None Remove="Resources\Image\folder_empty.png" />
     <None Remove="Resources\Image\folder_full.png" />
     <None Remove="Resources\Image\macro.png" />
+    <None Remove="Resources\Image\missingfaces.png" />
     <None Remove="Resources\Image\page.png" />
     <None Remove="Resources\Image\palette.png" />
     <None Remove="Resources\Image\pause.png" />
@@ -75,6 +76,7 @@
     <Resource Include="Resources\Image\folder_empty.png" />
     <Resource Include="Resources\Image\folder_full.png" />
     <Resource Include="Resources\Image\macro.png" />
+    <Resource Include="Resources\Image\missingfaces.png" />
     <Resource Include="Resources\Image\page.png" />
     <Resource Include="Resources\Image\palette.png" />
     <Resource Include="Resources\Image\pause.png" />

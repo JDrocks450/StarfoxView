@@ -2,6 +2,7 @@
 using StarFox.Interop.ASM.TYP;
 using StarFox.Interop.MISC;
 using StarFoxMapVisualizer.Controls.Subcontrols;
+using StarFoxMapVisualizer.Misc;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -27,9 +28,9 @@ namespace StarFoxMapVisualizer.Controls
     {
         private const double BASE_TEXT_SIZE = 12;
 
-        private FINST? current;        
+        private ASM_FINST? current;        
         private ASMCodeEditor EditorScreen => current?.EditorScreen;        
-        private Dictionary<string, FINST> fileInstanceMap = new();
+        private Dictionary<string, ASM_FINST> fileInstanceMap = new();
         /// <summary>
         /// The queue of <see cref="OpenFileContents(FileInfo, ASMFile?)"/> calls made while paused
         /// </summary>
@@ -82,7 +83,7 @@ namespace StarFoxMapVisualizer.Controls
                 if (Call.chunk != default)
                     current.EditorScreen.JumpToSymbol(Call.chunk);                
             }
-            void OpenTab(FINST inst)
+            void OpenTab(ASM_FINST inst)
             {
                 FileBrowserTabView.SelectedItem = inst.Tab; // select the tab
                 FilePathBlock.Text = Call.FileSelected.Name;
@@ -106,7 +107,7 @@ namespace StarFoxMapVisualizer.Controls
             {
                 Header = Call.FileSelected.Name,
             };
-            FINST instance = current = new FINST()
+            ASM_FINST instance = current = new ASM_FINST()
             {
                 OpenFile = Call.FileSelected,
                 symbolMap = new(),
@@ -118,7 +119,7 @@ namespace StarFoxMapVisualizer.Controls
             {
                 FontSize = BASE_TEXT_SIZE
             };
-            instance.EditorScreen = newEditZone;
+            instance.StateObject = newEditZone;
             tab.Content = newEditZone;
 
             fileInstanceMap.Add(Call.FileSelected.FullName, instance);

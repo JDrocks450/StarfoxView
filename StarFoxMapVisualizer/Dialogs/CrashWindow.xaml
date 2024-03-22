@@ -1,0 +1,28 @@
+﻿<Window x:Class="StarFoxMapVisualizer.Dialogs.CrashWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:StarFoxMapVisualizer.Dialogs"
+        mc:Ignorable="d"
+        Title="Sorry about this" Height="450" Width="400" Foreground="White" Style="{StaticResource SFDialogModalStyle}"
+        MouseLeftButtonUp="Window_MouseLeftButtonUp" >
+    <DockPanel>
+        <TextBlock x:Name="MessageBlock" TextWrapping="Wrap" DockPanel.Dock="Top">            
+            <LineBreak/>
+            <LineBreak/>
+            If you're in the Starfox Exploratorium discord, you can report this in #starfox-editor-program
+             <LineBreak/>
+             <LineBreak/>
+            Here's what happened:
+        </TextBlock>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Bottom">
+            <Button x:Name="ContinueButton" Background="#FFCA0000"  Click="ContinueButton_Click">Ignore and Continue (Not recommended)</Button>
+            <Button x:Name="CloseButton" Margin="5,0" Background="#FF009417" Click="CloseButton_Click">Close Application</Button>
+            <Button x:Name="NonfatalButton" Background="Gray" Click="ContinueButton_Click">OK</Button>
+        </StackPanel>
+        <TextBox Name="ErrorBox" Margin="0,10" FontFamily="Consolas" IsReadOnly="True" HorizontalScrollBarVisibility="Visible">
+            SAMPLE ERROR DETAILS
+        </TextBox>
+    </DockPanel>
+</Window>

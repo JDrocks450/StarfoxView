@@ -23,7 +23,7 @@
                 </LinearGradientBrush>
             </Grid.Background>
             <UniformGrid Rows="1" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <RadioButton Name="EnglishButton" IsChecked="True" Foreground="White" VerticalContentAlignment="Center">English Language</RadioButton>
+                <RadioButton Name="EnglishButton" IsChecked="True" Foreground="White" VerticalContentAlignment="Center" Checked="EnglishButton_Checked" Unchecked="EnglishButton_Checked">English Language</RadioButton>
                 <RadioButton Name="SecondButton" Foreground="White" VerticalContentAlignment="Center">Secondary Language</RadioButton>
                 <ComboBox Name="FilesCombo" Margin="10,0,0,0"></ComboBox>
             </UniformGrid>

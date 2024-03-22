@@ -2,6 +2,7 @@
 using StarFox.Interop;
 using StarFox.Interop.ASM;
 using StarFox.Interop.MAP;
+using StarFoxMapVisualizer.Dialogs;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -78,6 +79,22 @@ namespace StarFoxMapVisualizer
                 return false;
             }
             return true;
+        }
+
+        /// <summary>
+        /// Shows the CrashWindow with the given parameters
+        /// </summary>
+        /// <param name="Exception"></param>
+        /// <param name="v1"></param>
+        /// <param name="v2"></param>
+        /// <exception cref="NotImplementedException"></exception>
+        internal static bool? ShowCrash(Exception Exception, bool Fatal, string Tip)
+        {
+            CrashWindow window = new CrashWindow(Exception, Fatal, Tip)
+            {
+                WindowStartupLocation = WindowStartupLocation.CenterScreen
+            };
+            return window.ShowDialog();
         }
     }
 }

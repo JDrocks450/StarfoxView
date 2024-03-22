@@ -29,7 +29,7 @@ namespace StarFoxMapVisualizer.Controls.Subcontrols
 
         public LevelContextViewerControl()
         {
-            InitializeComponent();
+            InitializeComponent();            
         }        
 
         public MAPContextDefinition LevelContext { get; private set; }
@@ -58,7 +58,7 @@ namespace StarFoxMapVisualizer.Controls.Subcontrols
 
         private void ResetViewSettings()
         {            
-            ImageContent.SetViewportsToUniformSize(ScrWidth, ScrHeight, BG2X, BG2Y, BG3X, BG3Y);                                
+            ImageContent.SetViewportsToUniformSize(ScrWidth, ScrHeight, BG2X, BG2Y, BG3X, BG3Y, 1024);                                
         }
 
         private void ContextDataGrid_CellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
@@ -75,6 +75,7 @@ namespace StarFoxMapVisualizer.Controls.Subcontrols
         private void BG2Render_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
             if (open) return;
+            double width = ImageContent.Width;
             ImageContentHost.Content = null;
             //POP OUT LARGE VIEW
             Window hwnd = new()
@@ -89,6 +90,7 @@ namespace StarFoxMapVisualizer.Controls.Subcontrols
             {
                 ScrWidth = hwnd.Width;
                 ScrHeight = hwnd.Height;
+                ImageContent.Width = ScrWidth;
                 ResetViewSettings();
             };
             hwnd.SetResourceReference(BackgroundProperty, "WindowBackgroundColor");
@@ -96,7 +98,8 @@ namespace StarFoxMapVisualizer.Controls.Subcontrols
             {
                 open = false;
                 ImageContent.Background = null;
-                ImageContentHost.Content = ImageContent;                
+                ImageContentHost.Content = ImageContent;
+                ImageContent.Width = width;
             };
             open = true;
             hwnd.Show();

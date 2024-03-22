@@ -80,7 +80,7 @@ namespace StarFox.Interop.ASM
             var Current = Context.CurrentFile;
             var imports = Context.Includes;
 
-            long position = fs.GetActualPosition();
+            long position = fs.GetCharPosition();
             var header = fs.ReadLine().RemoveEscapes(); // read line
             Context.CurrentLine++;//increment line register                                   
             var type = ASMChunk.Conjecture(header); // investigate what it is

@@ -171,8 +171,9 @@
 
         </TextBox>
         <StackPanel Width="150" HorizontalAlignment="Right" Grid.RowSpan="2" Grid.Column="1" Grid.Row="1">
-            <Button x:Name="CapKeyboard" Click="CapKeyboard_Click">Capture Keyboard</Button>
-            <Button x:Name="ResetCam" Margin="0,5" Click="ResetCam_Click">Reset Camera</Button>
+            <Button x:Name="CapKeyboard" Margin="0,5" Click="CapKeyboard_Click">Capture Keyboard</Button>
+            <Button x:Name="ResetCam" Click="ResetCam_Click">Reset Camera</Button>
+            <Button x:Name="RotButton" Margin="0,5" Click="RotButton_Click">Rotation: ON</Button>
             <Button x:Name="ExportSFShapeButton" Click="ExportSFShapeButton_Click" Background="#FFC30000" Foreground="White" Height="37">Export to .sfshape</Button>
         </StackPanel>
         <GridSplitter Grid.Row="1" Grid.RowSpan="2" HorizontalAlignment="Right" Width="2" Background="Gray"/>

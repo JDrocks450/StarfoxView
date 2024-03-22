@@ -18,6 +18,7 @@ using System.Windows.Shapes;
 using static StarFoxMapVisualizer.Controls.ASMControl;
 using StarFoxMapVisualizer.Screens;
 using System.IO;
+using StarFoxMapVisualizer.Misc;
 
 namespace StarFoxMapVisualizer.Controls.Subcontrols
 {
@@ -27,9 +28,9 @@ namespace StarFoxMapVisualizer.Controls.Subcontrols
     public partial class ASMCodeEditor : RichTextBox
     {
         private readonly ASMControl parent; // attached parent control
-        internal FINST FileInstance { get; } // the current context for this control
+        internal ASM_FINST FileInstance { get; } // the current context for this control
         private Dictionary<ASMChunk, Run>? symbolMap => current?.symbolMap; // where all of the symbols in the document are located
-        private FINST current => FileInstance; // band-aid
+        private ASM_FINST current => FileInstance; // band-aid
         private IEnumerable<ASMMacro>? macros; // performance cache
         private IEnumerable<string>? macroNames; // performance cache
         /// <summary>
@@ -55,7 +56,7 @@ namespace StarFoxMapVisualizer.Controls.Subcontrols
         /// </summary>
         /// <param name="Parent"></param>
         /// <param name="FileInstance"></param>
-        public ASMCodeEditor(ASMControl Parent, FINST FileInstance) : this()
+        public ASMCodeEditor(ASMControl Parent, ASM_FINST FileInstance) : this()
         {
             parent = Parent;
             this.FileInstance = FileInstance;

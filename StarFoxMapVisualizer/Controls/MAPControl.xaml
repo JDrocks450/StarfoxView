@@ -9,19 +9,21 @@
     <Grid ClipToBounds="True">
         <Grid Name="BackgroundHost" Background="#333333" Margin="0,30,0,0">
             <subcontrols:BackgroundRenderer x:Name="BackgroundRender" Opacity=".75"/>
+            <ContentControl x:Name="CurrentEditorControl" ClipToBounds="True">
+                <customcontrols:PanAndZoomCanvas Background="{x:Null}">
+                    <local:MapEventNodeControl Canvas.Left="100" Canvas.Top="50"/>
+                </customcontrols:PanAndZoomCanvas>
+            </ContentControl>
+            <ScrollBar x:Name="ChronologySlider" Orientation="Horizontal" VerticalAlignment="Top" Scroll="ChronologySlider_Scroll"/>
         </Grid>
-        <TabControl Name="MAPTabViewer" Style="{StaticResource SFTabViewerKey}" Background="{x:Null}">
+        <TabControl Name="MAPTabViewer" Style="{StaticResource SFTabViewerKey}" Background="Black" VerticalAlignment="Top" Height="30">
             <TabControl.Resources>
                 <Style TargetType="customcontrols:PanAndZoomCanvas">
                     <Setter Property="Background" Value="Black"/>
                     <Setter Property="ClipToBounds" Value="True"/>
                 </Style>
             </TabControl.Resources>
-            <TabItem Header="TEST">
-                <customcontrols:PanAndZoomCanvas Background="{x:Null}">
-                    <local:MapEventNodeControl Canvas.Left="100" Canvas.Top="50"/>
-                </customcontrols:PanAndZoomCanvas>
-            </TabItem>
+            <TabItem Header="TEST"/>
         </TabControl>
         <ContentControl Grid.Column="1" FontSize="12" Margin="0,30,0,0" HorizontalAlignment="Right" Width="135">
             <Grid Margin="10">

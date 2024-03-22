@@ -129,6 +129,11 @@ namespace StarFoxMapVisualizer.Controls
                 Header = "LINE",
                 Content = MapEvent.Callsite.Line
             });
+            ComponentsStack.Children.Add(new HeaderedContentControl()
+            {
+                Header = "LEVEL TIME",
+                Content = MapEvent.LevelDelay.ToString()
+            });
             if (MapEvent is IMAPBGEvent mapBG)
             {
                 var contentItem = new HeaderedContentControl()

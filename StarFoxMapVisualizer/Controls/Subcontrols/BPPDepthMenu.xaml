@@ -10,7 +10,7 @@
     <DockPanel>
         <TextBlock DockPanel.Dock="Top" TextWrapping="Wrap" Margin="0,0,0,10">You're opening a *.CGX file, how many bits per pixel? <LineBreak/>(Default is 4BPP)</TextBlock>
         <Menu Name="TypeMenu">
-            <MenuItem x:Name="CancelItem" Header="Cancel"></MenuItem>
+            <MenuItem x:Name="CancelItem" Header="Cancel" Click="CancelItem_Click"></MenuItem>
         </Menu>
     </DockPanel>
 </Window>

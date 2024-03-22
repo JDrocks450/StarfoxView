@@ -22,6 +22,7 @@ namespace StarFoxMapVisualizer.Controls2
     public partial class CommunicationMessageControl : ContentControl, INotifyPropertyChanged
     {
         public Rect ImageRect { get; set; } = new Rect(0,0,31,39);
+        public Visibility MugshotVisibility { get; set; } = Visibility.Collapsed;
 
         public enum Characters
         {
@@ -39,7 +40,9 @@ namespace StarFoxMapVisualizer.Controls2
             "falcon" or "falcon3" => Characters.FALCON,
             "rabbit" or "rabbit3" => Characters.RABBIT,
             "frog" or "frog3" => Characters.FROG,
-            _ => Characters.FOX,
+            "andross" or "andross3" => Characters.ANDROSS,
+            "pepper" or "pepper3" => Characters.PEPPER,
+            _ => Characters.BETA_SLIPPY,
         };
 
         public CommunicationMessageControl()
@@ -61,9 +64,22 @@ namespace StarFoxMapVisualizer.Controls2
                 case Characters.FALCON: baseX = (charWidth * 2) + 2; break;
                 case Characters.RABBIT: baseY = charHeight + 1; break;
                 case Characters.FROG: baseX = (charWidth * 2) + 2; baseY = charHeight + 1; break;
+                default:
+                    ImageMissing();
+                    return;
             }
+
+            MugshotVisibility = Visibility.Visible;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(MugshotVisibility)));
+
             ImageRect = new Rect(baseX + Frame * (charWidth + 1),baseY,charWidth,charHeight); 
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ImageRect)));
+        }
+
+        private void ImageMissing()
+        {
+            MugshotVisibility = Visibility.Hidden;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(MugshotVisibility)));
         }
     }
 }

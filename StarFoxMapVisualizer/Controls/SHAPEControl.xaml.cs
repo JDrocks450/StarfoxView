@@ -63,11 +63,20 @@ namespace StarFoxMapVisualizer.Controls
         SFPalette? currentSFPalette;
         COLGroup? currentGroup;
 
+        private Storyboard SceneAnimation;
+
         private bool EDITOR_AnimationPaused = false;
 
         public SHAPEControl()
         {
-            InitializeComponent();
+            InitializeComponent();            
+            NameScope.SetNameScope(this, new NameScope());
+
+            Loaded += SHAPEControl_Loaded;            
+        }
+
+        private void SHAPEControl_Loaded(object sender, RoutedEventArgs e)
+        {            
             RedoLineWork();
             SetRotation3DAnimation();
             BSPTreeView.Items.Clear();
@@ -99,7 +108,14 @@ namespace StarFoxMapVisualizer.Controls
         /// </summary>
         private void SetRotation3DAnimation()
         {
-            var rotation = new AxisAngleRotation3D(new Vector3D(0, 1, 0), 0);
+            if (SceneAnimation != default) return;            
+
+            SceneAnimation = new Storyboard()
+            {
+                RepeatBehavior = RepeatBehavior.Forever
+            };
+            var rotation = new AxisAngleRotation3D(new Vector3D(0, 1, 0), 0);            
+            this.RegisterName("SceneRotation", rotation);
             var transformGroup = new Transform3DGroup();
             transformGroup.Children.Add(new RotateTransform3D()
             {
@@ -111,12 +127,13 @@ namespace StarFoxMapVisualizer.Controls
                 ScaleY = -1,
                 ScaleZ = 1
             });
-            rotation.BeginAnimation(AxisAngleRotation3D.AngleProperty,
-                new DoubleAnimation(0, 360, TimeSpan.FromSeconds(30))
-                {
-                    RepeatBehavior = RepeatBehavior.Forever
-                });
+            var animation = new DoubleAnimation(0, 360, TimeSpan.FromSeconds(30));                      
+            SceneAnimation.Children.Add(animation);
+            Storyboard.SetTargetName(animation, "SceneRotation");
+            Storyboard.SetTargetProperty(animation, new PropertyPath(AxisAngleRotation3D.AngleProperty));
             MainSceneGroup.Transform = transformGroup;
+
+            SceneAnimation.Begin(this, true);
         }
         /// <summary>
         /// Event pump when key is pressed for 3D camera movement
@@ -435,6 +452,16 @@ namespace StarFoxMapVisualizer.Controls
         {
             RedoLineWork((int)ThreeDViewer.ActualWidth, 
                 (int)ThreeDViewer.ActualHeight, (int)(ThreeDViewer.ActualHeight / 20));            
+        }
+
+        private void RotButton_Click(object sender, RoutedEventArgs e)
+        {
+            bool paused = SceneAnimation.GetIsPaused(this);
+            if (paused) 
+                SceneAnimation.Resume(this);
+            else SceneAnimation.Pause(this);
+            paused = !paused;
+            RotButton.Content = $"Rotation: {(paused ? "OFF" : "ON")}";
         }
     }
 }
