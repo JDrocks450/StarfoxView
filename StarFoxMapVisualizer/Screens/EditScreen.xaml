@@ -153,6 +153,7 @@
                 <MenuItem Header="Editor" Style="{StaticResource Base}">
                     <MenuItem Header="Export All 3D Data..." Click="ExportAll3DButton_Click"/>
                     <MenuItem Header="Refresh Editor SHAPE Map..." Click="SHAPEMapRefreshButton_Click"/>
+                    <MenuItem Header="Settings..." Click="SettingsMenuItem_Click"/>
                 </MenuItem>
             </Menu>
         </Border>

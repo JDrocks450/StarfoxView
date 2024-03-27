@@ -217,19 +217,20 @@ namespace StarFoxMapVisualizer.Controls
         }
 
         Brush MapNodeLineBrush = Brushes.Yellow;
+        double expandedX = 0;
+        int treeLayer = 0, lastTime = 0;
+        double lastX = 0, lastY;
 
-        private void EnumerateEvents(MAPFile File, Panel EventCanvas, ref int currentTime, bool autoDereference = true, int Layer = 0)
-            
+        private void EnumerateEvents(MAPFile File, Panel EventCanvas, ref int currentTime, bool autoDereference = true, int Layer = 0)            
         {
             double LayerShift = (Layer * 100);
 
             if (Layer == 0) MapNodeLineBrush = Brushes.Yellow;
             else MapNodeLineBrush = Brushes.DeepSkyBlue;
-            
-            int treeLayer = 0;
-            double YOffset() => treeLayer * 75;
-            double expandedX = 0;
-            double lastX = 0, lastY = LayerShift;
+                        
+            double YOffset() => treeLayer * 75;            
+            lastY = LayerShift;
+            lastX = currentTime;
 
             foreach (var evt in File.LevelData.Events)
             {
@@ -253,7 +254,13 @@ namespace StarFoxMapVisualizer.Controls
                     lastX = currentTime;
                     lastY = LayerShift;
                 }
-                if (rightEdge > expandedX) expandedX = rightEdge;                  
+                if (rightEdge > expandedX) expandedX = rightEdge;
+
+                if (Math.Abs(lastX - middleX) > 40)
+                {
+                    lastX = currentTime;
+                    lastY = LayerShift;
+                }
 
                 double drawX = middleX - (control.DesiredSize.Width / 2);
                 Canvas.SetLeft(control, drawX);
@@ -284,11 +291,13 @@ namespace StarFoxMapVisualizer.Controls
                     if (!FILEStandard.SearchProjectForFile($"{mapjsr.SubroutineName}.ASM", out var MAPInfo, false))
                         continue; // FAILED! Couldn't find the map.
                     var sub_map = FILEStandard.OpenMAPFile(MAPInfo).Result as MAPFile;
-                    if (sub_map == default) continue; // FAILED! Couldn't open the map.
+                    if (sub_map == default) continue; // FAILED! Couldn't open the map.                    
+                    CurrentState.StateObject.Subsections.Add(sub_map);
                     int section_StartTime = currentTime;
                     EnumerateEvents(sub_map, EventCanvas, ref currentTime, autoDereference, Layer+1);
                     SetupPlayFieldHorizontal(EventCanvas, Layer+1, section_StartTime, Brushes.DeepSkyBlue, currentTime, 
                         mapjsr.SubroutineName, "RETURN");
+                    selectedFile.MergeSubsection(sub_map.LevelData);
                 }
             }
             MapNodeLineBrush = Brushes.Yellow;
@@ -360,6 +369,9 @@ namespace StarFoxMapVisualizer.Controls
         private async Task<int> SetupEditor(MAPFile File, Panel EventCanvas, bool autoDereference)
         {
             int Time = 0;
+            expandedX = 0;
+            treeLayer = 0; lastTime = 0;
+            lastX = 0;
             EnumerateEvents(File, EventCanvas, ref Time, autoDereference);
             SetupPlayFieldHorizontal(EventCanvas, 0, 0, Brushes.Yellow, Time);
             await SwitchEditorBackground(File.LevelContext);

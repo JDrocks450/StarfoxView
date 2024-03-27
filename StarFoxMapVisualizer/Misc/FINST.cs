@@ -38,8 +38,10 @@ namespace StarFoxMapVisualizer.Misc
         {
             public bool Loaded => ContentControl != default;
             public Panel? ContentControl { get; set; } = default;
-
+            
             public double LevelWidth = 0;
+
+            public List<MAPFile> Subsections { get; } = new();
         }
 
         public MAP_FINST()

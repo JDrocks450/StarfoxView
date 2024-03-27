@@ -17,7 +17,7 @@
             </Viewport3D.Resources>
             <Viewport3D.Camera>
                 <PerspectiveCamera x:Name="Camera" 
-                        FarPlaneDistance="13000" 
+                        FarPlaneDistance="1000" 
                         LookDirection="0,0,1" 
                         UpDirection="0,1,0" 
                         NearPlaneDistance="1" 
@@ -81,6 +81,8 @@
                     X: <Run Text="{Binding Position.X, ElementName=Camera}" FontWeight="Regular"/><LineBreak/>
                     Y: <Run Text="{Binding Position.Y, ElementName=Camera}" FontWeight="Regular"/><LineBreak/>
                     Z: <Run Text="{Binding Position.Z, ElementName=Camera}" FontWeight="Regular"/><LineBreak/>
+                    Render Distance: <Run Text="{Binding FarPlaneDistance, ElementName=Camera}" FontWeight="Regular"/><LineBreak/>
+                    FOV: <Run Text="{Binding FieldOfView, ElementName=Camera}" FontWeight="Regular"/><LineBreak/>
                     </TextBlock>
                     <Separator/>
                     <Button Margin="5" x:Name="CamJumpStartButton" Click="CamJumpStartButton_Click" Height="25" Content="Jump to Start"/>

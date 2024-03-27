@@ -23,6 +23,7 @@ namespace StarFoxMapVisualizer.Controls2
     {
         public Rect ImageRect { get; set; } = new Rect(0,0,31,39);
         public Visibility MugshotVisibility { get; set; } = Visibility.Collapsed;
+        public FontFamily GameFont { get; set; }
 
         public enum Characters
         {
@@ -48,6 +49,7 @@ namespace StarFoxMapVisualizer.Controls2
         public CommunicationMessageControl()
         {
             InitializeComponent();
+            SetCompatibleFonts();
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -74,6 +76,14 @@ namespace StarFoxMapVisualizer.Controls2
 
             ImageRect = new Rect(baseX + Frame * (charWidth + 1),baseY,charWidth,charHeight); 
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ImageRect)));
+        }
+
+        public void SetCompatibleFonts(bool Compatible = true)
+        {
+            if (Compatible)
+                GameFont = new FontFamily("Segoe UI");
+            else GameFont = FindResource("SFFont") as FontFamily;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(GameFont)));
         }
 
         private void ImageMissing()

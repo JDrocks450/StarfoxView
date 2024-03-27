@@ -82,6 +82,11 @@ namespace StarFoxMapVisualizer.Misc
             File = new FileInfo(results.First().FilePath);
             return true;
         }
+        /// <summary>
+        /// Common helper function that will set imports on all <see cref="CodeImporter{T}"/>s
+        /// to be <see cref="AppResources.Includes"/>
+        /// <code>COLTImport, ASMImport, MAPImport, BSPImport and MSGImport</code>        
+        /// </summary>
         public static void ReadyImporters()
         {
             COLTImport.SetImports(AppResources.Includes.ToArray());

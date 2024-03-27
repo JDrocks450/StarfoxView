@@ -4,6 +4,7 @@ using StarFox.Interop.MAP.EVT;
 using StarFox.Interop.MISC;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Tracing;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
@@ -34,6 +35,41 @@ namespace StarFox.Interop.MAP
         /// <para>KEY is the index of the event in the <see cref="Events"/> property.</para>
         /// </summary>
         public Dictionary<int, int> EventsByDelay { get; set; } = new();
+
+        /// <summary>
+        /// Merges all the events into one *new* MAPData instance, keeps context data from Parent map
+        /// </summary>
+        /// <param name="ParentMap"></param>
+        /// <param name="MergeChild"></param>
+        /// <returns></returns>
+        public static MAPData Combine(MAPData ParentMap, MAPData MergeChild)
+        {
+            MAPData newMap = new MAPData()
+            {
+                Title = ParentMap.Title,
+            };
+            if (ParentMap.Events.Count != ParentMap.EventsByDelay.Count)
+                throw new InvalidDataException("PARENT Events and EventsByDelay are not the same!!!");
+            if (MergeChild.Events.Count != MergeChild.EventsByDelay.Count)
+                throw new InvalidDataException("CHILD Events and EventsByDelay are not the same!!!");
+            int runningIndex = 0;
+            for (int i = 0; i < ParentMap.Events.Count; i++)
+            {
+                var evt = ParentMap.Events.ElementAt(i);
+                newMap.Events.Add(evt);
+                var dlyevt = ParentMap.EventsByDelay.ElementAt(i);
+                newMap.EventsByDelay.Add(runningIndex + dlyevt.Key, dlyevt.Value);
+            }
+            runningIndex = newMap.Events.Count;
+            for (int i = 0; i < MergeChild.Events.Count; i++)
+            {
+                var evt = MergeChild.Events.ElementAt(i);
+                newMap.Events.Add(evt);
+                var dlyevt = MergeChild.EventsByDelay.ElementAt(i);
+                newMap.EventsByDelay.Add(runningIndex + dlyevt.Key, dlyevt.Value);
+            }
+            return newMap;
+        }
 
         [Serializable]
         private class Intermediary
@@ -90,9 +126,10 @@ namespace StarFox.Interop.MAP
         /// <summary>
         /// The main level data for this level. 
         /// <para>Note: Levels can often reference sub-sections of the level in other files / compilation units.</para>
-        /// <para>For this scenario, you should use the </para>
+        /// <para>For this scenario, you should use the <see cref="MergeSubsection(MAPData)"/> to merge the subsections</para>
         /// </summary>
         public MAPData LevelData { get; internal set; } = new();
+        public void MergeSubsection(MAPData Subsection) => LevelData = MAPData.Combine(LevelData, Subsection);
         /// <summary>
         /// A map of all referenced level sub-section names and the <see cref="MAPJSREvent"/>s found in <see cref="LevelData"/>
         /// that spawn the sub-section.

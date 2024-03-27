@@ -27,8 +27,10 @@ namespace WPF.UI.Extensions.Controls
             StrListConverter,
             DecimalConverter,
             ArrayInfoConverter,
+            Custom
         }
         private TypeConversionTechniques technique = TypeConversionTechniques.Unconvertable;
+
         /// <summary>
         /// The property attached to this object; if applicable
         /// </summary>
@@ -144,6 +146,11 @@ namespace WPF.UI.Extensions.Controls
                                 values[i] = box.Text;
                         AttachedProperty.SetValue(ParentObject, values);
                         break;
+                    case TypeConversionTechniques.Custom:
+                        var context = PropertyViewer.CustomConverters[AttachedProperty.PropertyType] as PropertyViewer.RangeCustomConverter;
+                        var rangedObject = AttachedProperty.GetValue(ParentObject);
+                        rangedObject.GetType().GetProperty(context.ValuePropName).SetValue(rangedObject, ((Slider)inputs[0]).Value);
+                        break;
                     case TypeConversionTechniques.DecimalConverter:
                         AttachedProperty.SetValue(ParentObject, decimal.Parse(((TextBox)inputs[0]).Text));
                         break;
@@ -196,6 +203,68 @@ namespace WPF.UI.Extensions.Controls
                     inputs.Add(GetTextBox(AttachedProperty.GetValue(ParentObject)?.ToString() ?? "", AttachedProperty.CanWrite));
                     Children.Add(inputs[0]);
                     SetColumn(inputs[0], 1);
+                    break;
+                case TypeConversionTechniques.Custom:
+                    var context = PropertyViewer.CustomConverters[AttachedProperty.PropertyType] as PropertyViewer.RangeCustomConverter;
+                    //CREATES A SLIDER
+                    //First, get the 'Ranged' object value
+                    var rangedObject = AttachedProperty.GetValue(ParentObject);
+                    //Next, access the property 'value'
+                    double SetValue = (double)rangedObject.GetType().GetProperty(context.ValuePropName).GetValue(rangedObject);
+                    double MaxValue = (double)rangedObject.GetType().GetProperty(context.MaxValuePropName).GetValue(rangedObject);
+                    double MinValue = (double)rangedObject.GetType().GetProperty(context.MinValuePropName).GetValue(rangedObject);
+
+                    var tooltipText = new TextBlock()
+                    {
+                        Text = SetValue.ToString()
+                    };
+                    var slider = new Slider()
+                    {
+                        Value = SetValue,
+                        Maximum = MaxValue,
+                        Minimum = MinValue,
+                        ToolTip = tooltipText
+                    };
+                    slider.ValueChanged += delegate
+                    {
+                        tooltipText.Text = slider.Value.ToString();
+                    };
+                    inputs.Add(slider);
+                    var placeholder = new Border();
+                    Children.Add(placeholder);
+                    SetColumn(placeholder, 1);
+                    Children.Add(inputs[0]);
+                    SetColumnSpan(inputs[0], 2);
+                    SetRow(inputs[0],1);
+
+                    TextBlock valueTextBlock = new TextBlock()
+                    {
+                        Text = MinValue.ToString(),
+                        HorizontalAlignment = HorizontalAlignment.Left,
+                    };
+                    SetRow(valueTextBlock, 2);
+                    Children.Add(valueTextBlock);
+                    valueTextBlock = new TextBlock()
+                    {
+                        Text = MaxValue.ToString(),
+                        HorizontalAlignment = HorizontalAlignment.Right,
+                    };
+                    SetRow(valueTextBlock, 2);
+                    SetColumn(valueTextBlock, 1);
+                    Children.Add(valueTextBlock);
+
+                    RowDefinitions.Add(new RowDefinition()
+                    {
+                        Height = GridLength.Auto
+                    });
+                    RowDefinitions.Add(new RowDefinition()
+                    {
+                        Height = GridLength.Auto
+                    });
+                    RowDefinitions.Add(new RowDefinition()
+                    {
+                        Height = GridLength.Auto
+                    });
                     break;
                 case TypeConversionTechniques.StrListConverter:
                     {
@@ -258,6 +327,11 @@ namespace WPF.UI.Extensions.Controls
         }
         private bool GetConvert()
         {
+            if (PropertyViewer.CustomConverters.ContainsKey(AttachedProperty.PropertyType))
+            {
+                technique = TypeConversionTechniques.Custom;
+                return true;
+            }
             if (AttachedProperty.PropertyType.IsAssignableFrom(typeof(IEnumerable<String>))) // STR list
             {
                 technique = TypeConversionTechniques.StrListConverter;
@@ -288,6 +362,31 @@ namespace WPF.UI.Extensions.Controls
     /// </summary>
     public partial class PropertyViewer : StackPanel
     {
+        //CUSTOM CONVERTER TECHNIQUES
+
+        internal abstract class CustomConverter
+        {
+
+        }
+        internal class RangeCustomConverter : CustomConverter
+        {
+            public RangeCustomConverter(string valuePropName, string maxValuePropName, string minValuePropName)
+            {
+                ValuePropName = valuePropName;
+                MaxValuePropName = maxValuePropName;
+                MinValuePropName = minValuePropName;
+            }
+
+            public string ValuePropName { get; set; }
+            public string MaxValuePropName { get; set; }
+            public string MinValuePropName { get; set; }
+        }
+
+        internal static Dictionary<Type, CustomConverter> CustomConverters = new Dictionary<Type, CustomConverter>();
+        public static bool RegisterRangedCustomConverter(Type PropertyType, string ValuePropertyName = "Value",
+            string MaxValuePropertyName = "MaxValue", string MinValuePropertyName = "MinValue") =>
+            CustomConverters.TryAdd(PropertyType, new RangeCustomConverter(ValuePropertyName, MaxValuePropertyName, MinValuePropertyName));
+
         private Dictionary<object, PropertyInfo> propMap = new();
         public PropertyViewer()
         {
@@ -297,12 +396,12 @@ namespace WPF.UI.Extensions.Controls
         public PropertyViewer(object ReflectiveType) : this()
         {
             this.ReflectiveType = ReflectiveType;
-            Initialized += PropertyViewer_Initialized; ;            
+            Loaded += PropertyViewer_Initialized; ;            
         }
 
         private void PropertyViewer_Initialized(object? sender, EventArgs e)
         {
-            Initialized -= PropertyViewer_Initialized;
+            Loaded -= PropertyViewer_Initialized;
             Init();
         }
 
