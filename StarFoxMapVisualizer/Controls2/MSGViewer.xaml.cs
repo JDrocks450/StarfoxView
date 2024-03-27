@@ -129,6 +129,7 @@ namespace StarFoxMapVisualizer.Controls2
             }
             var messageEntry = currentMessage = Entry;
             MugshotControl.Content = EnglishButton.IsChecked ?? false ? messageEntry.English : messageEntry.SecondaryLanguage;
+            MugshotControl.SetCompatibleFonts(!EnglishButton.IsChecked ?? true);
             CurrentSpeaker = MapSpeakerToCharacter(messageEntry.Speaker);
             SoundLabel.Text = messageEntry.Sound;
             InvokeAnimation();

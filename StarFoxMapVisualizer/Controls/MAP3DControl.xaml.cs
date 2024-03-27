@@ -1,4 +1,5 @@
-﻿using StarFox.Interop.ASM;
+﻿using Starfox.Editor.Settings;
+using StarFox.Interop.ASM;
 using StarFox.Interop.BSP.SHAPE;
 using StarFox.Interop.MAP;
 using StarFox.Interop.MAP.EVT;
@@ -32,6 +33,10 @@ namespace StarFoxMapVisualizer.Controls
     public partial class MAP3DControl : Window
     {
         private static double Editor_ZScrunchPercentage = 1;
+
+        private static double Editor_ZFarPlaneRenderDistance => UserSettings.ViewingDistance3D.Value;
+        private static GraphicsUserSettings UserSettings => 
+            AppResources.ImportedProject.GetSettings<GraphicsUserSettings>(SFCodeProjectSettingsTypes.Graphics);
 
         /// <summary>
         /// A basic port of Glider Game Object 3D with basic Positional, Scale, etc. parameters and render code
@@ -90,6 +95,7 @@ namespace StarFoxMapVisualizer.Controls
         }
 
         public MAPFile? SelectedFile { get; set; }
+
         //STARFOX CONSTANTS
         private ASMFile STRATEQU_Constants { get; set; }
         private int ShipMedSpeed => STRATEQU_Constants["medPspeed"];
@@ -124,12 +130,21 @@ namespace StarFoxMapVisualizer.Controls
             InitializeComponent();
             SelectedFile = MapFile;
             ScrunchSlider.ValueChanged += ScrunchValueChanged;
+
+            //**SETTINGS
+            UserSettings.SettingsChanged += delegate
+            { // Subscribes to the Settings Changed event
+                InvalidateUserSettings();
+            };
+            InvalidateUserSettings();
         }
-        public Task ShowMapContents(MAPFile MapFile)
+
+        public void InvalidateUserSettings()
         {
-            SelectedFile = MapFile;
-            return ShowMapContents(MapFile);
+            Camera.FarPlaneDistance = Editor_ZFarPlaneRenderDistance;
+            Camera.FieldOfView = UserSettings.Scene3DFieldOfView.Value;
         }
+
         private void ClearMap()
         {
             int_alVar.Clear();
@@ -149,7 +164,7 @@ namespace StarFoxMapVisualizer.Controls
             if (!await LoadContent())
                 return;
             //**CREATE MAP CONTENT (up until wherever the camera is!)
-            CreateMap(Camera.Position.Z + 15000);            
+            CreateMap(Camera.Position.Z + Editor_ZFarPlaneRenderDistance);            
             await UpdateUI();
         }
 
@@ -405,7 +420,7 @@ namespace StarFoxMapVisualizer.Controls
                 SetPlayfieldGround();
             else AdjustGroundToCam(NewPosition);
             //**CREATE MAP CONTENT (up until wherever the camera is!)
-            CreateMap(Camera.Position.Z + 5000);
+            CreateMap(Camera.Position.Z + Editor_ZFarPlaneRenderDistance);
         }
         /// <summary>
         /// sets the ground for the real-estate afforded by the current level
@@ -413,7 +428,7 @@ namespace StarFoxMapVisualizer.Controls
         /// <param name="Position"></param>
         private void SetPlayfieldGround()
         {
-            int w = 10000, h = (int)Math.Max(SelectedFile.LevelData.EventsByDelay.Values.Max(), MapZFar);
+            int w = 10000, h = (int)Math.Max(Math.Max(SelectedFile.LevelData.EventsByDelay.Values.Max(), MapZFar), 5000);
             var transformGroup = new Transform3DGroup();
             transformGroup.Children.Add(new ScaleTransform3D(
                 w, 1, h));
@@ -443,7 +458,8 @@ namespace StarFoxMapVisualizer.Controls
         /// <param name="e"></param>
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
         {
-            Camera.MoveBy(e.Key, 100).RotateBy(e.Key, 3);
+            bool fast = e.KeyboardDevice.IsKeyDown(Key.LeftShift) || e.KeyboardDevice.IsKeyDown(Key.RightShift);
+            Camera.MoveBy(e.Key, fast ? UserSettings.Scene3DFastSpeed : UserSettings.Scene3DSpeed.Value).RotateBy(e.Key, 3);
             CameraMoved(Camera.Position);
         }
 

@@ -103,6 +103,7 @@ namespace StarFoxMapVisualizer.Controls.Subcontrols
 
         public void ResizeViewports(int Width, int Height)
         {
+            if (LevelContext == default) return;
             var BG3X = LevelContext.BG3.HorizontalOffset;
             var BG3Y = LevelContext.BG3.VerticalOffset;
             var BG2X = LevelContext.BG2.HorizontalOffset;

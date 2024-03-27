@@ -11,6 +11,7 @@ using StarFox.Interop.MSG;
 using StarFox.Interop.SPC;
 using StarFoxMapVisualizer.Controls;
 using StarFoxMapVisualizer.Controls.Subcontrols;
+using StarFoxMapVisualizer.Dialogs;
 using StarFoxMapVisualizer.Misc;
 using System;
 using System.Collections.Generic;
@@ -728,7 +729,7 @@ namespace StarFoxMapVisualizer.Screens
             if (d.ShowDialog() is not CommonFileDialogResult.Ok) return default; // OOPSIES x2
             var directory = d.FileName; // Selected DIR
             if (!Directory.Exists(directory)) return default; // Random error?
-            AppResources.ImportedProject.ShapesDirectoryPath= directory;
+            AppResources.ImportedProject.ShapesDirectoryPath = directory;
             return new DirectoryInfo(directory);
         }
         /// <summary>
@@ -796,10 +797,24 @@ namespace StarFoxMapVisualizer.Screens
         private async void SHAPEMapRefreshButton_Click(object sender, RoutedEventArgs e)
         {
             //This function will create a SHAPE Map -- a file that links SHAPESX.ASM files to Shape Names
+        retry:
             var dirInfo = Generic_SelectShapeDirectory();
             if (dirInfo == default) return; // User Cancelled
             StringBuilder errorBuilder = new(); // ERRORS
             Dictionary<string, string> shapeMap = new();
+            //TEST SOMETHING OUT
+            if (!File.Exists(Path.Combine(dirInfo.FullName, "shapes.asm")))
+            {
+                if (MessageBox.Show("It looks like the directory you selected doesn't have at least " +
+                    "a SHAPES.ASM file in it. Have you selected the SHAPES directory in your workspace?\n" +
+                    "\n" +
+                    "Would you like to continue anyway? No will go back to file selection.", "Directory Selection Message",
+                    MessageBoxButton.YesNo) != MessageBoxResult.Yes)
+                {
+                    AppResources.ImportedProject.ShapesDirectoryPath = default;
+                    goto retry;
+                }                    
+            }
             //GET IMPORTS SET
             FILEStandard.ReadyImporters();
             foreach (var file in dirInfo.GetFiles()) // ITERATE OVER DIR FILES
@@ -869,6 +884,12 @@ namespace StarFoxMapVisualizer.Screens
             AppResources.ImportedProject = null;
             //switch to landing screen
             ((MainWindow)Application.Current.MainWindow).Content = new LandingScreen();
+        }
+
+        private void SettingsMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            SettingsDialog settings = new();
+            settings.Show();
         }
     }
 }

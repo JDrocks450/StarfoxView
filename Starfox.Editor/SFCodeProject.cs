@@ -1,4 +1,5 @@
-﻿using StarFox.Interop;
+﻿using Starfox.Editor.Settings;
+using StarFox.Interop;
 using StarFox.Interop.ASM;
 using StarFox.Interop.BRR;
 using StarFox.Interop.MAP;
@@ -11,20 +12,35 @@ using static StarFox.Interop.GFX.CAD;
 
 namespace Starfox.Editor
 {
+
     /// <summary>
     /// Represents a StarFox Editor Code Project
     /// </summary>
     public class SFCodeProject
     {
         /// <summary>
+        /// Tracks long-term storage like Settings and Paths without runtime information
+        /// </summary>
+        protected SFCodeProjectState BaseState { get; set; } = new SFCodeProjectState();
+
+        public IDictionary<SFCodeProjectSettingsTypes, SFEditorSettings> Settings => BaseState.Settings;
+        /// <summary>
+        /// Gets the specified type of settings and casts to the provided type
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="Type">The type of settings</param>
+        /// <returns></returns>
+        public T GetSettings<T>(SFCodeProjectSettingsTypes Type) where T:SFEditorSettings => BaseState.GetSettings<T>(Type);
+        
+        /// <summary>
         /// Gets whether or not this project has a Shapes Directory set yet
         /// </summary>
-        public bool ShapesDirectoryPathSet => ShapesDirectoryPath != default;
+        public bool ShapesDirectoryPathSet => BaseState.ShapesDirectoryPathSet;
         /// <summary>
         /// The path to the SHAPES directory -- if this project has one set.
         /// <para>See: <see cref="ShapesDirectoryPathSet"/> to check for this scenario</para>
         /// </summary>
-        public string? ShapesDirectoryPath { get; set; }
+        public string? ShapesDirectoryPath { get => BaseState.ShapesDirectoryPath; set => BaseState.ShapesDirectoryPath = value; }
         /// <summary>
         /// Palettes that have been included in this project
         /// <para>FilePath, COL</para>
