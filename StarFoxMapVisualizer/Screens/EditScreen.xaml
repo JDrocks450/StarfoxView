@@ -152,7 +152,8 @@
                 </MenuItem>
                 <MenuItem Header="Editor" Style="{StaticResource Base}">
                     <MenuItem Header="Export All 3D Data..." Click="ExportAll3DButton_Click"/>
-                    <MenuItem Header="Refresh Editor SHAPE Map..." Click="SHAPEMapRefreshButton_Click"/>
+                    <MenuItem Header="Refresh Editor SHAPES Map..." Click="SHAPEMapRefreshButton_Click"/>
+                    <MenuItem Header="Refresh Editor STAGES Map..." Click="STAGEMapRefreshButton_Click"/>
                     <MenuItem Header="Settings..." Click="SettingsMenuItem_Click"/>
                 </MenuItem>
             </Menu>
@@ -270,13 +271,6 @@
                 </ContentControl>
             </DockPanel>
         </Grid>
-        <Border x:Name="LoadingSpan" Background="#3F000000" Grid.ColumnSpan="5" Visibility="Collapsed">
-            <Button FontFamily="{StaticResource SFFont}" IsEnabled="False" VerticalAlignment="Center" HorizontalAlignment="Center" Padding="10">
-                <StackPanel Width="212">
-                    <TextBlock>LOADING...</TextBlock>
-                    <ProgressBar Margin="0,5,0,0" IsIndeterminate="True" Height="20"/>
-                </StackPanel>
-            </Button>
-        </Border>
+        <Border x:Name="LoadingSpan" Background="#3F000000" Grid.ColumnSpan="5" Visibility="Collapsed" Grid.RowSpan="2"/>
     </Grid>
 </Page>

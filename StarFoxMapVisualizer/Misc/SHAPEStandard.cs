@@ -87,28 +87,42 @@ namespace StarFoxMapVisualizer.Misc
             return filesCreated;
         }
         /// <summary>
-        /// Gets the shape by name by finding it in the ShapesMap (Code Project Optimizer), loading the file, and ripping the Shape out.
+        /// This uses an SFOptimizer in the node that stores Shapes to map ShapeName to the File it appears in.
+        /// <para/>This will look up the shape by it's name as it appears in it's header.
         /// </summary>
         /// <returns></returns>
-        public static async Task<IEnumerable<BSPShape>?> GetShapesByUniqueNameOrDefault(string UniqueName)
+        public static async Task<IEnumerable<BSPShape>?> GetShapesByHeaderNameOrDefault(string HeaderName)
         {
-            UniqueName = UniqueName.ToUpper();
+            HeaderName = HeaderName.ToUpper();
             var project = AppResources.ImportedProject;
+            //Load the SFOptimizer
             if (!project.Optimizers.Any())
                 throw new Exception("There aren't any optimizers added to this project yet.\n" +
                     "Use the Refresh ShapeMap button to create this.");
+            //Find the one that is a SHAPE MAP
             var shapeOptim = project.Optimizers.FirstOrDefault(x => 
                 x.OptimizerData.TypeSpecifier == Starfox.Editor.SFOptimizerTypeSpecifiers.Shapes);
             if (shapeOptim == default)
                 throw new Exception("This project has Optimizers, but none of them are for Shapes.\n" +
-                    "Use the Refresh ShapeMap button to create this.");
+                    "Use the Refresh ShapeMap button to create this.");            
             var shapeMap = shapeOptim.OptimizerData.ObjectMap;
-            if (!shapeMap.TryGetValue(UniqueName, out var FileName)) return default;
+            //Try to find the file that contains the shape we want
+            if (!shapeMap.TryGetValue(HeaderName, out var FileName)) return default;
             var path = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(shapeOptim.FilePath), FileName);
+            //Open the file
             var file = await FILEStandard.OpenBSPFile(new FileInfo(path));
             if (file != null && !AppResources.OpenFiles.ContainsKey(path))
-                AppResources.OpenFiles.Add(path, file);
-            return file.Shapes.Where(x => x.Header.Name.ToLower() == UniqueName.ToLower());
+                AppResources.OpenFiles.Add(path, file); // Cache it for later, if needed
+            //FIND all shapes whose name matches the provided parameter
+            var hits = file.Shapes.Where(x => x.Header.Name.ToLower() == HeaderName.ToLower());
+            //Find all shapes that don't point to another shape -- as in they're blank
+            var hitsWithoutDataPointer = hits.Where(x => !x.Header.HasDataPointer);
+            //If there are none, then pick the first one that does have a data pointer
+            //and load the shape it points to
+            if (!hitsWithoutDataPointer.Any())
+                return file.Shapes.Where(x => x.Header.Name.ToLower() ==
+                hits.Where(x => x.Header.HasDataPointer).First().Header.DataPointer);
+            else return hitsWithoutDataPointer; // else, return all shapes that don't point anywhere else
         }
         public static GeometryModel3D CreateLine(Point3D Point1, Point3D Point2, Material Material)
         {

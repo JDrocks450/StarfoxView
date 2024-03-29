@@ -103,6 +103,9 @@
     <Compile Update="Controls\Subcontrols\BINImportMenu.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="Controls\Subcontrols\GenericMenuDialog.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="Controls\Subcontrols\PCRImportMenu.xaml.cs">
       <SubType>Code</SubType>
     </Compile>

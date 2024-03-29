@@ -65,10 +65,10 @@ namespace StarFox.Interop.MAP.EVT
             var structure = Line.StructureAsMacroInvokeStructure;
             if (structure == null) return;
             EventName = structure.MacroReference.Name;
-            Delay = tryParseOrDefault(structure.TryGetParameter(0)?.ParameterContent); // parameter 0 is frame            
-            X = tryParseOrDefault(structure.TryGetParameter(1)?.ParameterContent); // parameter 1 is x
-            Y = tryParseOrDefault(structure.TryGetParameter(2)?.ParameterContent); // parameter 2 is y
-            Z = tryParseOrDefault(structure.TryGetParameter(3)?.ParameterContent); // parameter 3 is z
+            Delay = TryParseOrDefault(structure.TryGetParameter(0)?.ParameterContent); // parameter 0 is frame            
+            X = TryParseOrDefault(structure.TryGetParameter(1)?.ParameterContent); // parameter 1 is x
+            Y = TryParseOrDefault(structure.TryGetParameter(2)?.ParameterContent); // parameter 2 is y
+            Z = TryParseOrDefault(structure.TryGetParameter(3)?.ParameterContent); // parameter 3 is z
             ShapeName = structure.TryGetParameter(4)?.ParameterContent ?? ""; // parameter 4 is shape
             StrategyName = structure.TryGetParameter(5)?.ParameterContent ?? ""; // parameter 5 is strat
             AutoCorrect();

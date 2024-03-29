@@ -6,6 +6,7 @@ using StarFox.Interop.ASM.TYP.STRUCT;
 using StarFox.Interop.BSP.SHAPE;
 using StarFox.Interop.MAP;
 using StarFox.Interop.MISC;
+using StarFox.Interop.MSG;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -300,9 +301,9 @@ namespace StarFox.Interop.BSP
                         blankShape.CopyData(shape);
                         if (blankShape.Header.Name == shape.Header.Name)
                         {
-                            var tempName = shape.Header.Name + "";
+                            var tempName = shape.Header.Name;
                             if (!string.IsNullOrWhiteSpace(blankShape.Header.InlineLabelName))
-                                blankShape.Header.Name = blankShape.Header.InlineLabelName;                    
+                                blankShape.Header.DataPointer = shape.Header.Name;                    
                         }
                         completes.Add(blankShape);
                     }    
@@ -324,7 +325,7 @@ namespace StarFox.Interop.BSP
                 foreach (var match in matches)
                 {
                     index++;
-                    match.Header.UniqueName = match.Header.Name + $" ({index})";
+                    match.Header.UniqueName = match.Header.Name + $"({index})";
                 }
             }
         }
@@ -502,9 +503,29 @@ namespace StarFox.Interop.BSP
             }
             DereferenceBlankShapes(file);
             FixDuplicateNames(file);
+            LookupAllShapeHeaders(baseImport, file);
         end:
             ErrorOut = file.ImportErrors;
             return file;
+        }
+
+        private void LookupAllShapeHeaders(ASMFile BaseFile, BSPFile Target)
+        {
+            foreach (var chunk in BaseFile.Chunks.OfType<ASMLine>())
+            {
+                if (!chunk.HasStructureApplied) continue;
+                if (chunk.StructureAsMacroInvokeStructure == default) continue;
+                if (chunk.StructureAsMacroInvokeStructure.MacroReference.Name.ToLower() !=
+                    "shapehdr") continue;
+                var sName = chunk.StructureAsMacroInvokeStructure.Parameters.Last().ParameterContent;
+                var fooSName = sName;
+                int tries = 1;
+                while (!Target.ShapeHeaderEntries.Add(fooSName))
+                {
+                    fooSName = sName + "_" + tries;
+                    tries++;
+                }
+            }
         }
     }
 }

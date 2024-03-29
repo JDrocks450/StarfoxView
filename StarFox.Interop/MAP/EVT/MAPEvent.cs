@@ -170,24 +170,36 @@ namespace StarFox.Interop.MAP.EVT
             return false;
         }
         protected abstract void Parse(ASMLine Line);
-        protected int tryParseOrDefault(string? content)
+        /// <summary>
+        /// Basic <see cref="int.TryParse(string?, out int)"/> or returns <see langword="default"/> (which is 0)
+        /// </summary>
+        /// <param name="content"></param>
+        /// <returns></returns>
+        protected int TryParseOrDefault(string? content)
         {
             if (string.IsNullOrEmpty(content)) return 0;
             if (int.TryParse(content, out int result)) { return result; }
-            return 0;
+            return 0;            
         }
     }
+
+    /// <summary>
+    /// Base interface for all MapEventComponents
+    /// <para/><see cref="IMAPDelayEvent"/> etc.
+    /// </summary>
+    public interface IMAPEventComponent { }
+
     /// <summary>
     /// Represents a <see cref="MAPEvent"/> that sets the delay component of a map object
     /// </summary>
-    public interface IMAPDelayEvent
+    public interface IMAPDelayEvent : IMAPEventComponent
     {
         int Delay { get; }
     }
     /// <summary>
     /// Represents a <see cref="MAPEvent"/> that sets the spawn location component of a map object
     /// </summary>
-    public interface IMAPLocationEvent
+    public interface IMAPLocationEvent : IMAPEventComponent
     {
         int X { get; }
         int Y { get; }
@@ -196,7 +208,7 @@ namespace StarFox.Interop.MAP.EVT
     /// <summary>
     /// Represents a <see cref="MAPEvent"/> that sets the shape component of a map object
     /// </summary>
-    public interface IMAPShapeEvent
+    public interface IMAPShapeEvent : IMAPEventComponent
     {
         /// <summary>
         /// The line containing the label before the header is set in the SHAPES.ASM file it belongs in.
@@ -207,21 +219,21 @@ namespace StarFox.Interop.MAP.EVT
     /// <summary>
     /// Represents a <see cref="MAPEvent"/> that sets the strategy component of a map object
     /// </summary>
-    public interface IMAPStrategyEvent
+    public interface IMAPStrategyEvent : IMAPEventComponent
     {
         string StrategyName { get; }
     }
     /// <summary>
     /// Represents a <see cref="MAPEvent"/> that sets the path component of a map object
     /// </summary>
-    public interface IMAPPathEvent
+    public interface IMAPPathEvent : IMAPEventComponent
     {
         string PathName { get; }
     }
     /// <summary>
     /// Represents a <see cref="MAPEvent"/> that sets the health / attack power of a fighter
     /// </summary>
-    public interface IMAPHealthAttackEvent
+    public interface IMAPHealthAttackEvent : IMAPEventComponent
     {
         /// <summary>
         /// Health Power
@@ -235,7 +247,7 @@ namespace StarFox.Interop.MAP.EVT
     /// <summary>
     /// Represents a <see cref="MAPEvent"/> that has a name
     /// </summary>
-    public interface IMAPNamedEvent
+    public interface IMAPNamedEvent : IMAPEventComponent
     {
         /// <summary>
         /// The name of the this event
@@ -245,14 +257,14 @@ namespace StarFox.Interop.MAP.EVT
     /// <summary>
     /// Represents a <see cref="MAPEvent"/> that has a name
     /// </summary>
-    public interface IMAPValueEvent
+    public interface IMAPValueEvent : IMAPEventComponent
     {
         /// <summary>
         /// The name of the this event
         /// </summary>
         string Value { get; }
     }
-    public interface IMAPBGEvent
+    public interface IMAPBGEvent : IMAPEventComponent
     {
         /// <summary>
         /// The name of the background as it appears in code.

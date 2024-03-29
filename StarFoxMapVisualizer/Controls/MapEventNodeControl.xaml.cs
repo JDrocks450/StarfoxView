@@ -1,5 +1,6 @@
 ﻿using StarFox.Interop.MAP.EVT;
 using StarFoxMapVisualizer.Controls.Subcontrols;
+using StarFoxMapVisualizer.Misc;
 using StarFoxMapVisualizer.Screens;
 using System;
 using System.Collections.Generic;
@@ -36,15 +37,27 @@ namespace StarFoxMapVisualizer.Controls
 
         public void Attach(MAPEvent MapEvent)
         {
-            async void Clicked(object sender, MouseButtonEventArgs e)
-            {
-                var screen = EditScreen.Current;
-                await screen.MAPViewer.MapNodeSelected(MapEvent);
+            HeaderedContentControl CreateComponentSelection(Type Component, string Header, string Content, Brush? Background = default)
+            {                
+                var component = new HeaderedContentControl()
+                {
+                    Header = Header,
+                    Content = Content,
+                    Cursor = Cursors.Hand
+                };
+                component.MouseLeftButtonUp += async delegate
+                {
+                    await EDITORStandard.MapEditor_MapNodeSelected(MapEvent, Component);
+                };
+                if (Background != default) component.Background = Background;
+                ComponentsStack.Children.Add(component);
+                return component;
             }
+
             this.MapEvent = MapEvent;
             ComponentsStack.Children.Clear();
             Header = MapEvent.EventName ?? "#REF!";
-            MouseLeftButtonUp += Clicked;
+
             if (MapEvent is MAPUnknownEvent unknown)
             {
                 foreach (var param in unknown.Parameters)
@@ -57,72 +70,27 @@ namespace StarFoxMapVisualizer.Controls
                 return;
             }
             if (MapEvent is IMAPNamedEvent Name)
-                ComponentsStack.Children.Add(new HeaderedContentControl()
-                {
-                    Header = "NAME",
-                    Content = Name.Name
-                });
+                CreateComponentSelection(typeof(IMAPNamedEvent), "NAME", Name.Name);
             if (MapEvent is IMAPValueEvent value)
-                ComponentsStack.Children.Add(new HeaderedContentControl()
-                {
-                    Header = "VALUE",
-                    Content = value.Value
-                });
+                CreateComponentSelection(typeof(IMAPValueEvent), "VALUE", value.Value);
             if (MapEvent is IMAPDelayEvent delay)
-                ComponentsStack.Children.Add(new HeaderedContentControl()
-                {
-                    Header = "DELAY",
-                    Content = delay.Delay
-                });
+                CreateComponentSelection(typeof(IMAPDelayEvent), "DELAY", delay.Delay.ToString());
             if (MapEvent is IMAPLocationEvent loc)
             {
-                ComponentsStack.Children.Add(new HeaderedContentControl()
-                {
-                    Header = "X",
-                    Content = loc.X
-                });
-                ComponentsStack.Children.Add(new HeaderedContentControl()
-                {
-                    Header = "Y",
-                    Content = loc.Y
-                });
-                ComponentsStack.Children.Add(new HeaderedContentControl()
-                {
-                    Header = "Z",
-                    Content = loc.Z
-                });
+                CreateComponentSelection(typeof(IMAPLocationEvent), "X", loc.X.ToString());
+                CreateComponentSelection(typeof(IMAPLocationEvent), "Y", loc.Y.ToString());
+                CreateComponentSelection(typeof(IMAPLocationEvent), "Z", loc.Z.ToString());
             }
-            if (MapEvent is IMAPShapeEvent shape)
-                ComponentsStack.Children.Add(new HeaderedContentControl()
-                {
-                    Header = "SHAPE",
-                    Content = shape.ShapeName
-                });
+            if (MapEvent is IMAPShapeEvent shape)            
+                CreateComponentSelection(typeof(IMAPShapeEvent), "SHAPE", shape.ShapeName);            
             if (MapEvent is IMAPStrategyEvent strat)
-                ComponentsStack.Children.Add(new HeaderedContentControl()
-                {
-                    Header = "STRATEGY",
-                    Content = strat.StrategyName
-                });
-
+                CreateComponentSelection(typeof(IMAPStrategyEvent), "STRATEGY", strat.StrategyName);
             if (MapEvent is IMAPPathEvent path)
-                ComponentsStack.Children.Add(new HeaderedContentControl()
-                {
-                    Header = "PATH",
-                    Content = path.PathName
-                });
+                CreateComponentSelection(typeof(IMAPPathEvent), "PATH", path.PathName);
             if (MapEvent is IMAPHealthAttackEvent hp)
             {
-                ComponentsStack.Children.Add(new HeaderedContentControl()
-                {
-                    Header = "HP",
-                    Content = hp.HP
-                });
-                ComponentsStack.Children.Add(new HeaderedContentControl()
-                {
-                    Header = "AP",
-                    Content = hp.AP
-                });
+                CreateComponentSelection(typeof(IMAPHealthAttackEvent), "Health Points", hp.HP.ToString());
+                CreateComponentSelection(typeof(IMAPHealthAttackEvent), "Attack Power", hp.AP.ToString());
             }
             ComponentsStack.Children.Add(new HeaderedContentControl()
             {
@@ -134,17 +102,8 @@ namespace StarFoxMapVisualizer.Controls
                 Header = "LEVEL TIME",
                 Content = MapEvent.LevelDelay.ToString()
             });
-            if (MapEvent is IMAPBGEvent mapBG)
-            {
-                var contentItem = new HeaderedContentControl()
-                {
-                    Header = "EDITOR BACKGROUND",
-                    Content = "Switch BG to this",
-                    Cursor = Cursors.Hand,
-                    Background = Brushes.SlateBlue
-                };
-                ComponentsStack.Children.Add(contentItem);
-            }
+            if (MapEvent is IMAPBGEvent mapBG)            
+                CreateComponentSelection(typeof(IMAPBGEvent), "THEME", "preview theme", Brushes.SlateBlue);            
         }
     }
 }

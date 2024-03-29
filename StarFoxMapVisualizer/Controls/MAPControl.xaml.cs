@@ -1,6 +1,7 @@
 ﻿using StarFox.Interop.MAP;
 using StarFox.Interop.MAP.CONTEXT;
 using StarFox.Interop.MAP.EVT;
+using StarFoxMapVisualizer.Controls.Subcontrols;
 using StarFoxMapVisualizer.Misc;
 using StarFoxMapVisualizer.Screens;
 using System;
@@ -20,6 +21,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using WpfPanAndZoom.CustomControls;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.TaskbarClock;
 
 namespace StarFoxMapVisualizer.Controls
 {
@@ -42,16 +44,16 @@ namespace StarFoxMapVisualizer.Controls
             MAPTabViewer.Items.Clear();            
         }
 
-        private Dictionary<MAPFile, MAP_FINST> tabMap = new();
+        private Dictionary<MAPScript, MAP_FINST> tabMap = new();
         private MAP_FINST? CurrentState {
             get
             {
-                if (selectedFile == null) return null;
-                tabMap.TryGetValue(selectedFile, out var val);
+                if (selectedScript == null) return null;
+                tabMap.TryGetValue(selectedScript, out var val);
                 return val;
             }
         }
-        private MAPFile? selectedFile => ((TabItem)MAPTabViewer.SelectedItem).Tag as MAPFile;
+        private MAPScript? selectedScript => ((TabItem)MAPTabViewer.SelectedItem).Tag as MAPScript;
         
 
         //3D VIEWER VARS
@@ -76,14 +78,14 @@ namespace StarFoxMapVisualizer.Controls
 
         private void MapExportButton_Click(object sender, RoutedEventArgs e)
         {
-            if (selectedFile == null) return;
+            if (selectedScript == null) return;
             var fileName = System.IO.Path.Combine(Environment.CurrentDirectory,
-                "export","maps",$"{selectedFile.LevelData.Title}.sfmap");  
+                "export","maps",$"{selectedScript.Header.LevelMacroName}.sfmap");  
             Directory.CreateDirectory(System.IO.Path.GetDirectoryName(fileName));
             using (var file = File.Create(fileName))
             {
                 using (Utf8JsonWriter writer = new(file))
-                    selectedFile.LevelData.Serialize(writer);
+                    selectedScript.LevelData.Serialize(writer);
             }
             if (MessageBox.Show($"The map was successfully exported to:\n" +
                 $"{fileName}\n" +
@@ -94,7 +96,7 @@ namespace StarFoxMapVisualizer.Controls
 
         private async void View3DButton_Click(object sender, RoutedEventArgs e)
         {
-            var map3D = MapWindow = new MAP3DControl(selectedFile);
+            var map3D = MapWindow = new MAP3DControl(selectedScript);
             await map3D.ShowMapContents();
             map3D.Closed += delegate
             { // WINDOW CLOSED
@@ -103,10 +105,10 @@ namespace StarFoxMapVisualizer.Controls
             };
             map3D.Show();
             View3DButton.Visibility = Visibility.Collapsed;
-        }
+        }        
 
         private void SetupPlayFieldHorizontal(Panel PanCanvas, int Layer, int Time, Brush Foreground, double LevelEnd = 100000000,
-            string StartText = "DELAY", string EndText = "FINISH")
+            string StartText = "DELAY", string EndText = "FINISH", bool ShowTimes = true, int YOffset = 0)
         {
             TextBlock AddFieldText(string Text, double X, double Y, bool major = false)
             {
@@ -124,7 +126,7 @@ namespace StarFoxMapVisualizer.Controls
                 return textControl;
             }
 
-            double YPosition = Layer * 100;
+            double YPosition = Layer * 100 + YOffset;
 
             Line delayLine = new Line()
             {
@@ -140,60 +142,33 @@ namespace StarFoxMapVisualizer.Controls
             
             PanCanvas.Children.Add(delayLine);
             PanCanvas.Children.Add(AddFieldText(StartText, Time + 50, TextYPosition-50));
-            
-            for (double x = Time; x <= LevelEnd; x += 100)
+
+            if (ShowTimes)
             {
-                bool major = x % 1000 == 0;
-                PanCanvas.Children.Add(AddFieldText(Time.ToString(), x, TextYPosition, major));
-                Time += 100;
+                for (double x = Time; x <= LevelEnd; x += 100)
+                {
+                    bool major = x % 1000 == 0;
+                    PanCanvas.Children.Add(AddFieldText(Time.ToString(), x, TextYPosition, major));
+                    Time += 100;
+                }
             }
             PanCanvas.Children.Add(AddFieldText(EndText, LevelEnd + 50, TextYPosition-50));
         }
 
-        private void SetupPlayFieldVertical(Panel PanCanvas, double CenterFieldX, double LevelYStart, Brush Foreground, double LevelYEnd = -100000000,
-            string StartText = "DELAY", string EndText = "FINISH", int currentDelay = 0)
+        private void SetupMapLoops(MAPData LoopLevelData, Panel PanCanvas, int Layer, int SubMapEnterTime)
         {
-            TextBlock AddFieldText(string Text, double X, double Y, bool major = false)
+            foreach (var loopRegion in LoopLevelData.SectionMarkers.Values)
             {
-                var textControl = new TextBlock()
-                {
-                    Text = Text,
-                    FontSize = major ? 28 : 22,
-                    FontFamily = new FontFamily("Consolas"),
-                    Padding = new Thickness(10,5,10,5),
-                    Foreground = Foreground
-                };
-                textControl.LayoutTransform = new RotateTransform(-45);
-                Canvas.SetTop(textControl, Y);
-                Canvas.SetLeft(textControl, X);
-                Panel.SetZIndex(textControl, 0);
-                return textControl;
+                if (!loopRegion.IsLooped) continue;
+                SetupPlayFieldHorizontal(PanCanvas, Layer, loopRegion.EstimatedTimeStart + SubMapEnterTime, Brushes.Orange,
+                    loopRegion.EstimatedTimeEnd + SubMapEnterTime, loopRegion.LabelName, "END LOOP", false, 20);
             }
-            Line delayLine = new Line()
-            {
-                X1 = CenterFieldX,
-                X2 = CenterFieldX,
-                Y1 = LevelYStart,
-                Y2 = LevelYEnd,
-                StrokeThickness = 4,
-                Stroke = Foreground,
-                Fill = Foreground,                
-            };
-            PanCanvas.Children.Add(delayLine);
-            PanCanvas.Children.Add(AddFieldText(StartText, CenterFieldX, LevelYStart - 100));
-            for (double y = LevelYStart; y >= LevelYEnd; y-=100)
-            {
-                bool major = y % 1000 == 0;
-                PanCanvas.Children.Add(AddFieldText(currentDelay.ToString(), CenterFieldX, y, major));
-                currentDelay += 100;
-            }
-            PanCanvas.Children.Add(AddFieldText(EndText, CenterFieldX, LevelYEnd - 200));
         }
 
         private void MapContextButton_Click(object sender, RoutedEventArgs e)
         {
             LevelContextViewer? viewer = default;
-            if (!selectedFile.ReferencedContexts.Any())
+            if (!selectedScript.ReferencedContexts.Any())
             {
                 viewer = new LevelContextViewer(FILEStandard.MAPImport.LoadedContextDefinitions)
                 {
@@ -203,7 +178,7 @@ namespace StarFoxMapVisualizer.Controls
             }
             else
             {
-                viewer = new LevelContextViewer(selectedFile.ReferencedContexts.Select(x => x.Key).ToArray())
+                viewer = new LevelContextViewer(selectedScript.ReferencedContexts.Select(x => x.Key).ToArray())
                 {
                     WindowStartupLocation = WindowStartupLocation.CenterOwner,
                     Owner = Application.Current.MainWindow
@@ -221,7 +196,7 @@ namespace StarFoxMapVisualizer.Controls
         int treeLayer = 0, lastTime = 0;
         double lastX = 0, lastY;
 
-        private void EnumerateEvents(MAPFile File, Panel EventCanvas, ref int currentTime, bool autoDereference = true, int Layer = 0)            
+        private void EnumerateEvents(MAPScript File, Panel EventCanvas, ref int currentTime, bool autoDereference = true, int Layer = 0)            
         {
             double LayerShift = (Layer * 100);
 
@@ -234,13 +209,15 @@ namespace StarFoxMapVisualizer.Controls
 
             foreach (var evt in File.LevelData.Events)
             {
+                //Adjust level timing
+                if (evt is IMAPDelayEvent delay)
+                    currentTime += delay.Delay;
+                evt.LevelDelay = currentTime;
+
                 var control = new MapEventNodeControl(evt);
                 EventCanvas.Children.Add(control);               
 
-                control.Measure(new Size(5000, 5000));                
-                
-                if (evt is IMAPDelayEvent delay)                
-                    currentTime += delay.Delay;
+                control.Measure(new Size(5000, 5000));                                                
 
                 double middleX = currentTime;                
                 double rightEdge = middleX + (control.DesiredSize.Width / 2);
@@ -286,18 +263,57 @@ namespace StarFoxMapVisualizer.Controls
 
                 EventCanvas.Children.Add(delayLine);
 
-                if(evt is MAPJSREvent mapjsr && autoDereference) // SUBSECTION FOUND!!
+                if (evt is MAPJSREvent mapjsr && autoDereference) // SUBSECTION FOUND!!
                 { // WERE ALLOWED TO INCLUDE IT
-                    if (!FILEStandard.SearchProjectForFile($"{mapjsr.SubroutineName}.ASM", out var MAPInfo, false))
-                        continue; // FAILED! Couldn't find the map.
-                    var sub_map = FILEStandard.OpenMAPFile(MAPInfo).Result as MAPFile;
-                    if (sub_map == default) continue; // FAILED! Couldn't open the map.                    
-                    CurrentState.StateObject.Subsections.Add(sub_map);
+                    MAPFile? sub_map = default;
+                    MAPScript? sub_script = default;
+
+                    try
+                    {
+                        sub_script = FILEStandard.GetMapScriptByMacroName(mapjsr.SubroutineName).Result;
+                    }
+                    catch { }
+
+                    if (sub_script == default)
+                    {
+                        //Try to automatically find the subsection without getting the user involved
+                        if (FILEStandard.SearchProjectForFile($"{mapjsr.SubroutineName}.ASM", out var MAPInfo, false))
+                        {
+                            sub_map = FILEStandard.OpenMAPFile(MAPInfo).Result;
+                            if (sub_map == default ||
+                                !sub_map.Scripts.TryGetValue(mapjsr.SubroutineName, out sub_script)) // FAILED! Couldn't open the map.
+                            { // prompt the user for a new file
+                                sub_script = null;
+                            }
+                        }
+                        //Loop while user selects the right file
+                        while (sub_script == null)
+                        {
+                            if (MessageBox.Show($"Could not find section: {mapjsr.SubroutineName}\n\n" +
+                                        $"Would you like to select the file it's in?", "Subsection Not Found",
+                                        MessageBoxButton.YesNo) == MessageBoxResult.No)
+                                break; // User gives up
+                            var file = FILEStandard.ShowGenericFileBrowser("Select the MAP file that contains this section");
+                            if (file == default) break;
+
+                            sub_map = FILEStandard.OpenMAPFile(new FileInfo(file)).Result;
+                            if (sub_map == default ||
+                                !sub_map.Scripts.TryGetValue(mapjsr.SubroutineName, out sub_script)) // FAILED! Still isn't the right file.
+                            { // prompt the user for a new file
+                                sub_script = null;
+                            }
+                        }
+                    }
+                    else MessageBox.Show("SFOptim worked perfectly!");
+                    if (sub_script == default) continue; // Could not load the file at all, move on
+                                                         
+                    CurrentState.StateObject.Subsections.Add(sub_script);
                     int section_StartTime = currentTime;
-                    EnumerateEvents(sub_map, EventCanvas, ref currentTime, autoDereference, Layer+1);
-                    SetupPlayFieldHorizontal(EventCanvas, Layer+1, section_StartTime, Brushes.DeepSkyBlue, currentTime, 
+                    EnumerateEvents(sub_script, EventCanvas, ref currentTime, autoDereference, Layer + 1);
+                    SetupPlayFieldHorizontal(EventCanvas, Layer + 1, section_StartTime, Brushes.DeepSkyBlue, currentTime,
                         mapjsr.SubroutineName, "RETURN");
-                    selectedFile.MergeSubsection(sub_map.LevelData);
+                    SetupMapLoops(sub_script.LevelData, EventCanvas, Layer + 1, section_StartTime);
+                    selectedScript.MergeSubsection(sub_script.LevelData);
                 }
             }
             MapNodeLineBrush = Brushes.Yellow;
@@ -307,21 +323,49 @@ namespace StarFoxMapVisualizer.Controls
         {
             if (File == null) return;
 
+            foreach(var script in File.Scripts.Values)            
+                if (tabMap.ContainsKey(script)) return;            
+
+            //ASYNC DISABLE
+            IsEnabled = false;
+            
+            if (File.Scripts.Count == 0) return;
+            if (File.Scripts.Count == 1) await OpenScript(File.Scripts.Values.First());
+            else
+            { // Many scripts here, prompt the user to pick one
+                GenericMenuDialog dialog = new GenericMenuDialog("LEVEL SCRIPTS",
+                    "The file you selected may have multiple scripts in it.\n" +
+                    "Select the one you would like to view.",
+                    File.Scripts.Select(x => $"{x.Key} ({x.Value.LevelData.Events.Count} events)").ToArray())
+                {
+                    Owner = Application.Current.MainWindow
+                };
+                if(dialog.ShowDialog() ?? false)
+                    await OpenScript(File.Scripts.Values.ElementAtOrDefault(dialog.Selection));
+            }
+
+            IsEnabled = true;
+        }
+
+        private async Task OpenScript(MAPScript? Script)
+        {
+            if (Script == default) return;
+
             //ASYNC DISABLE
             IsEnabled = false;
 
             MAP_FINST state = new MAP_FINST();
 
-            if (tabMap.ContainsKey(File))
-                state = tabMap[File];
+            if (tabMap.ContainsKey(Script))
+                state = tabMap[Script];
 
             if (state.Tab == default)
             {
                 state.Tab = new TabItem()
                 {
-                    Header = System.IO.Path.GetFileNameWithoutExtension(File.OriginalFilePath),
-                    Tag = File
-                };                
+                    Header = Script.Header.LevelName ?? Script.Header.LevelMacroName,
+                    Tag = Script
+                };
                 MAPTabViewer.Items.Add(state.Tab);
             }
 
@@ -329,13 +373,13 @@ namespace StarFoxMapVisualizer.Controls
             MAPTabViewer.SelectionChanged -= ChangeFile;
             MAPTabViewer.SelectedItem = tabItem;
             MAPTabViewer.SelectionChanged += ChangeFile;
-            tabMap.TryAdd(File, state);
+            tabMap.TryAdd(Script, state);
 
-            bool autoDereference = File.ReferencedSubSections.Any();
+            bool autoDereference = Script.ReferencedSubSections.Any();
             if (!AppResources.MapImporterAutoDereferenceMode && autoDereference)
             {
                 if (MessageBox.Show("Automatically include referenced sub-sections of Map files is OFF.\n" +
-                    $"This level contains {File.ReferencedSubSections.Count} subsections, include them anyway?\n" +
+                    $"This level contains {Script.ReferencedSubSections.Count} subsections, include them anyway?\n" +
                     $"\n(this may take some time)",
                     "Auto-Include Sub-Sections?", MessageBoxButton.YesNo) == MessageBoxResult.No)
                     autoDereference = false;
@@ -345,35 +389,40 @@ namespace StarFoxMapVisualizer.Controls
 
             if (!state.StateObject.Loaded)
             {
-                state.StateObject.ContentControl = new PanAndZoomCanvas()
+                var dragCanvas = new PanAndZoomCanvas()
                 {
                     Background = new SolidColorBrush(Color.FromArgb(1, 255, 255, 255))
                 };
-                EventCanvas = state.StateObject.ContentControl;  
-                int Width = await SetupEditor(File, EventCanvas, autoDereference) + 200;
+                dragCanvas.LocationChanged += CanvasMoved;
+                state.StateObject.ContentControl = dragCanvas;
+                EventCanvas = state.StateObject.ContentControl;
+                int Width = await SetupEditor(Script, EventCanvas, autoDereference) + 200;
                 state.StateObject.LevelWidth = Width;
             }
             EventCanvas = state.StateObject.ContentControl;
 
             CurrentEditorControl.Content = EventCanvas;
-            //ASYNC DISABLE
+            //ASYNC ENABLE
             IsEnabled = true;
         }
 
         private async void ChangeFile(object sender, SelectionChangedEventArgs e)
         {            
-            var file = (MAPTabViewer.SelectedItem as TabItem).Tag as MAPFile;
-            await OpenFile(file);
+            var file = (MAPTabViewer.SelectedItem as TabItem).Tag as MAPScript;
+            await OpenScript(file);
         }
 
-        private async Task<int> SetupEditor(MAPFile File, Panel EventCanvas, bool autoDereference)
+        private async Task<int> SetupEditor(MAPScript File, Panel EventCanvas, bool autoDereference)
         {
             int Time = 0;
             expandedX = 0;
             treeLayer = 0; lastTime = 0;
             lastX = 0;
+
             EnumerateEvents(File, EventCanvas, ref Time, autoDereference);
             SetupPlayFieldHorizontal(EventCanvas, 0, 0, Brushes.Yellow, Time);
+            SetupMapLoops(File.LevelData, EventCanvas, 0, 0);
+
             await SwitchEditorBackground(File.LevelContext);
             return Time;
         }        
@@ -393,36 +442,61 @@ namespace StarFoxMapVisualizer.Controls
             await BackgroundRender.Attach(Definition);
             BackgroundRender.ResizeViewports((int)ActualWidth, (int)ActualHeight);
         }
-
-        internal async Task MapNodeSelected(MAPEvent MapEvent)
+        /// <summary>
+        /// This function is used when the user selects a MapNode in the MAPControl.
+        /// <para/>Map Nodes can represent many types of information, using the <paramref name="ComponentSelected"/>
+        /// can narrow down what the user actually meant to select to get more info on.
+        /// <para/><paramref name="ComponentSelected"/> being null indicates it's unclear what they meant to select
+        /// and the most generic action should be taken
+        /// </summary>
+        /// <param name="MapEvent"></param>
+        /// <param name="ComponentSelected">Must be of type <see cref="IMAPEventComponent"/></param>
+        /// <returns></returns>
+        internal async Task<bool> MapNodeSelected(MAPEvent MapEvent, Type? ComponentSelected)
         {
+            if (!ComponentSelected.IsAssignableTo(typeof(IMAPEventComponent)))
+                throw new ArgumentException("Selected Component Type is not a IMAPEventComponent");
             //SWITCH BACKGROUND TO THIS
-            if (MapEvent is IMAPBGEvent BGEvent)
+            if (MapEvent is IMAPBGEvent BGEvent && ComponentSelected == typeof(IMAPBGEvent))
             {
                 await SwitchEditorBackground(FILEStandard.MAPImport.FindContext(BGEvent.Background));
-                return;
+                return true;
             }
+            //SWITCH TO SHAPE VIEWER TO VIEW SHAPE SELECTED
+            if (MapEvent is IMAPShapeEvent ShapeEvent && ComponentSelected == typeof(IMAPShapeEvent))
+                if (!await EDITORStandard.ShapeEditor_ShowShapeByName(ShapeEvent.ShapeName, -1))
+                {
+                    MessageBox.Show("Couldn't find any shapes by the name of: " + ShapeEvent.ShapeName,
+                        "Switch Shape");
+                    return false;
+                }
+                else return true;
+            
             //CHECK 3D VIEWER OPENED
             if (MapWindowOpened)
             { // 3D CONTEXT
-                MapWindow.CameraTransitionToObject(MapEvent);
-                return;
+                return MapWindow.CameraTransitionToObject(MapEvent);
             }
             //NO 3D VIEWER ATTACHED CONTEXT
-            var screen = EditScreen.Current;
-            await screen.ASMViewer.OpenSymbol(MapEvent.Callsite); // open the symbol in the assembly viewer
-            screen.CurrentMode = EditScreen.ViewMode.ASM; // switch to this viewer
-            await screen.HandleViewModes(); // update the view
+            await EDITORStandard.AsmEditor_OpenSymbol(MapEvent.Callsite); // open the symbol in the assembly viewer
+            return true;
         }
 
-        double oldScrollValue = 0;
         private void ChronologySlider_Scroll(object sender, System.Windows.Controls.Primitives.ScrollEventArgs e)
         {
-            double delta = (ChronologySlider.Value - oldScrollValue);
-            oldScrollValue = ChronologySlider.Value;
-            double value = CurrentState.StateObject.LevelWidth * delta;
-            ((PanAndZoomCanvas)CurrentState.StateObject.ContentControl).MoveCanvas(new Vector(-value, 0));
+            var control = ((PanAndZoomCanvas)CurrentState.StateObject.ContentControl);
+            control.LocationChanged -= CanvasMoved;
+            double value = CurrentState.StateObject.LevelWidth * ChronologySlider.Value;
+            control.SetCanvasLocation(new Point(value, 0));
+            control.LocationChanged += CanvasMoved;
+        }
 
+        private void CanvasMoved(object? sender, Point e)
+        {
+            var control = ((PanAndZoomCanvas)sender);
+            ChronologySlider.Scroll -= ChronologySlider_Scroll;
+            ChronologySlider.Value = Math.Min(1, Math.Max(0, control.Location.X / CurrentState.StateObject.LevelWidth));
+            ChronologySlider.Scroll += ChronologySlider_Scroll;
         }
     }
 }

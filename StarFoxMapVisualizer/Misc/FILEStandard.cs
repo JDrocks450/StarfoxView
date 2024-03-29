@@ -1,8 +1,10 @@
-﻿using Starfox.Editor;
+﻿using Microsoft.WindowsAPICodePack.Dialogs;
+using Starfox.Editor;
 using StarFox.Interop;
 using StarFox.Interop.ASM;
 using StarFox.Interop.BRR;
 using StarFox.Interop.BSP;
+using StarFox.Interop.BSP.SHAPE;
 using StarFox.Interop.GFX.COLTAB;
 using StarFox.Interop.MAP;
 using StarFox.Interop.MSG;
@@ -194,7 +196,7 @@ namespace StarFoxMapVisualizer.Misc
             var file = await BSPImport.ImportAsync(File.FullName);
             return file;
         }
-        public static async Task<ASMFile?> OpenMAPFile(FileInfo File)
+        public static async Task<MAPFile?> OpenMAPFile(FileInfo File)
         {
             //MAP IMPORT LOGIC   
             if (!await HandleImportMessages(File, MAPImport)) return default;
@@ -274,10 +276,63 @@ namespace StarFoxMapVisualizer.Misc
                 AppResources.OpenFiles.Add(File.FullName, asmfile);
             return asmfile;
         }
-        internal static async Task<ASMFile?> OpenASMFile(FileInfo File)
+        internal static async Task<ASMFile?> OpenASMFile(FileInfo File, bool IgnoreDialogs = false)
         {
             //DO FILE PARSE NOW            
-            return await ParseFile(File);            
+            return await ParseFile(File, IgnoreDialogs ? SFFileType.ASMFileTypes.ASM : null);            
+        }
+
+        /// <summary>
+        /// Spawns a new <see cref="CommonFileDialog"/> with the desired options
+        /// </summary>
+        /// <param name="Title"></param>
+        /// <param name="FolderBrowser"></param>
+        /// <param name="InitialDirectory"></param>
+        /// <param name="Multiselect"></param>
+        /// <returns></returns>
+        internal static string? ShowGenericFileBrowser(string Title, bool FolderBrowser = false, string? InitialDirectory = null, bool Multiselect = false)
+        {
+            if (InitialDirectory == default) InitialDirectory = AppResources.ImportedProject.WorkspaceDirectory.FullName;
+            CommonOpenFileDialog d = new CommonOpenFileDialog()
+            {
+                Title = Title,
+                IsFolderPicker = FolderBrowser,
+                Multiselect = Multiselect,
+                InitialDirectory = InitialDirectory
+            }; // CREATE THE FOLDER PICKER
+            if (d.ShowDialog() is not CommonFileDialogResult.Ok) return default; // OOPSIES x2
+            var directory = d.FileName; // Selected DIR
+            if (!Directory.Exists(directory)) return default; // Random error?
+            return directory;
+        }
+        /// <summary>
+        /// This uses an SFOptimizer in the node that stores Levels to map Level Macro Name to the File it appears in.
+        /// <para/>This will look up the level by it's name as it appears in it's header.
+        /// </summary>
+        /// <returns></returns>
+        internal static async Task<MAPScript?> GetMapScriptByMacroName(string LevelMacroName)
+        {
+            var HeaderName = LevelMacroName;
+            var project = AppResources.ImportedProject;
+            //Load the SFOptimizer
+            if (!project.Optimizers.Any())
+                throw new Exception("There aren't any optimizers added to this project yet.\n" +
+                    "Use the Refresh StageMap button to create this.");
+            //Find the one that is a STAGE MAP
+            var stageOptim = project.Optimizers.FirstOrDefault(x =>
+                x.OptimizerData.TypeSpecifier == Starfox.Editor.SFOptimizerTypeSpecifiers.Levels);
+            if (stageOptim == default)
+                throw new Exception("This project has Optimizers, but none of them are for Stages.\n" +
+                    "Use the Refresh StageMap button to create this.");
+            var stageMap = stageOptim.OptimizerData.ObjectMap;
+            //Try to find the file that contains the stage we want
+            if (!stageMap.TryGetValue(HeaderName, out var FileName)) return default;
+            var path = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(stageOptim.FilePath), FileName);
+            //Open the file
+            var file = await OpenMAPFile(new FileInfo(path));
+            if (file.Scripts.TryGetValue(LevelMacroName, out var script))
+                return script;
+            return default;
         }
     }
 }

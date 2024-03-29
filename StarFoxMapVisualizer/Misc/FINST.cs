@@ -30,6 +30,7 @@ namespace StarFoxMapVisualizer.Misc
     public class ASM_FINST : FINST<ASMFile, ASMCodeEditor, TabItem>
     {
         internal Dictionary<ASMChunk, Run>? symbolMap;
+        internal Dictionary<long, Inline> NewLineMap { get; } = new();
         internal ASMCodeEditor EditorScreen => StateObject;
     }
     public class MAP_FINST : FINST<MAPFile, MAP_FINST.MAPEditorState, TabItem>
@@ -41,7 +42,7 @@ namespace StarFoxMapVisualizer.Misc
             
             public double LevelWidth = 0;
 
-            public List<MAPFile> Subsections { get; } = new();
+            public List<MAPScript> Subsections { get; } = new();
         }
 
         public MAP_FINST()

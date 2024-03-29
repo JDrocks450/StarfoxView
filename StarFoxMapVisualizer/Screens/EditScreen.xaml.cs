@@ -33,6 +33,11 @@ namespace StarFoxMapVisualizer.Screens
     /// </summary>
     public partial class EditScreen : Page
     {
+        /// <summary>
+        /// See: <see cref="EDITORStandard.CurrentEditorScreen"/>
+        /// </summary>
+        internal static EditScreen Current => EDITORStandard.CurrentEditorScreen;
+
         public enum ViewMode
         {
             NONE,
@@ -43,8 +48,7 @@ namespace StarFoxMapVisualizer.Screens
             MSG,
             BRR
         }        
-
-        internal static EditScreen Current { get; private set; }
+        
         public ViewMode CurrentMode { get; set; }
 
         public EditScreen()
@@ -52,9 +56,7 @@ namespace StarFoxMapVisualizer.Screens
             InitializeComponent();
 
             SolutionExplorerView.Items.Clear();
-            MacroExplorerView.Items.Clear();
-
-            Current = this;
+            MacroExplorerView.Items.Clear();            
 
             Loaded += OnLoad;
         }
@@ -64,7 +66,7 @@ namespace StarFoxMapVisualizer.Screens
             CurrentMode = ViewMode.NONE;
             await HandleViewModes();
             UpdateInterface();
-            LoadingSpan.Visibility = Visibility.Collapsed;
+            EDITORStandard.HideLoadingWindow();
         }
         /// <summary>
         /// Will Load (or Reload) the current project
@@ -140,13 +142,13 @@ namespace StarFoxMapVisualizer.Screens
                 };
                 importItem.Click += async delegate
                 {
-                    LoadingSpan.Visibility = Visibility.Visible;
+                    EDITORStandard.ShowLoadingWindow();
                     foreach (var brrNode in FileNode.ChildNodes.Where(x => x.RecognizedFileType is SFCodeProjectFileTypes.BRR))
                         await AUDIOStandard.OpenBRR(new FileInfo(brrNode.FilePath), false, false, true);
                     UpdateInterface();
                     CurrentMode = ViewMode.BRR;
                     await HandleViewModes();
-                    LoadingSpan.Visibility = Visibility.Collapsed;                    
+                    EDITORStandard.HideLoadingWindow();                    
                 };
                 contextMenu.Items.Add(importItem);
             }
@@ -307,7 +309,7 @@ namespace StarFoxMapVisualizer.Screens
                     }
                     finally
                     {
-                        LoadingSpan.Visibility = Visibility.Collapsed;
+                        EDITORStandard.HideLoadingWindow();
                     }
                 };
                 if (selectedItemHeader != default && selectedItemHeader.FilePath == FileNode.FilePath)// was selected
@@ -315,7 +317,18 @@ namespace StarFoxMapVisualizer.Screens
                 Parent.Items.Add(item);
             }
             SolutionExplorerView.Items.Add(await AddProjectNode(currentProject.ParentNode));
-        }        
+        }
+        /// <summary>
+        /// Changes the current Editor View Mode to the one provided
+        /// </summary>
+        /// <param name="View"></param>
+        /// <returns></returns>
+        public async Task SwitchView(ViewMode View)
+        {
+            if (View == CurrentMode) return;
+            CurrentMode = View;
+            await HandleViewModes();
+        }
         /// <summary>
         /// Should be called after changing the <see cref="CurrentMode"/> property
         /// <para>Will update the interface to match the new Mode</para>
@@ -417,7 +430,7 @@ namespace StarFoxMapVisualizer.Screens
             { // YEAH?
                 case SFCodeProjectFileTypes.Palette: // HANDLE PALETTE
                     await FILEStandard.OpenPalette(File);
-                    LoadingSpan.Visibility = Visibility.Collapsed;
+                    EDITORStandard.HideLoadingWindow();
                     UpdateInterface();
                     return true;
                 case SFCodeProjectFileTypes.BRR:
@@ -425,12 +438,12 @@ namespace StarFoxMapVisualizer.Screens
                     UpdateInterface();
                     CurrentMode = ViewMode.BRR;
                     await HandleViewModes();
-                    LoadingSpan.Visibility = Visibility.Collapsed;
+                    EDITORStandard.HideLoadingWindow();
                     BRRViewer.SelectFile(File.FullName);
                     return true;
                 case SFCodeProjectFileTypes.SPC:
                     await AUDIOStandard.OpenSPCProperties(File);
-                    LoadingSpan.Visibility = Visibility.Collapsed;
+                    EDITORStandard.HideLoadingWindow();
                     return true;
                 case SFCodeProjectFileTypes.BINFile: // EXTRACT BIN
                     // DOUBT AS TO FILE TYPE
@@ -459,26 +472,26 @@ namespace StarFoxMapVisualizer.Screens
                                 UpdateInterface(true);
                             break;
                     }
-                    LoadingSpan.Visibility = Visibility.Collapsed;
+                    EDITORStandard.HideLoadingWindow();
                     return true;
                 case SFCodeProjectFileTypes.CCR: // EXTRACT COMPRESSED GRAPHICS
                     {
                         await GFXStandard.ExtractCCR(File);
-                        LoadingSpan.Visibility = Visibility.Collapsed;
+                        EDITORStandard.HideLoadingWindow();
                         UpdateInterface(true); // Files changed!
                     }
                     return true;
                 case SFCodeProjectFileTypes.PCR: // EXTRACT COMPRESSED GRAPHICS
                     {
                         await SFGFXInterface.TranslateCompressedPCR(File.FullName);
-                        LoadingSpan.Visibility = Visibility.Collapsed;
+                        EDITORStandard.HideLoadingWindow();
                         UpdateInterface(true); // Files changed!
                     }
                     return true;
                 case SFCodeProjectFileTypes.SCR: // screens
                     //OPEN THE SCR FILE
                     GFXStandard.OpenSCR(File);
-                    LoadingSpan.Visibility = Visibility.Collapsed;
+                    EDITORStandard.HideLoadingWindow();
                     UpdateInterface();
                     CurrentMode = ViewMode.GFX;
                     await HandleViewModes();
@@ -486,7 +499,7 @@ namespace StarFoxMapVisualizer.Screens
                 case SFCodeProjectFileTypes.CGX: // graphics
                     //OPEN THE CGX FILE
                     await GFXStandard.OpenCGX(File);
-                    LoadingSpan.Visibility = Visibility.Collapsed;
+                    EDITORStandard.HideLoadingWindow();
                     UpdateInterface();
                     CurrentMode = ViewMode.GFX;
                     await HandleViewModes();
@@ -501,7 +514,7 @@ namespace StarFoxMapVisualizer.Screens
         /// <returns></returns>
         private async Task FileSelected(FileInfo File)
         {                        
-            LoadingSpan.Visibility = Visibility.Visible;
+            EDITORStandard.ShowLoadingWindow();
             //CHECK IF ITS A KNOWN FILE
             var result = await HandleKnownFileTypes(File);
             if (!result.HasValue || result.Value) return; // Handled or User Cancelled
@@ -516,7 +529,7 @@ namespace StarFoxMapVisualizer.Screens
             bool isMSG = asmfile is MSGFile;
             if (asmfile == default)
             {
-                LoadingSpan.Visibility = Visibility.Collapsed;
+                EDITORStandard.HideLoadingWindow();
                 return;
             }
             // FILE INCLUDE ROUTINE
@@ -546,10 +559,13 @@ namespace StarFoxMapVisualizer.Screens
                 await ASMViewer.OpenFileContents(File, asmfile); // tell the ASMControl to look at the new file            
             }
             UpdateInterface();
-            LoadingSpan.Visibility = Visibility.Collapsed;
+            EDITORStandard.HideLoadingWindow();
             MacroFileCombo.SelectedValue = System.IO.Path.GetFileNameWithoutExtension(File.Name);
         }
-
+        /// <summary>
+        /// Refreshes the Workspace Explorer, Macros and Open Files for some Editors
+        /// </summary>
+        /// <param name="FlushFiles"></param>
         private async void UpdateInterface(bool FlushFiles = false)
         {
             //update explorer
@@ -712,144 +728,39 @@ namespace StarFoxMapVisualizer.Screens
             UpdateInterface();
         }
         /// <summary>
-        /// Prompts the user to select a new shapes directory
-        /// </summary>
-        /// <returns></returns>
-        private DirectoryInfo? Generic_SelectShapeDirectory()
-        {
-            if (AppResources.ImportedProject.ShapesDirectoryPathSet)
-                return new DirectoryInfo(AppResources.ImportedProject.ShapesDirectoryPath);
-            CommonOpenFileDialog d = new CommonOpenFileDialog()
-            {
-                Title = "Select a Directory that contains Shape files",
-                IsFolderPicker = true,
-                Multiselect = false,
-                InitialDirectory = AppResources.ImportedProject.WorkspaceDirectory.FullName
-            }; // CREATE THE FOLDER PICKER
-            if (d.ShowDialog() is not CommonFileDialogResult.Ok) return default; // OOPSIES x2
-            var directory = d.FileName; // Selected DIR
-            if (!Directory.Exists(directory)) return default; // Random error?
-            AppResources.ImportedProject.ShapesDirectoryPath = directory;
-            return new DirectoryInfo(directory);
-        }
-        /// <summary>
         /// Prompts the user to export all 3D models and will export them
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private async void ExportAll3DButton_Click(object sender, RoutedEventArgs e)
+        private async void ExportAll3DButton_Click(object sender, RoutedEventArgs e) => await EDITORStandard.Editor_ExportAll3DShapes();
+
+        private async Task SFOptimRefreshBase(SFOptimizerTypeSpecifiers Type, string Noun)
         {
-            // EXPORT 3D FUNCTION -- I MADE HISTORY HERE TODAY. 11:53PM 03/31/2023 JEREMY GLAZEBROOK.
-            // I MADE A GUI PROGRAM THAT EXTRACTED STARFOX SHAPES SUCCESSFULLY AND DUMPED THEM ALL IN READABLE FORMAT.
-            var r = MessageBox.Show($"Welcome to the Export 3D Assets Wizard!\n" +
-                $"This tool will do the following: Export all 3D assets from the selected directory to *.sfshape files and palettes.\n" +
-                $"It will dump them to the exports/models directory.\n" +
-                $"You will get a manifest of all files dumped with their model names as well.\n" +
-                $"Happy hacking! - Love Bisquick <3", "Export 3D Assets Wizard", MessageBoxButton.OKCancel); // WELCOME MSG
-            if (r is MessageBoxResult.Cancel) return; // OOPSIES!
-            var dirInfo = Generic_SelectShapeDirectory();
-            if (dirInfo == default) return; // OOPSIES!
-            LoadingSpan.Visibility = Visibility.Visible;
-            StringBuilder errorBuilder = new(); // ERRORS
-            StringBuilder exportedBSPs = new(); // BSPS
-            StringBuilder exportedFiles = new(); // ALL FILES
-            //GET IMPORTS SET
-            FILEStandard.ReadyImporters();
-            foreach (var file in dirInfo.GetFiles()) // ITERATE OVER DIR FILES
-            {
-                try
-                {
-                    var bspFile = await FILEStandard.OpenBSPFile(file); // IMPORT THE BSP
-                    foreach (var shape in bspFile.Shapes) // FIND ALL SHAPES
-                    {
-                        var files =await SHAPEStandard.ExportShapeToSfShape(shape); // USE STANDARD EXPORT FUNC
-                        if (files.Count() == 0) continue; // HUH, WEIRD?
-                        foreach(var eFile in files) // EXPORTED FILES
-                            exportedFiles.AppendLine(eFile);
-                        var bspFileAddr = files.ElementAt(0);
-                        exportedBSPs.AppendLine(bspFileAddr); // BSP ONLY
-                    }
-                }
-                catch (Exception ex)
-                {
-                    errorBuilder.AppendLine($"The file: {file.FullName} could not be exported.\n" +
-                        $"***\n{ex.ToString()}\n***"); // ERROR INFO
-                }                
-            }
-            //CREATE THE MANIFEST FILE
-            File.WriteAllText(System.IO.Path.Combine(SHAPEStandard.DefaultShapeExtractionDirectory, "manifest.txt"), exportedBSPs.ToString());
-            MessageBox.Show($"{exportedFiles}", "Exported Files");
-            if (!string.IsNullOrWhiteSpace(errorBuilder.ToString()))
-                MessageBox.Show($"{errorBuilder}", "Errors");
-            if (MessageBox.Show($"Files exported to:\n" +
-                $"{SHAPEStandard.DefaultShapeExtractionDirectory}\n" +
-                $"Do you want to copy its location to the clipboard?", "Complete",
-                MessageBoxButton.YesNo) == MessageBoxResult.Yes)
-                Clipboard.SetText(SHAPEStandard.DefaultShapeExtractionDirectory);
-            LoadingSpan.Visibility = Visibility.Collapsed;
+            var sfOptim = await EDITORStandard.Editor_RefreshMap(Type);
+            var dirNode = AppResources.ImportedProject.SearchDirectory(Path.GetFileName(sfOptim.DirectoryPath)).FirstOrDefault();
+            if (dirNode == default)
+                throw new FileNotFoundException("Couldn't find the node that matches this directory in the Code Project.");
+            dirNode.AddOptimizer(Noun, sfOptim);
+            MessageBox.Show($"The {Noun} Code Project Optimizer has been updated with {sfOptim.ObjectMap.Count} items.");
+            UpdateInterface(true); // files updated!
         }
+
         /// <summary>
         /// Refreshes the SHAPESMap SFOptimizer directory with the latest 3D model list
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         /// <exception cref="FileNotFoundException"></exception>
-        private async void SHAPEMapRefreshButton_Click(object sender, RoutedEventArgs e)
-        {
-            //This function will create a SHAPE Map -- a file that links SHAPESX.ASM files to Shape Names
-        retry:
-            var dirInfo = Generic_SelectShapeDirectory();
-            if (dirInfo == default) return; // User Cancelled
-            StringBuilder errorBuilder = new(); // ERRORS
-            Dictionary<string, string> shapeMap = new();
-            //TEST SOMETHING OUT
-            if (!File.Exists(Path.Combine(dirInfo.FullName, "shapes.asm")))
-            {
-                if (MessageBox.Show("It looks like the directory you selected doesn't have at least " +
-                    "a SHAPES.ASM file in it. Have you selected the SHAPES directory in your workspace?\n" +
-                    "\n" +
-                    "Would you like to continue anyway? No will go back to file selection.", "Directory Selection Message",
-                    MessageBoxButton.YesNo) != MessageBoxResult.Yes)
-                {
-                    AppResources.ImportedProject.ShapesDirectoryPath = default;
-                    goto retry;
-                }                    
-            }
-            //GET IMPORTS SET
-            FILEStandard.ReadyImporters();
-            foreach (var file in dirInfo.GetFiles()) // ITERATE OVER DIR FILES
-            {
-                try
-                {
-                    var bspFile = await FILEStandard.OpenBSPFile(file); // IMPORT THE BSP
-                    foreach(var shape in bspFile.Shapes)
-                    {
-                        var sName = shape.Header.UniqueName;
-                        var fooSName = sName;
-                        int tries = 1;
-                        while (shapeMap.ContainsKey(fooSName))
-                        {
-                            fooSName = sName + "_" + tries;
-                            tries++;
-                        }
-                        sName = fooSName.ToUpper();
-                        shapeMap.Add(sName, file.Name);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    errorBuilder.AppendLine($"The file: {file.FullName} could not be exported.\n" +
-                        $"***\n{ex.ToString()}\n***"); // ERROR INFO
-                }
-            }
-            var dirNode = AppResources.ImportedProject.SearchDirectory(dirInfo.Name).FirstOrDefault();
-            if (dirNode == default)
-                throw new FileNotFoundException("Couldn't find the node that matches this directory in the Code Project.");
-            dirNode.AddOptimizer("ShapesMap", new SFOptimizerDataStruct(
-                SFOptimizerTypeSpecifiers.Shapes, shapeMap));
-            MessageBox.Show("The ShapesMap Code Project Optimizer has been updated.");
-            UpdateInterface(true); // files updated!
-        }
+        private async void SHAPEMapRefreshButton_Click(object sender, RoutedEventArgs e) => 
+            await SFOptimRefreshBase(SFOptimizerTypeSpecifiers.Shapes, "ShapesMap");
+        /// <summary>
+        /// Refreshes the STAGESMAP SFOptimizer directory with the latest level list
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        /// <exception cref="FileNotFoundException"></exception>
+        private async void STAGEMapRefreshButton_Click(object sender, RoutedEventArgs e) => 
+            await SFOptimRefreshBase(SFOptimizerTypeSpecifiers.Levels, "StagesMap");
         /// <summary>
         /// Opens the Level Background viewer dialog
         /// </summary>
@@ -873,9 +784,11 @@ namespace StarFoxMapVisualizer.Screens
 
         private void ExitItem_Click(object sender, RoutedEventArgs e) => Application.Current.Shutdown();
 
-        private void OpenItem_Click(object sender, RoutedEventArgs e)
+        private async void OpenItem_Click(object sender, RoutedEventArgs e)
         {
-
+            var file = FILEStandard.ShowGenericFileBrowser("Select a File to View");
+            if (file == default) return;
+            await FileSelected(new FileInfo(file));
         }
 
         private void CloseProjectMenuItem_Click(object sender, RoutedEventArgs e)
@@ -890,6 +803,6 @@ namespace StarFoxMapVisualizer.Screens
         {
             SettingsDialog settings = new();
             settings.Show();
-        }
+        }        
     }
 }

@@ -20,7 +20,11 @@ namespace Starfox.Editor
         /// <summary>
         /// Custom
         /// </summary>
-        Custom
+        Custom,
+        /// <summary>
+        /// A stages optimizer, which is LevelMacroName -> File
+        /// </summary>
+        Levels
     }
 
     /// <summary>
@@ -29,11 +33,13 @@ namespace Starfox.Editor
     [Serializable]
     public class SFOptimizerDataStruct
     {
-        public SFOptimizerDataStruct(SFOptimizerTypeSpecifiers typeSpecifier, Dictionary<string, string> objectMap, string? customOptimizerCodeName = default)
+        public SFOptimizerDataStruct(SFOptimizerTypeSpecifiers typeSpecifier, string directoryPath,
+            Dictionary<string, string> objectMap, string? customOptimizerCodeName = default)
         {
             TypeSpecifier = typeSpecifier;
             CustomOptimizerCodeName = customOptimizerCodeName;
             ObjectMap = objectMap;
+            DirectoryPath = directoryPath;
         }
 
         /// <summary>
@@ -48,6 +54,10 @@ namespace Starfox.Editor
         /// The map of objects this optimizer links
         /// </summary>
         public Dictionary<string, string> ObjectMap { get; set; } = new();
+        /// <summary>
+        /// The path to the files included in this <see cref="SFOptimizerDataStruct"/>
+        /// </summary>
+        public string DirectoryPath { get; set; }
     }
     /// <summary>
     /// An optimizer links an Object Name to a file that contains it

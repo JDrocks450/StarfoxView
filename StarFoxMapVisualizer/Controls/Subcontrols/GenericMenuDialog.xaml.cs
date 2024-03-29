@@ -2,24 +2,31 @@
 using System;
 using System.Windows;
 using System.Windows.Controls;
-using static StarFox.Interop.SFFileType;
 
 namespace StarFoxMapVisualizer.Controls.Subcontrols
 {
     /// <summary>
     /// Interaction logic for FileImportMenu.xaml
     /// </summary>
-    public partial class FileImportMenu : Window
+    public partial class GenericMenuDialog : Window
     {
-        /// <summary>
-        /// The selected type of file
-        /// </summary>
-        public SFFileType.ASMFileTypes FileType { get; private set; }
-        public FileImportMenu()
+        private readonly string[] selections;
+        public int Selection { get; private set; } = -1;
+        public string SelectedItem => selections[Selection];
+
+        public GenericMenuDialog()
         {
             InitializeComponent();
 
             Loaded += OnLoaded;
+        }
+
+        public GenericMenuDialog(string Caption, string Message, params string[] Selections) : this()
+        {
+            Title = Caption;
+            BlurbText.Text = Message;
+
+            selections = Selections;
         }
 
         private void OnLoaded(object sender, RoutedEventArgs e)
@@ -29,29 +36,32 @@ namespace StarFoxMapVisualizer.Controls.Subcontrols
 
         private void showOptions()
         {
-            TypeMenu.Items.Clear();
-            foreach(var type in Enum.GetValues<SFFileType.ASMFileTypes>())
+            SelectionMenu.Items.Clear();
+            int index = -1;
+            foreach (var selection in selections)
             {
+                index++;
                 var item = new MenuItem()
                 {
-                    Header = SFFileType.GetSummary(type)
+                    Header = selection
                 };
                 item.PreviewMouseLeftButtonUp += delegate
                 {
-                    Dismiss(type);
+                    Dismiss(index);
                 };
-                TypeMenu.Items.Add(item);
+                SelectionMenu.Items.Add(item);
             }
             var citem = new MenuItem()
             {
-                Header = "Cancel"
+                Header = "Nevermind"
             };
             citem.PreviewMouseLeftButtonUp += delegate
-            {
+            {                
                 DialogResult = false;
                 Close();
             };
-            TypeMenu.Items.Add(citem);
+            SelectionMenu.Items.Add(citem);
+
             Activate();
         }
 
@@ -59,10 +69,10 @@ namespace StarFoxMapVisualizer.Controls.Subcontrols
         /// Dismiss the window with the specified result
         /// </summary>
         /// <param name="FileType"></param>
-        private void Dismiss(ASMFileTypes FileType)
+        private void Dismiss(int Index)
         {
             DialogResult = true;
-            this.FileType = FileType;
+            Selection = Index;
             Close();
         }
     }

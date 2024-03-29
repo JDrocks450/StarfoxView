@@ -94,7 +94,7 @@ namespace StarFoxMapVisualizer.Controls
             }
         }
 
-        public MAPFile? SelectedFile { get; set; }
+        public MAPScript? SelectedFile { get; set; }
 
         //STARFOX CONSTANTS
         private ASMFile STRATEQU_Constants { get; set; }
@@ -125,7 +125,7 @@ namespace StarFoxMapVisualizer.Controls
         /// Creates a new control, optionally with the <see cref="SelectedFile"/> property set
         /// </summary>
         /// <param name="MapFile"></param>
-        public MAP3DControl(MAPFile? MapFile = default)
+        public MAP3DControl(MAPScript? MapFile = default)
         {
             InitializeComponent();
             SelectedFile = MapFile;
@@ -196,17 +196,22 @@ namespace StarFoxMapVisualizer.Controls
             Camera.BeginAnimation(ProjectionCamera.LookDirectionProperty, lookAnim);
         }
 
-        public void CameraTransitionToObject(MAPEvent mapEvent)
+        public bool CameraTransitionToObject(MAPEvent mapEvent)
         {
             //Try to find the referenced MAPEvent
-            if (!mapToEventMap.TryGetValue(mapEvent, out var mapObj)) return;
+            if (!mapToEventMap.TryGetValue(mapEvent, out var mapObj))
+            {
+                CameraTransitionToPoint(new Point3D(0, 100, mapEvent.LevelDelay), new Vector3D(0, 0, 1));
+                return false;
+            }
             var vecToPos = mapObj.Position;
-            var linearAdj = -(4 * mapObj.ColSize.Y);
-            var toPos = new Point3D(vecToPos.X, vecToPos.Y + 100 + mapObj.ColSize.Y, vecToPos.Z + linearAdj);
+            var linearAdj = -(10 * mapObj.ColSize.Y);
+            var toPos = new Point3D(vecToPos.X, vecToPos.Y + 50 + mapObj.ColSize.Y, vecToPos.Z + linearAdj);
             var lookAtDirection = vecToPos - new Vector3D(toPos.X, toPos.Y, toPos.Z);
             lookAtDirection.Normalize();
             CameraTransitionToPoint(toPos, lookAtDirection);
             _ = this;
+            return true;
         }
 
         private DispatcherOperation UpdateUI()
@@ -282,16 +287,23 @@ namespace StarFoxMapVisualizer.Controls
         {
             if (!await LoadConstants()) return false;
             var assetsReferenced = SelectedFile.LevelData.ShapeEvents;
+            HashSet<string> attempted = new();
+            int loaded = 0, eligible = 0;
             foreach(var asset in assetsReferenced)
             {
                 var shapeName = asset.ShapeName;
                 if (referencedShapes.ContainsKey(shapeName)) continue;
-                var shapes = await SHAPEStandard.GetShapesByUniqueNameOrDefault(shapeName);
-                if (shapes == default || shapes.Count() == 0) 
+                if (attempted.Contains(shapeName)) continue;
+                attempted.Add(shapeName);
+                eligible++;
+                var shapes = await SHAPEStandard.GetShapesByHeaderNameOrDefault(shapeName);                
+                if (shapes == default || shapes.Count() == 0)
                     continue;
                 var shape = shapes.First();
                 referencedShapes.Add(shapeName, shape);
+                loaded++;
             }
+            MessageBox.Show($"Loaded {loaded} of {eligible} shapes. ({(double)loaded / eligible:P})");
             return true;
         }
         /// <summary>
@@ -498,9 +510,7 @@ namespace StarFoxMapVisualizer.Controls
             await ShowMapContents();
         }
 
-        private void CamJumpStartButton_Click(object sender, RoutedEventArgs e)
-        {
+        private void CamJumpStartButton_Click(object sender, RoutedEventArgs e) =>
             CameraTransitionToPoint(new Point3D(0, 100, 0), new Vector3D(0, 0, 1));
-        }
     }
 }

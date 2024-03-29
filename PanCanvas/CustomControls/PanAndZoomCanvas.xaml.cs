@@ -44,6 +44,15 @@ namespace WpfPanAndZoom.CustomControls
 
         #endregion
 
+        public event EventHandler<Point> LocationChanged;
+
+        /// <summary>
+        /// The current position of the camera in this virtual 2D space
+        /// </summary>
+        public Point Location { get; private set; }
+        /// <summary>
+        /// When true, only the view can be moved. No components inside can be moved when this is ON.
+        /// </summary>
         public bool ViewMode { get; set; } = true;
 
         public PanAndZoomCanvas()
@@ -184,13 +193,21 @@ namespace WpfPanAndZoom.CustomControls
         {
             var translate = new TranslateTransform(Offset.X, Offset.Y);
             _transform.Matrix = translate.Value * _transform.Matrix;
+            Location -= Offset;
 
             foreach (UIElement child in this.Children)
             {
                 child.RenderTransform = _transform;
             }
+
+            LocationChanged?.Invoke(this, Location);
         }
         public void MoveCanvas(Point Offset) => MoveCanvas(new Vector(Offset.X,Offset.Y));
+        public void SetCanvasLocation(Point Location)
+        {
+            Vector delta = this.Location - Location;
+            MoveCanvas(delta);
+        }
 
         private void PanAndZoomCanvas_MouseMove(object sender, MouseEventArgs e)
         {

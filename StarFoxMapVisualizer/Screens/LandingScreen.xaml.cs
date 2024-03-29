@@ -2,6 +2,7 @@
 using Microsoft.WindowsAPICodePack.Dialogs;
 using StarFox.Interop.ASM;
 using StarFoxMapVisualizer.Controls2;
+using StarFoxMapVisualizer.Misc;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -84,6 +85,9 @@ namespace StarFoxMapVisualizer.Screens
 
             EditScreen screen = new EditScreen();
             //InstrumentPackerControl screen = new();
+
+            //Set the Editor Screen Current Instance
+            EDITORStandard.CurrentEditorScreen = screen;
             ((MainWindow)Application.Current.MainWindow).Content = screen;
         }
 

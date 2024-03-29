@@ -81,7 +81,8 @@ namespace StarFoxMapVisualizer.Controls
             {
                 current.EditorScreen.Focus();
                 if (Call.chunk != default)
-                    current.EditorScreen.JumpToSymbol(Call.chunk);                
+                    current.EditorScreen.JumpToSymbol(Call.chunk);
+                _ = Dispatcher.InvokeAsync(current.EditorScreen.Focus, DispatcherPriority.ApplicationIdle);
             }
             void OpenTab(ASM_FINST inst)
             {
@@ -145,10 +146,7 @@ namespace StarFoxMapVisualizer.Controls
             }
             await doFileOpenTaskAsync(call);
         }
-        public async Task OpenSymbol(ASMChunk chunk)
-        {
-            await OpenFileContents(new FileInfo(chunk.OriginalFileName), null, chunk);
-        }          
+        public Task OpenSymbol(ASMChunk chunk) => OpenFileContents(new FileInfo(chunk.OriginalFileName), null, chunk);
 
         private DispatcherOperation ParseAsync(FileInfo File)
         {            

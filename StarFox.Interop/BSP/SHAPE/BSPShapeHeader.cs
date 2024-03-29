@@ -55,7 +55,7 @@ namespace StarFox.Interop.BSP.SHAPE
         /// </summary>
         public int Shift { get; set; }
         /// <summary>
-        /// Radius is run through macro function chk1dig for verification
+        /// Radius is run through macro function <c>chk1dig</c> for verification
         /// <para><code>word</code></para>
         /// </summary>
         public float Radius { get; set; }
@@ -101,7 +101,8 @@ namespace StarFox.Interop.BSP.SHAPE
         /// </summary>
         public string Simple3 { get; set; }
         /// <summary>
-        /// Name of this shape
+        /// Name of this shape as it appears in the Shape Header. 
+        /// <para/>The last parameter in the ShapeHdr macro
         /// </summary>
         public string Name { get; set; }
         /// <summary>
@@ -110,8 +111,17 @@ namespace StarFox.Interop.BSP.SHAPE
         public string? InlineLabelName { get; set; }
         /// <summary>
         /// A name that has been given by the importer, unique to any other shape in the file.
+        /// <para/>Generally follows the formula: <c><see cref="Name"/>_NumberOfDuplicates</c>
         /// </summary>
         public string UniqueName { get; set; }
+        /// <summary>
+        /// If this shape is an alternate form of another shape, the place where the data can be found is
+        /// pointed to here.
+        /// <para/>This is the name of the shape that has this data.
+        /// </summary>
+        public string? DataPointer { get; set; }
+        public bool HasDataPointer => DataPointer != null;
+
         internal static string[] CompatibleMacroNames =
         {
             "shapehdr", "oshapehdr"
@@ -190,16 +200,6 @@ namespace StarFox.Interop.BSP.SHAPE
             var name = Structure.TryGetParameter(0x12)?.ParameterContent ?? ""; // name of the object
             //---- END
             ASMExtensions.EndConstantsContext();
-            if (!string.IsNullOrWhiteSpace(name))
-            {
-                if (name.Contains('<') && name.Contains('>'))
-                {
-                    var startIndex = name.IndexOf('<') + 1;
-                    var len = name.IndexOf('>') - startIndex;
-                    name = name.Substring(startIndex, len > -1 ? len : 0);
-                }
-                else name = name.TrimStart('<').TrimEnd('>');
-            }
             header = new(pptr, bank, fptr, type, zsort, height, view, shift, 
                 radius, xmax, ymax, zmax, size, cptr, shadow, simple1, simple2, simple3, name)
             {

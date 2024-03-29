@@ -25,6 +25,23 @@ namespace StarFox.Interop.BSP
         /// </summary>
         public StringBuilder ImportErrors { get; } = new();
 
+        public HashSet<string> ShapeHeaderEntries { get; } = new();
+        /// <summary>
+        /// Finds items that are in <see cref="ShapeHeaderEntries"/> yet not in <see cref="Shapes"/>
+        /// </summary>
+        /// <returns></returns>
+        /*
+        public IEnumerable<string> GetShapeHeaderDiscrepencies()
+        {
+            List<string> discrepencies = new();
+            foreach(var headerItem in ShapeHeaderEntries)
+            {
+                if (!Shapes.ContainsKey(headerItem))
+                    discrepencies.Add(headerItem);
+            }
+            return discrepencies;
+        }*/
+
         internal BSPFile(string OriginalFilePath) : base(OriginalFilePath)
         {
 

@@ -142,7 +142,7 @@ namespace StarFoxMapVisualizer.Controls.Subcontrols
             BG3Render.ImageSource = null;
             if (LevelContext == default) return;
             //RENDER BG2
-            if (LevelContext.BG2ChrFile != null && LevelContext.BG2ScrFile != null)
+            if (LevelContext?.BG2ChrFile != null && LevelContext?.BG2ScrFile != null)
             {
                 try
                 {
@@ -162,7 +162,7 @@ namespace StarFoxMapVisualizer.Controls.Subcontrols
                 }
             }
             //RENDER BG3
-            if (LevelContext.BG3ChrFile != null && LevelContext.BG3ScrFile != null)
+            if (LevelContext?.BG3ChrFile != null && LevelContext?.BG3ScrFile != null)
             {
                 try
                 {

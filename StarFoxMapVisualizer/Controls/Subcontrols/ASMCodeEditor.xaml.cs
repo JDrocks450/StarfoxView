@@ -72,19 +72,31 @@ namespace StarFoxMapVisualizer.Controls.Subcontrols
             if (chunk.OriginalFileName != current.OpenFile.FullName) return false;
             if (current?.symbolMap?.TryGetValue(chunk, out var run) ?? false)
             {
-                var characterRect = run.ContentStart.GetCharacterRect(LogicalDirection.Forward);
-                ScrollToHorizontalOffset(HorizontalOffset + characterRect.Left - ActualWidth / 2d);
-                ScrollToVerticalOffset(VerticalOffset + characterRect.Top - ActualHeight / 2d);
-                CaretPosition = run.ContentStart;
+                ScrollToInline(run);
                 return true;
             }
             else
-            {                
-
+            {
+                JumpToLine(Chunk.Line);
+                return true;
             }
             return false;
         }
-
+        private void ScrollToInline(Inline Inline)
+        {
+            var characterRect = Inline.ContentStart.GetCharacterRect(LogicalDirection.Forward);
+            ScrollToHorizontalOffset(HorizontalOffset + characterRect.Left - ActualWidth / 2d);
+            ScrollToVerticalOffset(VerticalOffset + characterRect.Top - ActualHeight / 2d);
+            CaretPosition = Inline.ContentStart;
+        }
+        public void JumpToLine(long Line)
+        {
+            var map = current?.NewLineMap;
+            if (map == default) return;
+            Line = Math.Min(map.Count, Math.Max(Line, 0));
+            if(map.TryGetValue(Line, out var line))
+                ScrollToInline(line);
+        }
         /// <summary>
         /// Shows and highlights string content
         /// </summary>
@@ -200,7 +212,10 @@ namespace StarFoxMapVisualizer.Controls.Subcontrols
                 }); // write the text in red here to show me I messed up somewhere
                 textParagraph.Inlines.Add(new Run(line));                
             }
-            textParagraph.Inlines.Add(new LineBreak()); // insert new line
+            var lineInline = textParagraph.Inlines.LastOrDefault();
+            if (lineInline != null)
+                current?.NewLineMap.TryAdd(lineNumber, lineInline);
+            textParagraph.Inlines.Add(new LineBreak()); // insert new line            
             return success;
         }    
 

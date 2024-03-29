@@ -270,7 +270,7 @@ namespace StarFoxMapVisualizer.Controls
                 OpenFile(file);
             ShapeSelector.SelectedIndex = -1;
             ShapeSelector.SelectionChanged += ShapeSelector_SelectionChanged;  
-            ShapeSelector.SelectedIndex = SelectedShape;
+            //ShapeSelector.SelectedIndex = SelectedShape;
         }
 
         /// <summary>
@@ -296,17 +296,37 @@ namespace StarFoxMapVisualizer.Controls
             MainSceneGroup.Children.Clear();
             //MainSceneGroup.Children.Add(MainLight);
         }        
+
+        /// <summary>
+        /// Uses the <see cref="SHAPEStandard.GetShapesByHeaderNameOrDefault(string)"/> to attempt to get the 
+        /// shape by the name provided and show it in the viewer
+        /// </summary>
+        /// <param name="ShapeName"></param>
+        /// <param name="Frame"></param>
+        public async Task<bool> ShowShape(string ShapeName, int Frame = -1)
+        {
+            ShapeSelector.SelectionChanged -= ShapeSelector_SelectionChanged;
+            ShapeSelector.SelectedValue = ShapeName;
+            ShapeSelector.SelectionChanged += ShapeSelector_SelectionChanged;
+
+            var results = await SHAPEStandard.GetShapesByHeaderNameOrDefault(ShapeName);
+            if (!results?.Any() ?? true) return false;
+
+            return ShowShape(results.First(), Frame);
+        }
+
         /// <summary>
         /// Invokes the control to draw a model with the current frame
         /// </summary>
         /// <param name="shape"></param>
         /// <param name="Frame"></param>
-        private void ShowShape(BSPShape? shape, int Frame = -1)
+        private bool ShowShape(BSPShape? shape, int Frame = -1)
         {           
-            if (!canShowShape) return; // showing shapes is blocked rn
-            if (shape == null) return; // there is no shape to speak of            
+            if (!canShowShape) return false; // showing shapes is blocked rn
+            if (shape == null) return false; // there is no shape to speak of            
             // our palette hasn't been rendered or we're forced to update it
-            if (!CreateSFPalette("id_0_c")) return;
+            if (!CreateSFPalette("id_0_c")) return false;
+            if (shape.Frames.Count <= 0) Frame = -1;
 
             currentShape = shape;
             
@@ -331,7 +351,7 @@ namespace StarFoxMapVisualizer.Controls
                     $"{ex.Message}\nEnding preview.", "Error Occured");
                 EndAnimatingFrames();
                 canShowShape = true;
-                return;
+                return false;
             }
             if (shape.Frames.Count > 0)
             {
@@ -340,11 +360,56 @@ namespace StarFoxMapVisualizer.Controls
                 FrameSelector.SelectionChanged -= FrameSelector_SelectionChanged;
                 FrameSelector.SelectedIndex = Frame;
                 FrameSelector.SelectionChanged += FrameSelector_SelectionChanged;
-            }
+            }            
             PopulatePointsView(shape, Frame);
             canShowShape = true;
             foreach (var model in models)
                 MainSceneGroup.Children.Add(model);
+            if (shape.Frames.Count <= 0)
+                TransitionCameraToLookAtObject(shape);
+            return true;
+        }
+
+        private void TransitionCameraToLookAtObject(BSPShape Shape)
+        {
+            if (!Shape.Points.Any()) return;
+            var ColSize = new Vector3D(Shape.Header.XMax, Shape.Header.YMax, Shape.Header.ZMax);
+            ColSize.Y = (-Shape.Points.Select(x => x.Y).Min()) + Shape.Points.Select(x => x.Y).Max();
+            ColSize.X = (-Shape.Points.Select(x => x.X).Min()) + Shape.Points.Select(x => x.X).Max();
+            ColSize.Z = (-Shape.Points.Select(x => x.Z).Min()) + Shape.Points.Select(x => x.Z).Max();
+            var toPos = new Point3D((-ColSize.X * 5), (ColSize.Y / 2), (-ColSize.Z)*5);
+            var vecToPos = new Vector3D(0, (ColSize.Y / 2), 0);
+            var lookAtDirection = vecToPos - new Vector3D(toPos.X, toPos.Y, toPos.Z);
+            lookAtDirection.Normalize();
+            CameraTransitionToPoint(toPos, lookAtDirection);
+        }
+
+        public void CameraTransitionToPoint(Point3D ToPosition, Vector3D LookAt)
+        {
+            var toPos = ToPosition;
+            var lookAtDirection = LookAt;
+            var positionAnim = new Point3DAnimation(toPos, TimeSpan.FromSeconds(1))
+            {
+                AccelerationRatio = .5,
+                DecelerationRatio = .5,
+                FillBehavior = FillBehavior.Stop
+            };
+            positionAnim.Completed += delegate
+            {
+                Camera.Position = toPos;
+            };
+            var lookAnim = new Vector3DAnimation(lookAtDirection, TimeSpan.FromSeconds(1))
+            {
+                AccelerationRatio = .5,
+                DecelerationRatio = .5,
+                FillBehavior = FillBehavior.Stop
+            };
+            lookAnim.Completed += delegate
+            {
+                Camera.LookDirection = lookAtDirection;
+            };
+            Camera.BeginAnimation(ProjectionCamera.PositionProperty, positionAnim);
+            Camera.BeginAnimation(ProjectionCamera.LookDirectionProperty, lookAnim);
         }
 
         /// <summary>
@@ -378,7 +443,7 @@ namespace StarFoxMapVisualizer.Controls
         /// <param name="Frame"></param>
         private void PopulatePointsView(BSPShape Shape, int Frame)
         {
-            PointsView.Items.Clear();
+            PointsView.Items.Clear();           
             foreach(var point in Shape.GetPoints(Frame))
                 PointsView.Items.Add(point.ToString());
         }
