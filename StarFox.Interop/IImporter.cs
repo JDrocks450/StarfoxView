@@ -118,8 +118,8 @@ namespace StarFox.Interop
             if (context == null) return default; // can't check this importer's includes
             StringBuilder builder = new();
             foreach(var expectedFile in ExpectedIncludes) {
-                if (!context.Includes.Any(x => 
-                    Path.GetFileName(x.OriginalFilePath) == Path.GetFileName(expectedFile)))
+                if (!context.Includes?.Any(x => 
+                    Path.GetFileName(x.OriginalFilePath) == Path.GetFileName(expectedFile)) ?? true)
                         builder.AppendLine($"{expectedFile} was expected to be included, but not found.");
             }            
             return builder.ToString();

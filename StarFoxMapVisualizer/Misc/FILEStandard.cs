@@ -5,7 +5,9 @@ using StarFox.Interop.ASM;
 using StarFox.Interop.BRR;
 using StarFox.Interop.BSP;
 using StarFox.Interop.BSP.SHAPE;
+using StarFox.Interop.GFX;
 using StarFox.Interop.GFX.COLTAB;
+using StarFox.Interop.GFX.DAT.MSPRITES;
 using StarFox.Interop.MAP;
 using StarFox.Interop.MSG;
 using StarFox.Interop.SPC;
@@ -33,6 +35,8 @@ namespace StarFoxMapVisualizer.Misc
         internal static readonly COLTABImporter COLTImport = new();
         internal static readonly BRRImporter BRRImport = new();
         internal static readonly SPCImporter SPCImport = new();
+        internal static readonly MSpritesImporter DEFSPRImport = new();
+
         /// <summary>
         /// Includes a <see cref="SFCodeProjectFileTypes.Assembly"/>, <see cref="SFCodeProjectFileTypes.Include"/> or 
         /// <see cref="SFCodeProjectFileTypes.Palette"/>.
@@ -96,6 +100,7 @@ namespace StarFoxMapVisualizer.Misc
             MAPImport.SetImports(AppResources.Includes.ToArray());
             BSPImport.SetImports(AppResources.Includes.ToArray());
             MSGImport.SetImports(AppResources.Includes.ToArray());
+            DEFSPRImport.SetImports(AppResources.Includes.ToArray());
         }
         private static async Task<bool> HandleImportMessages<T>(FileInfo File, CodeImporter<T> importer) where T : IImporterObject
         {
@@ -147,6 +152,16 @@ namespace StarFoxMapVisualizer.Misc
                 }
             }
             return true;
+        }
+
+        public static async Task<CAD.COL?> GetPalette(FileInfo File)
+        {
+            if (!AppResources.IsFileIncluded(File))
+            {
+                var success = await IncludeFile<object>(File) != default;
+                if (!success) return null;
+            }
+            return AppResources.ImportedProject.Palettes[File.FullName];
         }
 
         public static async Task OpenPalette(FileInfo File)
@@ -265,6 +280,9 @@ namespace StarFoxMapVisualizer.Misc
                     case SFFileType.ASMFileTypes.MSG:
                         asmfile = await OpenMSGFile(File);
                         break;
+                    case SFFileType.ASMFileTypes.DEFSPR:
+                        asmfile = await OpenDEFSPRFile(File);
+                        break;
                 }
                 goto import;
             }
@@ -276,6 +294,19 @@ namespace StarFoxMapVisualizer.Misc
                 AppResources.OpenFiles.Add(File.FullName, asmfile);
             return asmfile;
         }
+
+        private static async Task<ASMFile?> OpenDEFSPRFile(FileInfo file)
+        {
+            //DEFSPR IMPORT LOGIC   
+            if (!await HandleImportMessages(file, DEFSPRImport)) return default;
+            var rObj = await DEFSPRImport.ImportAsync(file.FullName);
+            var errors = DEFSPRImport.ErrorOut.ToString();
+            if (!string.IsNullOrWhiteSpace(errors))
+                MessageBox.Show(errors + "\nThe file was still imported -- use caution when viewing for inaccuracies.",
+                    "Errors Occured when Importing this File");
+            return rObj;
+        }
+
         internal static async Task<ASMFile?> OpenASMFile(FileInfo File, bool IgnoreDialogs = false)
         {
             //DO FILE PARSE NOW            
@@ -306,6 +337,28 @@ namespace StarFoxMapVisualizer.Misc
             return directory;
         }
         /// <summary>
+        /// Attempts to load the given <see cref="SFOptimizerNode"/> for the given type
+        /// <para/>Upon failure, will throw an exception
+        /// </summary>
+        /// <param name="Type"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        internal static SFOptimizerNode GetOptimizerByType(SFOptimizerTypeSpecifiers Type)
+        {
+            var project = AppResources.ImportedProject;
+            //Load the SFOptimizer
+            if (!project.Optimizers.Any())
+                throw new Exception("There aren't any optimizers added to this project yet.\n" +
+                    "Use the Refresh <Type>Map button to create this.");
+            //Find the one that is a STAGE MAP
+            var sfOptim = project.GetOptimizerByTypeOrDefault(Type);
+            if (sfOptim == default)
+                throw new Exception($"This project has Optimizers, but none of them are for {Type}.\n" +
+                    "Use the Refresh <Type>Map button to create this.");
+            return sfOptim;
+        }
+
+        /// <summary>
         /// This uses an SFOptimizer in the node that stores Levels to map Level Macro Name to the File it appears in.
         /// <para/>This will look up the level by it's name as it appears in it's header.
         /// </summary>
@@ -313,17 +366,7 @@ namespace StarFoxMapVisualizer.Misc
         internal static async Task<MAPScript?> GetMapScriptByMacroName(string LevelMacroName)
         {
             var HeaderName = LevelMacroName;
-            var project = AppResources.ImportedProject;
-            //Load the SFOptimizer
-            if (!project.Optimizers.Any())
-                throw new Exception("There aren't any optimizers added to this project yet.\n" +
-                    "Use the Refresh StageMap button to create this.");
-            //Find the one that is a STAGE MAP
-            var stageOptim = project.Optimizers.FirstOrDefault(x =>
-                x.OptimizerData.TypeSpecifier == Starfox.Editor.SFOptimizerTypeSpecifiers.Levels);
-            if (stageOptim == default)
-                throw new Exception("This project has Optimizers, but none of them are for Stages.\n" +
-                    "Use the Refresh StageMap button to create this.");
+            var stageOptim = GetOptimizerByType(SFOptimizerTypeSpecifiers.Levels);
             var stageMap = stageOptim.OptimizerData.ObjectMap;
             //Try to find the file that contains the stage we want
             if (!stageMap.TryGetValue(HeaderName, out var FileName)) return default;

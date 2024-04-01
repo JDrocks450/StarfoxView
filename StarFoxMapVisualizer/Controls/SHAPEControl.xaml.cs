@@ -1,9 +1,11 @@
-﻿using StarFox.Interop.BSP;
+﻿using Starfox.Editor.Settings;
+using StarFox.Interop.BSP;
 using StarFox.Interop.BSP.SHAPE;
 using StarFox.Interop.GFX;
 using StarFox.Interop.GFX.COLTAB;
 using StarFox.Interop.GFX.COLTAB.DEF;
 using StarFox.Interop.MAP;
+using StarFoxMapVisualizer.Controls.Subcontrols;
 using StarFoxMapVisualizer.Misc;
 using System;
 using System.Collections.Generic;
@@ -60,12 +62,23 @@ namespace StarFoxMapVisualizer.Controls
         /// Blocks invokes to update the model
         /// </summary>
         private bool canShowShape = true;
+        /// <summary>
+        /// For COLANIM brushes, this is used by the editor to make the color change between each color in the animation
+        /// </summary>
+        private int materialAnimationFrame = 0;
+        /// <summary>
+        /// The FPS the animations will play at in the editor
+        /// </summary>
+        private int EDITOR_AnimationFPS => (int)AppResources.ImportedProject.
+            GetSettings<GraphicsUserSettings>(SFCodeProjectSettingsTypes.Graphics).AnimationFPS.Value;
+
         SFPalette? currentSFPalette;
         COLGroup? currentGroup;
 
         private Storyboard SceneAnimation;
 
         private bool EDITOR_AnimationPaused = false;
+        private bool EDITOR_ToolboxOpened = true;
 
         public SHAPEControl()
         {
@@ -81,6 +94,36 @@ namespace StarFoxMapVisualizer.Controls
             SetRotation3DAnimation();
             BSPTreeView.Items.Clear();
             PointsView.Items.Clear();
+        }
+        
+        /// <summary>
+        /// Opens/Closes the toolbox on the right side. 
+        /// <para/><paramref name="EnsureState"/> can be used to manually set the state to ON/OFF.
+        /// </summary>
+        /// <param name="EnsureState"></param>
+        /// <returns>The new state of if it's opened or not</returns>
+        public bool ToggleToolbox(bool? EnsureState = default)
+        {
+            bool stateChanging = EDITOR_ToolboxOpened;
+            EDITOR_ToolboxOpened = EnsureState ?? !EDITOR_ToolboxOpened;
+            stateChanging = stateChanging != EDITOR_ToolboxOpened;
+            //This code effectively just checks to see if we set the state to the same as it already is.
+            if (!stateChanging) return EDITOR_ToolboxOpened;
+
+            double DEST_WIDTH = Toolbox.Width; // toolbox has a manual width set, which makes this fine here.
+            Thickness DEST_LOC = new Thickness(0);
+            if (!EDITOR_ToolboxOpened)
+                DEST_LOC.Right = -DEST_WIDTH;
+            var anim = new ThicknessAnimation(DEST_LOC, TimeSpan.FromSeconds(.5))
+            {
+                AccelerationRatio = .7,
+                DecelerationRatio = .3
+            }; // half second
+            Toolbox.BeginAnimation(MarginProperty, anim); // start the animation
+
+            ExpandToolboxButton.Content = EDITOR_ToolboxOpened ? ">" : "<";
+
+            return EDITOR_ToolboxOpened;
         }
 
         /// <summary>
@@ -172,30 +215,38 @@ namespace StarFoxMapVisualizer.Controls
         /// <param name="state"></param>
         public void ChangeFrame(object? state)
         {
+            //animate colors on the shape
+            materialAnimationFrame++;
+            if (materialAnimationFrame > 999) materialAnimationFrame = 0;            
+            
             void Show()
             {
                 ShowShape(currentShape, SelectedFrame);
             }
-            SelectedFrame++;
-            if (SelectedFrame >= currentShape.Frames.Count)
-                SelectedFrame = 0;
+            //for shapes without frames of animation, bail out here
+            if (currentShape.Frames.Count > 0)
+            {
+                SelectedFrame++;
+                if (SelectedFrame >= currentShape.Frames.Count)
+                    SelectedFrame = 0;
+            }
             Dispatcher.Invoke(delegate
             {
                 Show();
             });
         }
         /// <summary>
-        /// Start animating this object
+        /// Start animating this object -- for shapes with frames, this is used. This is also used for COLANIMs
         /// </summary>
         /// <param name="shape"></param>
         private void StartAnimationFrames(BSPShape shape)
         {
-            if (shape.Frames.Count <= 0) return;
             animating = true;
             if (animationClock != null)
                 EndAnimatingFrames();
             currentShape = shape;
-            animationClock = new Timer(ChangeFrame, null, 1000 / 15, 1000);
+            int milliseconds = (int)(1000.0 / EDITOR_AnimationFPS);
+            animationClock = new Timer(ChangeFrame, null, milliseconds, 1000);
         }
         /// <summary>
         /// Stop animating this object
@@ -325,8 +376,10 @@ namespace StarFoxMapVisualizer.Controls
             if (!canShowShape) return false; // showing shapes is blocked rn
             if (shape == null) return false; // there is no shape to speak of            
             // our palette hasn't been rendered or we're forced to update it
-            if (!CreateSFPalette("id_0_c")) return false;
+            if (!CreateSFPalette(shape.Header.ColorPalettePtr)) return false;
             if (shape.Frames.Count <= 0) Frame = -1;
+
+            bool shapeChanging = currentShape != shape;
 
             currentShape = shape;
             
@@ -343,30 +396,35 @@ namespace StarFoxMapVisualizer.Controls
             {
                 //Use the standard SHAPE library function to render the shape to a MeshGeom
                 models = SHAPEStandard.MakeBSPShapeMeshGeometry(
-                    shape, in group, in currentSFPalette, Frame, EDITOR_SelectedFace);
+                    shape, in group, in currentSFPalette, Frame, materialAnimationFrame, EDITOR_SelectedFace);
             }
             catch (Exception ex)
             {
+                //**REALLY OLD ERROR MESSAGE, MAY REMOVE IF EVER NOTICED.
                 MessageBox.Show($"Reticulating Splines resulted in: \n" +
                     $"{ex.Message}\nEnding preview.", "Error Occured");
                 EndAnimatingFrames();
                 canShowShape = true;
                 return false;
             }
+                                           
+            canShowShape = true;
+
+            foreach (var model in models)
+                MainSceneGroup.Children.Add(model); // render in viewer
+
+            // start animation on COLANIMs and frames if applicable
+            StartAnimationFrames(shape);
             if (shape.Frames.Count > 0)
             {
-                if (!EDITOR_AnimationPaused)
-                    StartAnimationFrames(shape);
                 FrameSelector.SelectionChanged -= FrameSelector_SelectionChanged;
                 FrameSelector.SelectedIndex = Frame;
                 FrameSelector.SelectionChanged += FrameSelector_SelectionChanged;
-            }            
-            PopulatePointsView(shape, Frame);
-            canShowShape = true;
-            foreach (var model in models)
-                MainSceneGroup.Children.Add(model);
-            if (shape.Frames.Count <= 0)
-                TransitionCameraToLookAtObject(shape);
+            }
+
+            if (shapeChanging)
+                TransitionCameraToLookAtObject(shape); // shape changed: transition camera
+            RefreshEditorInfoViews(shape, Frame, shapeChanging); // safely refresh views (if exception occurs, is handled)
             return true;
         }
 
@@ -377,7 +435,7 @@ namespace StarFoxMapVisualizer.Controls
             ColSize.Y = (-Shape.Points.Select(x => x.Y).Min()) + Shape.Points.Select(x => x.Y).Max();
             ColSize.X = (-Shape.Points.Select(x => x.X).Min()) + Shape.Points.Select(x => x.X).Max();
             ColSize.Z = (-Shape.Points.Select(x => x.Z).Min()) + Shape.Points.Select(x => x.Z).Max();
-            var toPos = new Point3D((-ColSize.X * 5), (ColSize.Y / 2), (-ColSize.Z)*5);
+            var toPos = new Point3D((-ColSize.X * 2), (ColSize.Y / 3), (-ColSize.Z)*2);
             var vecToPos = new Vector3D(0, (ColSize.Y / 2), 0);
             var lookAtDirection = vecToPos - new Vector3D(toPos.X, toPos.Y, toPos.Z);
             lookAtDirection.Normalize();
@@ -386,6 +444,7 @@ namespace StarFoxMapVisualizer.Controls
 
         public void CameraTransitionToPoint(Point3D ToPosition, Vector3D LookAt)
         {
+            if (double.IsNaN(LookAt.X) || double.IsNaN(LookAt.Y) || double.IsNaN(LookAt.Z)) return;
             var toPos = ToPosition;
             var lookAtDirection = LookAt;
             var positionAnim = new Point3DAnimation(toPos, TimeSpan.FromSeconds(1))
@@ -410,6 +469,78 @@ namespace StarFoxMapVisualizer.Controls
             };
             Camera.BeginAnimation(ProjectionCamera.PositionProperty, positionAnim);
             Camera.BeginAnimation(ProjectionCamera.LookDirectionProperty, lookAnim);
+        }
+
+        /// <summary>
+        /// Refreshes the information shown in the Faces, Points, Header, and Palette views on the left
+        /// </summary>
+        /// <param name="Shape"></param>
+        /// <param name="Frame"></param>
+        /// <param name="FullReload">Full Reload will refresh the Palettes entries -- something that doesn't change between frames</param>
+        private void RefreshEditorInfoViews(BSPShape Shape, int Frame, bool FullReload = false)
+        {
+            if (Shape == null) return;
+
+            void prompt(Exception Exception, string Message) => AppResources.ShowCrash(Exception, false, Message);
+
+            try
+            {
+                PopulatePointsView(Shape, Frame);
+            }
+            catch (Exception Ex)
+            {
+                prompt(Ex, "Populating the points view");
+            }
+            try
+            {
+                PopulateBSPTreeView(Shape);
+            }
+            catch (Exception Ex)
+            {
+                prompt(Ex, "Populating the BSP view");
+            }
+            if (FullReload)
+            {
+                try
+                {
+                    PopulatePaletteView(Shape);
+                }
+                catch (Exception Ex)
+                {
+                    prompt(Ex, "Populating the points view");
+                }
+            }
+
+            ErrorText.Text = CurrentFile?.ImportErrors?.ToString();
+        }
+
+        private void PopulatePaletteView(BSPShape Shape)
+        {
+            PalettesViewer.Children.Clear();
+
+            foreach(var referencedPalette in Shape.ReferencedPalettes)
+            {
+                bool loaded = false;
+                SHAPEStandard.CreateSFPalette(referencedPalette, out var Palette, out var COLGroup);
+                loaded = Palette != null;
+
+                TextBlock block = new TextBlock()
+                {
+                    Text = referencedPalette + (!loaded ? " - FAILED" : ""),
+                    Foreground = loaded ? Brushes.White : Brushes.Red
+                };
+                PalettesViewer.Children.Add(block);
+                if (!loaded) goto skip;
+
+                CopyableImage img = new CopyableImage()
+                {
+                    Source = Palette.RenderPalette().Convert()
+                };
+                PalettesViewer.Children.Add(img);
+
+            skip: // goto chad (completely unnecessary)
+                PalettesViewer.Children.Add(new Separator() { Margin = new Thickness(0,10,0,10) });
+            }
         }
 
         /// <summary>
@@ -443,9 +574,13 @@ namespace StarFoxMapVisualizer.Controls
         /// <param name="Frame"></param>
         private void PopulatePointsView(BSPShape Shape, int Frame)
         {
-            PointsView.Items.Clear();           
-            foreach(var point in Shape.GetPoints(Frame))
-                PointsView.Items.Add(point.ToString());
+            PointsView.Items.Clear(); 
+            try
+            {
+                foreach (var point in Shape.GetPoints(Frame))
+                    PointsView.Items.Add(point.ToString());
+            }
+            catch { }
         }
 
         private void ShapeSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -463,9 +598,7 @@ namespace StarFoxMapVisualizer.Controls
                 FrameSelector.SelectionChanged += FrameSelector_SelectionChanged;
                 FrameSelector.SelectedIndex = selectedShape.Frames.Any() ? 0 : -1;
                 //if (selectedShape.Frames.Any())
-                    ShowShape(selectedShape);
-                PopulateBSPTreeView(selectedShape);
-                ErrorText.Text = (CurrentFile as BSPFile).ImportErrors.ToString();
+                    ShowShape(selectedShape);                
             }
         }
 
@@ -528,5 +661,12 @@ namespace StarFoxMapVisualizer.Controls
             paused = !paused;
             RotButton.Content = $"Rotation: {(paused ? "OFF" : "ON")}";
         }
+
+        /// <summary>
+        /// Expands or contracts the toolbox on the right side of the control
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ExpandToolboxButton_Click(object sender, RoutedEventArgs e) => ToggleToolbox();
     }
 }

@@ -28,7 +28,11 @@ namespace StarFox.Interop
             /// <summary>
             /// Messages for commentary in the game
             /// </summary>
-            MSG,            
+            MSG,   
+            /// <summary>
+            /// 3D MSprites Definition
+            /// </summary>
+            DEFSPR,
         }
         /// <summary>
         /// Files that are stored and interpreted as Binary
@@ -54,6 +58,7 @@ namespace StarFox.Interop
             ASMFileTypes.MAP => "Map-Script File",
             ASMFileTypes.BSP => "Compiled 3D Models",
             ASMFileTypes.MSG => "Communications",
+            ASMFileTypes.DEFSPR => "3D Textures (MSprites)",
             _ => "Not found", // default case
         };
         public static string GetSummary(BINFileTypes Type) => Type switch

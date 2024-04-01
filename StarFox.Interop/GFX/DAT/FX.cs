@@ -30,7 +30,7 @@ namespace StarFox.Interop.GFX.DAT
                     byte Byte = buffer[((row + lcv2) * 256) + (col + lcv)];
 
                     // de-interleave
-                    if (!mode) { Byte &= 0xf0; Byte >>= 4; }
+                    if (mode) { Byte &= 0xf0; Byte >>= 4; }
                     else { Byte &= 0x0f; }
 
                     data <<= 4;
@@ -66,9 +66,9 @@ namespace StarFox.Interop.GFX.DAT
                     for (int row = 0; row < 384; row += 8)
                     {
                         for (int col = 0; col < 256; col += 8)
-                        {
+                        {                            
                             Read_8x8(fileData, row, col, fx_low, false); // read low bank
-                            Read_8x8(fileData, row, col, fx_high, true); // read high bank
+                            Read_8x8(fileData, row, col, fx_high, true); // read high bank                         
                         }
                     }
                     return new FXGraphicsHiLowBanks(fx_high.ToArray(),fx_low.ToArray());

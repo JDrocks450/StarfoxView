@@ -152,9 +152,15 @@
                 </MenuItem>
                 <MenuItem Header="Editor" Style="{StaticResource Base}">
                     <MenuItem Header="Export All 3D Data..." Click="ExportAll3DButton_Click"/>
+                    <Separator/>
                     <MenuItem Header="Refresh Editor SHAPES Map..." Click="SHAPEMapRefreshButton_Click"/>
                     <MenuItem Header="Refresh Editor STAGES Map..." Click="STAGEMapRefreshButton_Click"/>
+                    <Separator/>
                     <MenuItem Header="Settings..." Click="SettingsMenuItem_Click"/>
+                </MenuItem>
+                <MenuItem Header="Go" Name="GoItem" Style="{StaticResource Base}" SubmenuOpened="GoItem_Load">
+                    <MenuItem Header="Map..."/>
+                    <MenuItem Header="Shape..."/>
                 </MenuItem>
             </Menu>
         </Border>

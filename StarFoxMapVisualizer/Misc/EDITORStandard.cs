@@ -300,5 +300,23 @@ namespace StarFoxMapVisualizer.Misc
             }
             return default;
         }
+
+        /// <summary>
+        /// Opens up the best editor to open an item mapped in the given optimizer type.
+        /// </summary>
+        /// <param name="OptimizerType">The type of <see cref="SFOptimizerNode"/> this item appears in</param>
+        /// <param name="ObjectName">The name of the object in the optimizer: Shapes, Levels, etc.</param>
+        /// <exception cref="NotImplementedException"></exception>
+        internal static Task<bool> InvokeOptimizerMapItem(SFOptimizerTypeSpecifiers OptimizerType, string ObjectName)
+        {
+            switch (OptimizerType)
+            {
+                case SFOptimizerTypeSpecifiers.Shapes:
+                    return ShapeEditor_ShowShapeByName(ObjectName);
+                case SFOptimizerTypeSpecifiers.Levels:
+                default:
+                    throw new NotImplementedException("There is no way to handle that item yet.");
+            }            
+        }
     }
 }

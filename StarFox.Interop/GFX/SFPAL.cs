@@ -37,6 +37,10 @@ namespace StarFox.Interop.GFX
         /// A filtered list of just coldepths (light colors)
         /// </summary>
         public Dictionary<int, Color> Coldepths { get; } = new();
+        /// <summary>
+        /// A filtered list of just colnorms (colors based on normal of face ... in relation to a supposed source)
+        /// </summary>
+        public Dictionary<int, Color> Colnorms { get; } = new();
         private bool IsOdd = false;
 
         /// <summary>
@@ -82,7 +86,7 @@ namespace StarFox.Interop.GFX
             IsOdd = false;
             var colors = new Color[0];
             int i = -1, actualPosition = -1;
-            foreach(var definition in group.Definitions)
+            foreach (var definition in group.Definitions)
             {
                 i++;
                 actualPosition++;
@@ -90,8 +94,10 @@ namespace StarFox.Interop.GFX
                 {
                     COLDefinition.CallTypes.Collite => HandleCollite(definition as COLLite),
                     COLDefinition.CallTypes.Coldepth => HandleColdepth(definition as COLDepth),
+                    COLDefinition.CallTypes.Colnorm => HandleColnorm(definition as COLNorm),
+                    COLDefinition.CallTypes.Colsmooth => HandleColsmooth(definition as COLSmooth),
                     _ => default
-                };                
+                };
                 if (color == null)
                 {
                     i--;
@@ -159,15 +165,19 @@ namespace StarFox.Interop.GFX
         }
         private Color? HandleColdepth(COLDepth DepthColor)
         {
-            if (DepthColor.ColorByte < 0x0B)
+            return HandleDepthColorByte(DepthColor.ColorByte);
+        }
+        private Color? HandleDepthColorByte(int ColorByte)
+        {
+            if (ColorByte < 0x0B)
             { // 1-10 reserved for greyscale
-                var grey = GetGreyscale(DepthColor.ColorByte / 10.0f);
-                Coldepths.Add(DepthColor.ColorByte, grey);
+                var grey = GetGreyscale(ColorByte / 10.0f);
+                Coldepths.Add(ColorByte, grey);
                 return grey;
             }
-            if (DepthColor.ColorByte == 0x1f || (DepthColor.ColorByte >= 0x19 && DepthColor.ColorByte < 0x1e)) // 0x19 -> 0x1d && 0x1f is mixies
-                return GetMixies(DepthColor.ColorByte);
-            if (DepthColor.ColorByte == 0x12)
+            if (ColorByte == 0x1f || (ColorByte >= 0x19 && ColorByte < 0x1e)) // 0x19 -> 0x1d && 0x1f is mixies
+                return GetMixies(ColorByte);
+            if (ColorByte == 0x12)
             {
                 IsOdd = false;
                 return default;
@@ -176,26 +186,21 @@ namespace StarFox.Interop.GFX
             if (isInbetween)
             {
                 IsOdd = false;
-                var previousColor = Coldepths[DepthColor.ColorByte-1];
-                var nextColor = GetSolidColor(DepthColor.ColorByte + 1);
+                var previousColor = Coldepths[ColorByte - 1];
+                var nextColor = GetSolidColor(ColorByte + 1);
                 var thisColor = LerpColor(previousColor, nextColor, .5f); // lerp by half of both colors
-                Coldepths.Add(DepthColor.ColorByte, thisColor);
+                Coldepths.Add(ColorByte, thisColor);
                 return thisColor;
             }
             IsOdd = true;
-            return GetSolidColor(DepthColor.ColorByte);
+            return GetSolidColor(ColorByte);
         }
-        /// <summary>
-        /// Processes a <see cref="COLLite"/> color (WIP)
-        /// </summary>
-        /// <param name="LightColor"></param>
-        /// <returns></returns>
-        private Color HandleCollite(COLLite LightColor)
+        private Color HandleColorByte(int ColorByte)
         {
-            if (Collites.TryGetValue(LightColor.ColorByte, out var color))
+            if (Collites.TryGetValue(ColorByte, out var color))
                 return color;
             // Falling back on CoolK definitions until parser is complete
-            var collite = ColorTranslator.FromHtml(LightColor.ColorByte switch
+            var collite = ColorTranslator.FromHtml(ColorByte switch
             {
                 0 => "#E7E7E7", //Solid Dark Grey
                 1 => "#AAAAAA", // = Solid Darker Grey
@@ -207,9 +212,33 @@ namespace StarFox.Interop.GFX
                 7 => "#2411A3", //= Solid Blue
                 8 => "#7C11A3", //= Shaded Red/blue (Purple)
                 9 => "#2F9E28", //= Shaded Green/Dark Green
+                _ => "#FFFFFF" // = Error -- color not found
             });
-            Collites.Add(LightColor.ColorByte, collite);
+            Collites.Add(ColorByte, collite);
             return collite;
         }
+        /// <summary>
+        /// Processes a <see cref="COLLite"/> color (WIP)
+        /// </summary>
+        /// <param name="LightColor"></param>
+        /// <returns></returns>
+        private Color HandleCollite(COLLite LightColor) => HandleColorByte(LightColor.ColorByte);
+        /// <summary>
+        /// Very WIP!
+        /// </summary>
+        /// <param name="LightColor"></param>
+        /// <returns></returns>
+        private Color HandleColnorm(COLNorm LightColor)
+        {
+            var color = palette.GetPalette()[LightColor.ColorByte];
+            Colnorms.Add(LightColor.ColorByte, color);
+            return color;
+        }
+        /// <summary>
+        /// Very WIP!
+        /// </summary>
+        /// <param name="LightColor"></param>
+        /// <returns></returns>
+        private Color HandleColsmooth(COLSmooth LightColor) => HandleDepthColorByte(LightColor.ColorByte) ?? Color.Red;
     }
 }

@@ -183,7 +183,7 @@ namespace StarFox.Interop.GFX
             public Bitmap RenderTile(int tile, int size, Color[] pal, bool xflip = false, bool yflip = false)
             {
                 Bitmap output = new Bitmap(size, size);
-
+                
                 for (int y = 0; y < (size / 8); y++)
                 {
                     for (int x = 0; x < (size / 8); x++)

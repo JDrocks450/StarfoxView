@@ -158,5 +158,8 @@ namespace Starfox.Editor
                 ParentNode = processDirectory(WorkspaceDirectory, null);
             });
         }
+
+        public SFOptimizerNode GetOptimizerByTypeOrDefault(SFOptimizerTypeSpecifiers type)=> Optimizers.FirstOrDefault(x =>
+                x.OptimizerData.TypeSpecifier == type);
     }
 }

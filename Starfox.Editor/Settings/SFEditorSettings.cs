@@ -94,6 +94,7 @@ namespace Starfox.Editor.Settings
         public RangedUserSetting Scene3DFieldOfView { get; set; } = new RangedUserSetting(75, 200, 25);
 
         public override SFCodeProjectSettingsTypes SettingsType => SFCodeProjectSettingsTypes.Graphics;
-        
+
+        public RangedUserSetting AnimationFPS { get; set; } = new RangedUserSetting(20, 120, 1);
     }
 }

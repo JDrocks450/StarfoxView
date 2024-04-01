@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 
 namespace StarFox.Interop.BSP.SHAPE
 {
@@ -228,12 +223,14 @@ namespace StarFox.Interop.BSP.SHAPE
         /// <summary>
         /// A set of faces that reference points with this shape.
         /// </summary>
-        public HashSet<BSPFace> Faces { get; set; } = new();       
+        public HashSet<BSPFace> Faces { get; set; } = new();
+
+        public HashSet<string> ReferencedPalettes { get; } = new();
 
         /// <summary>
         /// Creates a blank shape
         /// </summary>
-        public BSPShape() { 
+        private BSPShape() { 
             
         }
 
@@ -243,6 +240,7 @@ namespace StarFox.Interop.BSP.SHAPE
         /// <param name="Header"></param>
         public BSPShape(BSPShapeHeader Header) : this() {
             this.Header = Header;
+            ReferencedPalettes.Add(Header.ColorPalettePtr);
         }
         /// <summary>
         /// Get points for a given keyframe

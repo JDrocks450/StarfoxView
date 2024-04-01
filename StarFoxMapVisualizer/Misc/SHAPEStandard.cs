@@ -16,6 +16,7 @@ using System.Windows.Controls;
 using System.Windows.Media.Media3D;
 using System.Windows.Media;
 using StarFox.Interop.ASM;
+using Starfox.Editor;
 
 namespace StarFoxMapVisualizer.Misc
 {
@@ -75,7 +76,7 @@ namespace StarFoxMapVisualizer.Misc
                     Shape.Serialize(writer);
                 filesCreated.Add(fileName);
             }
-            var colorPalPtr = "id_0_c"; // Shape.Header.ColorPalettePtr
+            var colorPalPtr = Shape.Header.ColorPalettePtr;
             fileName = System.IO.Path.Combine(DefaultShapeExtractionDirectory, $"{colorPalPtr}.sfpal");                
             if (!File.Exists(fileName))
             {
@@ -94,17 +95,7 @@ namespace StarFoxMapVisualizer.Misc
         public static async Task<IEnumerable<BSPShape>?> GetShapesByHeaderNameOrDefault(string HeaderName)
         {
             HeaderName = HeaderName.ToUpper();
-            var project = AppResources.ImportedProject;
-            //Load the SFOptimizer
-            if (!project.Optimizers.Any())
-                throw new Exception("There aren't any optimizers added to this project yet.\n" +
-                    "Use the Refresh ShapeMap button to create this.");
-            //Find the one that is a SHAPE MAP
-            var shapeOptim = project.Optimizers.FirstOrDefault(x => 
-                x.OptimizerData.TypeSpecifier == Starfox.Editor.SFOptimizerTypeSpecifiers.Shapes);
-            if (shapeOptim == default)
-                throw new Exception("This project has Optimizers, but none of them are for Shapes.\n" +
-                    "Use the Refresh ShapeMap button to create this.");            
+            var shapeOptim = FILEStandard.GetOptimizerByType(SFOptimizerTypeSpecifiers.Shapes);
             var shapeMap = shapeOptim.OptimizerData.ObjectMap;
             //Try to find the file that contains the shape we want
             if (!shapeMap.TryGetValue(HeaderName, out var FileName)) return default;
@@ -169,10 +160,10 @@ namespace StarFoxMapVisualizer.Misc
         /// <param name="Frame">The frame of animation to use as the rendered frame</param>
         /// <returns></returns>
         public static List<GeometryModel3D> MakeBSPShapeMeshGeometry(
-            BSPShape Shape, string ColorPalettePtr = "id_0_c", int Frame = -1)
+            BSPShape Shape, string ColorPalettePtr = "id_0_c", int Frame = -1, int MaterialAnimationFrame = -1)
         {
             CreateSFPalette(ColorPalettePtr, out var palette, out var group);
-            return MakeBSPShapeMeshGeometry(Shape, in group, in palette, Frame);
+            return MakeBSPShapeMeshGeometry(Shape, in group, in palette, Frame, MaterialAnimationFrame);
         }
         /// <summary>
         /// Turns a <see cref="BSPShape"/> into a GeometryModel3D collection which makes up the supplied model
@@ -181,11 +172,11 @@ namespace StarFoxMapVisualizer.Misc
         /// <param name="Group">The COLGroup instance to use to find color data</param>
         /// <param name="Palette">The palette that contains the colors to use</param>
         /// <param name="Frame">The frame of Animation to render</param>
-        /// <param name="HighlightFace">Optionally, a face to highlight over all others</param>
+        /// <param name="HighlightFace">Optionally, a face to highlight over all others. The remaining ones will be semi-opaque.</param>
         /// <returns></returns>
         public static List<GeometryModel3D> MakeBSPShapeMeshGeometry(
-            BSPShape Shape, in COLGroup Group, in SFPalette Palette, int Frame, 
-            BSPFace? HighlightFace = default)            
+            BSPShape Shape, in COLGroup Group, in SFPalette Palette, int Frame, int MaterialAnimationFrame,
+            BSPFace? HighlightFace = default, Brush? HighlightColor = default)            
         {
             //SET VARS
             var models = new List<GeometryModel3D>();
@@ -193,6 +184,7 @@ namespace StarFoxMapVisualizer.Misc
             var group = Group;
             var currentSFPalette = Palette;
             var EDITOR_SelectedFace = HighlightFace;
+            HighlightColor = HighlightColor ?? Brushes.Yellow;
             //---
 
             Color GetColor(COLDefinition.CallTypes Type, int colIndex, SFPalette palette)
@@ -200,9 +192,13 @@ namespace StarFoxMapVisualizer.Misc
                 var fooColor = System.Drawing.Color.Blue;
                 switch (Type)
                 {
-                    case COLDefinition.CallTypes.Collite: // Diffuse
+                    case COLDefinition.CallTypes.Collite: // diffuse                    
                         fooColor = palette.Collites[colIndex];
                         break;
+                    case COLDefinition.CallTypes.Colnorm: // normal? not sure.
+                        fooColor = palette.Colnorms[colIndex];
+                        break;
+                    case COLDefinition.CallTypes.Colsmooth: // not implemented
                     case COLDefinition.CallTypes.Coldepth: // No reaction to angle
                         fooColor = palette.Coldepths.ElementAtOrDefault(colIndex).Value;
                         break;
@@ -223,7 +219,7 @@ namespace StarFoxMapVisualizer.Misc
                     Brush = new SolidColorBrush(Colors.Blue),
                 }; // basic material in case of errors
                 var definition = group.Definitions.ElementAtOrDefault(face.Color); // find the color definition for this face
-                double _Opacity = 1;
+                double drawingOpacity = 1;
                 if (definition != default) // did we find it?
                 {
                     int colIndex = 0;
@@ -241,11 +237,12 @@ namespace StarFoxMapVisualizer.Misc
                             break;
                         case COLDefinition.CallTypes.Animation: // color animation
                             {
-                                break;
                                 var animDef = definition as COLAnimationReference; // find anim definition
                                 //attempt to make a palette for this animation
-                                if (!SHAPEStandard.CreateSFPalette(animDef.TableName, out var animSFPal, out var animGroup)) break;
-                                int index = Frame > -1 ? Frame % animGroup.Definitions.Count : 0; // adjust color based on Frame parameter
+                                if (!CreateSFPalette(animDef.TableName, out var animSFPal, out var animGroup)) break;
+                                shape.ReferencedPalettes.Add(animDef.TableName);
+                                int index = MaterialAnimationFrame > -1 ? MaterialAnimationFrame % 
+                                    animGroup.Definitions.Count : 0; // adjust color based on MatAnimFrame parameter
                                 var animMemberDefinition = animGroup.Definitions.ElementAt(index); // jump to color
                                 color = GetColor(animMemberDefinition.CallType, // finally get the color from the animPalette
                                     ((ICOLColorIndexDefinition)animMemberDefinition).ColorByte,
@@ -261,15 +258,15 @@ namespace StarFoxMapVisualizer.Misc
                 //Do we have a selected face to highlight?
                 if (EDITOR_SelectedFace != default)
                 {
-                    _Opacity = .5; // we do, make all of them semi-opaque
-                    (material as DiffuseMaterial).Brush.Opacity = _Opacity; // current material is set to this opacity
+                    drawingOpacity = .5; // we do, make all of them semi-opaque
+                    (material as DiffuseMaterial).Brush.Opacity = drawingOpacity; // current material is set to this opacity
                     if (EDITOR_SelectedFace == face)
                     { // oops, this material is the one we want to highlight!
                         material = new EmissiveMaterial()
                         {
-                            Brush = Brushes.Yellow, // make it stand out
+                            Brush = HighlightColor, // make it stand out
                         };
-                        _Opacity = 1; // put the opacity back!
+                        drawingOpacity = 1; // put the opacity back!
                     }
                 }
                 //Make the model that uses this geom we made

@@ -6,11 +6,13 @@ using StarFox.Interop.ASM.TYP;
 using StarFox.Interop.BSP;
 using StarFox.Interop.GFX;
 using StarFox.Interop.GFX.COLTAB;
+using StarFox.Interop.GFX.DAT.MSPRITES;
 using StarFox.Interop.MAP;
 using StarFox.Interop.MSG;
 using StarFox.Interop.SPC;
 using StarFoxMapVisualizer.Controls;
 using StarFoxMapVisualizer.Controls.Subcontrols;
+using StarFoxMapVisualizer.Controls2;
 using StarFoxMapVisualizer.Dialogs;
 using StarFoxMapVisualizer.Misc;
 using System;
@@ -25,6 +27,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Threading;
+using static StarFox.Interop.GFX.DAT.MSPRITES.MSprite;
 
 namespace StarFoxMapVisualizer.Screens
 {
@@ -379,15 +382,8 @@ namespace StarFoxMapVisualizer.Screens
                     ViewMapButton.IsChecked = true;
                     TitleBlock.Text = "Map Event Node Viewer";
                     break;
-                case ViewMode.OBJ:
-                    try
-                    {
-                        OBJViewer.Unpause();
-                    }
-                    catch(Exception ex)
-                    {
-                        MessageBox.Show($"The Shape Viewer has reported an error: {ex.Message}");
-                    }
+                case ViewMode.OBJ:                                        
+                    OBJViewer.Unpause();
                     ViewModeHost.SelectedItem = OBJTab;
                     ViewBSTButton.IsChecked = true;
                     TitleBlock.Text = "Shape Viewer";
@@ -527,6 +523,7 @@ namespace StarFoxMapVisualizer.Screens
             bool isMap = asmfile is MAPFile;
             bool isObj = asmfile is BSPFile;
             bool isMSG = asmfile is MSGFile;
+            bool isDEFSPR = asmfile is MSpritesDefinitionFile;
             if (asmfile == default)
             {
                 EDITORStandard.HideLoadingWindow();
@@ -552,6 +549,11 @@ namespace StarFoxMapVisualizer.Screens
             {
                 CurrentMode = ViewMode.MSG;
                 await HandleViewModes();
+            }
+            else if (isDEFSPR)
+            { // 3D MSPRITES VIEWER
+                MSpritesViewer viewer = new MSpritesViewer(asmfile as MSpritesDefinitionFile);
+                viewer.ShowDialog();
             }
             else
             {
@@ -739,7 +741,8 @@ namespace StarFoxMapVisualizer.Screens
             var sfOptim = await EDITORStandard.Editor_RefreshMap(Type);
             var dirNode = AppResources.ImportedProject.SearchDirectory(Path.GetFileName(sfOptim.DirectoryPath)).FirstOrDefault();
             if (dirNode == default)
-                throw new FileNotFoundException("Couldn't find the node that matches this directory in the Code Project.");
+                AppResources.ShowCrash(new FileNotFoundException("Couldn't find the node that matches this directory in the Code Project."),
+                    false, $"Could not refresh {Type} because the directory it corresponds with isn't in this project.");
             dirNode.AddOptimizer(Noun, sfOptim);
             MessageBox.Show($"The {Noun} Code Project Optimizer has been updated with {sfOptim.ObjectMap.Count} items.");
             UpdateInterface(true); // files updated!
@@ -803,6 +806,51 @@ namespace StarFoxMapVisualizer.Screens
         {
             SettingsDialog settings = new();
             settings.Show();
-        }        
+        }
+
+        /// <summary>
+        /// Fired when the Go... item is opened (this loads Maps, stages, etc.)
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void GoItem_Load(object sender, RoutedEventArgs e)
+        {            
+            GoItem.Items.Clear();
+            foreach(var map in AppResources.ImportedProject.Optimizers)
+            {
+                if (map.OptimizerData == default) continue;
+                MenuItem item = new MenuItem()
+                {
+                    Header = Enum.GetName(map.OptimizerData.TypeSpecifier),
+                };                
+                foreach(var mapItem in map.OptimizerData.ObjectMap)
+                {
+                    var subItem = new MenuItem()
+                    {
+                        Header = mapItem.Key
+                    };
+                    subItem.Click += async delegate
+                    {
+                        var name = mapItem.Key;
+                        try
+                        {
+                            EDITORStandard.ShowLoadingWindow();
+                            await EDITORStandard.InvokeOptimizerMapItem(map.OptimizerData.TypeSpecifier, name);
+                        }
+                        catch (Exception e)
+                        {
+                            AppResources.ShowCrash(e, false, $"Couldn't open this {map.OptimizerData.TypeSpecifier} item.");
+                        }
+                        finally
+                        {
+                            EDITORStandard.HideLoadingWindow();
+                        }
+                    };
+                    item.Items.Add(subItem);
+                }
+                GoItem.Items.Add(item);
+            }
+            GoItem.SubmenuOpened -= GoItem_Load;
+        }
     }
 }
