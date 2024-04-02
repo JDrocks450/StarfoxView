@@ -49,6 +49,7 @@ namespace StarFoxMapVisualizer
         public static HashSet<ASMFile>? Includes => ImportedProject?.Includes;
         /// <summary>
         /// All files that have been imported by the <see cref="ASMImporter"/>
+        /// <para/>Key is File FullName (FullPath)
         /// </summary>
         public static Dictionary<string, IImporterObject>? OpenFiles => ImportedProject?.OpenFiles;
         public static IEnumerable<MAPFile>? OpenMAPFiles => ImportedProject?.OpenMAPFiles;

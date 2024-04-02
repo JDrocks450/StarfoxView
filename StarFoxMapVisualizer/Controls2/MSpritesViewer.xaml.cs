@@ -2,6 +2,7 @@
 using StarFox.Interop.GFX.DAT;
 using StarFox.Interop.GFX.DAT.MSPRITES;
 using StarFoxMapVisualizer.Misc;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -48,33 +49,14 @@ namespace StarFoxMapVisualizer.Controls2
             SelectionCombo.SelectedItem = Sprite;
             SelectionCombo.SelectionChanged += SelectionCombo_SelectionChanged;
 
-            string[] banks =
+            try
             {
-                "TEX_01_low.cgx",
-                "TEX_01_high.cgx",
-                "TEX_23_low.cgx",
-                "TEX_23_high.cgx",
-                "TEX_23_A_low.cgx",
-                "TEX_23_A_high.cgx",
-            };
-            List<FXCGXFile> cgxs = new List<FXCGXFile>();
-            foreach(var bankName in banks)
-            {
-                var hit = AppResources.ImportedProject.SearchFile(bankName).FirstOrDefault();
-                if (hit == default)
-                    throw new FileNotFoundException($"Could not find {bankName}");
-                cgxs.Add(SFGFXInterface.OpenCGX(hit.FilePath));
+                RenderImage.Source = await SHAPEStandard.RenderMSprite(Sprite);
             }
-            var colHit = AppResources.ImportedProject.SearchFile("P_COL.COL").FirstOrDefault();
-            if (colHit == default)
-                throw new FileNotFoundException($"Could not find P_COL.COL");
-
-            var pCol = await FILEStandard.GetPalette(new FileInfo(colHit.FilePath));
-            if (pCol == default)
-                throw new InvalidDataException("PCOL was not found.");
-
-            var bmp = SFGFXInterface.RenderMSprite(Sprite, pCol, cgxs.ToArray());
-            RenderImage.Source = bmp.Convert();
+            catch (Exception ex)
+            {
+                AppResources.ShowCrash(ex, false, "Viewing an MSprite");
+            }
         }
     }
 }

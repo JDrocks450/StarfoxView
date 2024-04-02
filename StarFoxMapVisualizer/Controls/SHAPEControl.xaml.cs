@@ -3,31 +3,26 @@ using StarFox.Interop.BSP;
 using StarFox.Interop.BSP.SHAPE;
 using StarFox.Interop.GFX;
 using StarFox.Interop.GFX.COLTAB;
-using StarFox.Interop.GFX.COLTAB.DEF;
-using StarFox.Interop.MAP;
 using StarFoxMapVisualizer.Controls.Subcontrols;
 using StarFoxMapVisualizer.Misc;
 using System;
 using System.Collections.Generic;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
+using System.Windows.Markup;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Media.Media3D;
-using System.Windows.Navigation;
 using System.Windows.Shapes;
-using static Microsoft.WindowsAPICodePack.Shell.PropertySystem.SystemProperties.System;
-using static StarFox.Interop.GFX.CAD;
+using System.Xml.Linq;
 
 namespace StarFoxMapVisualizer.Controls
 {
@@ -424,7 +419,8 @@ namespace StarFoxMapVisualizer.Controls
 
             if (shapeChanging)
                 TransitionCameraToLookAtObject(shape); // shape changed: transition camera
-            RefreshEditorInfoViews(shape, Frame, shapeChanging); // safely refresh views (if exception occurs, is handled)
+            RefreshEditorInfoViews(shape, currentSFPalette, Frame, shapeChanging); // safely
+                                             // refresh views (if exception occurs, is handled)
             return true;
         }
 
@@ -477,70 +473,112 @@ namespace StarFoxMapVisualizer.Controls
         /// <param name="Shape"></param>
         /// <param name="Frame"></param>
         /// <param name="FullReload">Full Reload will refresh the Palettes entries -- something that doesn't change between frames</param>
-        private void RefreshEditorInfoViews(BSPShape Shape, int Frame, bool FullReload = false)
+        private void RefreshEditorInfoViews(BSPShape Shape, SFPalette Palette, int Frame, bool FullReload = false)
         {
             if (Shape == null) return;
 
             void prompt(Exception Exception, string Message) => AppResources.ShowCrash(Exception, false, Message);
 
-            try
-            {
-                PopulatePointsView(Shape, Frame);
-            }
-            catch (Exception Ex)
-            {
-                prompt(Ex, "Populating the points view");
-            }
-            try
-            {
-                PopulateBSPTreeView(Shape);
-            }
-            catch (Exception Ex)
-            {
-                prompt(Ex, "Populating the BSP view");
-            }
             if (FullReload)
             {
                 try
                 {
-                    PopulatePaletteView(Shape);
+                    PopulatePointsView(Shape, Frame);
                 }
                 catch (Exception Ex)
                 {
                     prompt(Ex, "Populating the points view");
                 }
-            }
+                try
+                {
+                    PopulateBSPTreeView(Shape);
+                }
+                catch (Exception Ex)
+                {
+                    prompt(Ex, "Populating the BSP view");
+                }
 
-            ErrorText.Text = CurrentFile?.ImportErrors?.ToString();
+                try
+                {
+                    PopulatePaletteView(Shape, Palette);
+                }
+                catch (Exception Ex)
+                {
+                    prompt(Ex, "Populating the palettes view");
+                }
+                ErrorText.Text = CurrentFile?.ImportErrors?.ToString();
+            }            
         }
 
-        private void PopulatePaletteView(BSPShape Shape)
+        private void PopulatePaletteView(BSPShape Shape, SFPalette Palette)
         {
-            PalettesViewer.Children.Clear();
-
-            foreach(var referencedPalette in Shape.ReferencedPalettes)
+            void AddOne(string PaletteName)
             {
                 bool loaded = false;
-                SHAPEStandard.CreateSFPalette(referencedPalette, out var Palette, out var COLGroup);
-                loaded = Palette != null;
+                SHAPEStandard.CreateSFPalette(PaletteName, out var otherPalette, out _);
+                loaded = otherPalette != null;
 
+                AddColGroup(PaletteName, otherPalette, loaded);
+            }
+            void AddColGroup(string PaletteName, SFPalette otherPalette, bool Loaded = true)
+            {
                 TextBlock block = new TextBlock()
                 {
-                    Text = referencedPalette + (!loaded ? " - FAILED" : ""),
-                    Foreground = loaded ? Brushes.White : Brushes.Red
+                    Text = PaletteName + (!Loaded ? " - FAILED" : ""),
+                    Foreground = Loaded ? Brushes.White : Brushes.Red
                 };
                 PalettesViewer.Children.Add(block);
-                if (!loaded) goto skip;
-
-                CopyableImage img = new CopyableImage()
+                if (Loaded)
                 {
-                    Source = Palette.RenderPalette().Convert()
-                };
-                PalettesViewer.Children.Add(img);
-
-            skip: // goto chad (completely unnecessary)
-                PalettesViewer.Children.Add(new Separator() { Margin = new Thickness(0,10,0,10) });
+                    CopyableImage img = new CopyableImage()
+                    {
+                        Source = otherPalette.RenderPalette().Convert()
+                    };
+                    PalettesViewer.Children.Add(img);
+                }
+                PalettesViewer.Children.Add(new Separator() { Margin = new Thickness(0, 10, 0, 10) });
             }
+            async void AddMSprite(string MSpriteName)
+            {
+                try
+                {
+                    var (bmp, sprite) = await SHAPEStandard.RenderMSprite(MSpriteName);
+                    bool Loaded = bmp != default;
+
+                    TextBlock block = new TextBlock()
+                    {
+                        Text = MSpriteName + (!Loaded ? " - FAILED" : ""),
+                        Foreground = Loaded ? Brushes.White : Brushes.Red
+                    };
+                    PalettesViewer.Children.Add(block);
+                    if (Loaded)
+                    {
+                        CopyableImage img = new CopyableImage()
+                        {
+                            Source = bmp
+                        };
+                        PalettesViewer.Children.Add(img);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    AppResources.ShowCrash(ex, false, "Rendering MSprite: " + MSpriteName);
+                }
+                PalettesViewer.Children.Add(new Separator() { Margin = new Thickness(0, 10, 0, 10) });
+            }
+
+            PalettesViewer.Children.Clear();
+            //Add main col group
+            AddColGroup(Shape.Header.ColorPalettePtr, Palette);
+
+            foreach (var referencedPalette in Shape.UsingColGroups)
+            { // add any color animations                                
+                AddOne(referencedPalette);
+            }
+            foreach (var referencedPalette in Shape.UsingTextures)
+            { // add any textures                                
+                AddMSprite(referencedPalette);
+            }            
         }
 
         /// <summary>
@@ -668,5 +706,46 @@ namespace StarFoxMapVisualizer.Controls
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void ExpandToolboxButton_Click(object sender, RoutedEventArgs e) => ToggleToolbox();
+
+        private void Render2Clipboard()
+        {
+            var element = ThreeDViewer;
+
+            var rect = new Rect(element.RenderSize);
+            var visual = new DrawingVisual();
+
+            using (var dc = visual.RenderOpen())
+            {
+                var brush = new VisualBrush(element)
+                {
+                    Stretch = Stretch.None
+                };
+                dc.DrawRectangle(brush, null, rect);
+            }
+
+            var bitmap = new RenderTargetBitmap(
+                (int)rect.Width, (int)rect.Height, 96, 96, PixelFormats.Default);
+            bitmap.Render(visual);            
+            
+            var encoder = new PngBitmapEncoder();
+            encoder.Frames.Add(BitmapFrame.Create(bitmap));
+            using (MemoryStream stm = new MemoryStream()) {
+                encoder.Save(stm);
+                
+                var path = System.IO.Path.Combine(Environment.CurrentDirectory, "clipboard.png");
+                File.WriteAllBytes(path, stm.ToArray());
+
+                var collection = new System.Collections.Specialized.StringCollection
+                {
+                    path
+                };
+                Clipboard.SetFileDropList(collection);
+            }
+        }
+
+        private void CopyImageButton_Click(object sender, RoutedEventArgs e)
+        {
+            Render2Clipboard();
+        }
     }
 }

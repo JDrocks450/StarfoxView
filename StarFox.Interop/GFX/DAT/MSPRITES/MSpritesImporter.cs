@@ -48,6 +48,29 @@ namespace StarFox.Interop.GFX.DAT.MSPRITES
         internal MSpritesDefinitionFile(ASMFile From) : base(From) { }
 
         public string OriginalFilePath { get; set; }
+
+        /// <summary>
+        /// Returns the sprite matching the name provided, if it exists in any of the <see cref="Banks"/>
+        /// </summary>
+        /// <param name="mSpriteName"></param>
+        /// <returns></returns>
+        public MSprite? GetSpriteByName(string mSpriteName)
+        {
+            foreach(var bank in Banks)
+            {
+                if (bank.Value.Sprites.TryGetValue(mSpriteName, out var sprite)) 
+                    return sprite;
+            }
+            return null;
+        }
+        /// <summary>
+        /// Returns the sprite matching the name provided, if it exists in any of the <see cref="Banks"/>
+        /// </summary>
+        /// <param name="mSpriteName"></param>
+        /// <param name="Sprite"></param>
+        /// <returns></returns>
+        public bool TryGetSpriteByName(string mSpriteName, out MSprite? Sprite) =>
+            (Sprite = GetSpriteByName(mSpriteName)) != null;
     }
 
     /// <summary>
@@ -73,7 +96,7 @@ namespace StarFox.Interop.GFX.DAT.MSPRITES
             int bankIndex = -1;            
             MSpriteBank? currentBank = default;
 
-            void defspr(string Name, bool HiBank, int Chars = DEF_TEXT_SIZE_CHARS)
+            void defspr(string Name, bool HiBank, int Chars = DEF_TEXT_SIZE_CHARS, int YInc = DEF_TEXT_SIZE_CHARS * CHAR_H)
             {
                 int sqSize = CHAR_W * Chars;
                 int width = sqSize;
@@ -94,7 +117,7 @@ namespace StarFox.Interop.GFX.DAT.MSPRITES
                 if (cX >= TEXMAP_W)
                 {
                     cX = 0;
-                    cY += sqSize;
+                    cY += YInc;
                 }
             }
             void AddSprite(string Name, int X, int Y, int W, int H, bool HiBank)
@@ -111,10 +134,11 @@ namespace StarFox.Interop.GFX.DAT.MSPRITES
 
                 bool highBank = false;
                 int sizeChars = DEF_TEXT_SIZE_CHARS;
+                int yInc = DEF_TEXT_SIZE_CHARS * CHAR_H;
 
                 switch (macro.MacroReference.Name)
                 {
-                    //creates a new sprite bank
+                    //creates a new sprite bank (or add to an existing one)
                     case "sprbank":
                         {
                             bankIndex = file.Banks.Count;
@@ -139,7 +163,7 @@ namespace StarFox.Interop.GFX.DAT.MSPRITES
                         {
                             string name = macro.TryGetParameter(0)?.ParameterContent ?? "";
                             if (string.IsNullOrWhiteSpace(name)) break;
-                            defspr(name, highBank, sizeChars);
+                            defspr(name, highBank, sizeChars, yInc);
                         }
                         break;
                     //Sprite in the high bank
@@ -148,9 +172,11 @@ namespace StarFox.Interop.GFX.DAT.MSPRITES
                         goto case "defspr";
                     //This creates a double width & height texture
                     case "defsprdoub":
-                    case "defspr64":
                         sizeChars = DEF_TEXT_SIZE_CHARS * 2;
                         goto case "defspr";
+                    case "defspr64":
+                        yInc = (DEF_TEXT_SIZE_CHARS * 2) * CHAR_H;
+                        goto case "defsprdoub";
                     //This creates a double width & height texture
                     case "defsprdoub_hi":
                     case "defspr64_hi":

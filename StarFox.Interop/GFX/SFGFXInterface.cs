@@ -162,6 +162,7 @@ namespace StarFox.Interop.GFX
                 {
                     grD.DrawImage(Src, new Rectangle(0, 0, ViewRect.Width, ViewRect.Height), ViewRect, GraphicsUnit.Pixel);                    
                 }
+                newBmp.MakeTransparent(P_Col.GetPalette()[0]);
                 return newBmp;
             }
             if (CGXBanks.Length % 2 != 0) throw new ArgumentOutOfRangeException("CGX banks provided should be High AND Low banks.");
@@ -169,7 +170,9 @@ namespace StarFox.Interop.GFX
             if (CGXBanks.Length < bank) throw new ArgumentOutOfRangeException("CGX banks provided is not enough for the supplied sprite.");            
             FXCGXFile source = CGXBanks[bank];
             using (var bmp = source.Render(P_Col, -1, 256, 128))
+            {                
                 return Clip(bmp, new Rectangle(Sprite.X, Sprite.Y, Sprite.Width, Sprite.Height));
+            }
         }
     }
 }

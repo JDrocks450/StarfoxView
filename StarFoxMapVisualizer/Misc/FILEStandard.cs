@@ -102,6 +102,14 @@ namespace StarFoxMapVisualizer.Misc
             MSGImport.SetImports(AppResources.Includes.ToArray());
             DEFSPRImport.SetImports(AppResources.Includes.ToArray());
         }
+        /// <summary>
+        /// Performs the Auto-Include function, which will ask the importer what includes it needs
+        /// and automatically includes them to this project file
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="File"></param>
+        /// <param name="importer"></param>
+        /// <returns></returns>
         private static async Task<bool> HandleImportMessages<T>(FileInfo File, CodeImporter<T> importer) where T : IImporterObject
         {
             async Task AutoIncludeNow(string message, IEnumerable<string> ExpectedIncludes)
@@ -134,7 +142,14 @@ namespace StarFoxMapVisualizer.Misc
             }
             return true;
         }
-        public static async Task<bool> TryIncludeColorTable(FileInfo File)
+        /// <summary>
+        /// When called on <c>COLTABS.ASM</c> will parse out the color table and add it to the project
+        /// <para/>If no other palettes are added to the project, will import <paramref name="DefaultPalette"/>
+        /// automatically
+        /// </summary>
+        /// <param name="File"></param>
+        /// <returns></returns>
+        public static async Task<bool> TryIncludeColorTable(FileInfo File, string DefaultPalette = "NIGHT.COL")
         {
             if (!AppResources.IsFileIncluded(File))
             {
@@ -153,7 +168,11 @@ namespace StarFoxMapVisualizer.Misc
             }
             return true;
         }
-
+        /// <summary>
+        /// Returns a palette from the file reference provided
+        /// </summary>
+        /// <param name="File"></param>
+        /// <returns></returns>
         public static async Task<CAD.COL?> GetPalette(FileInfo File)
         {
             if (!AppResources.IsFileIncluded(File))
@@ -163,7 +182,11 @@ namespace StarFoxMapVisualizer.Misc
             }
             return AppResources.ImportedProject.Palettes[File.FullName];
         }
-
+        /// <summary>
+        /// Opens the <see cref="PaletteView"/> window with the palette file name provided
+        /// </summary>
+        /// <param name="File"></param>
+        /// <returns></returns>
         public static async Task OpenPalette(FileInfo File)
         {
             if (!AppResources.IsFileIncluded(File))
@@ -179,6 +202,11 @@ namespace StarFoxMapVisualizer.Misc
             view.SetupControl(col);
             view.ShowDialog();            
         }       
+        /// <summary>
+        /// If the file is in <see cref="AppResources.OpenFiles"/>, the file will be closed
+        /// </summary>
+        /// <param name="File"></param>
+        /// <returns></returns>
         public static bool CloseFileIfOpen(FileInfo File)
         {
             if (AppResources.OpenFiles.ContainsKey(File.FullName))
@@ -211,6 +239,11 @@ namespace StarFoxMapVisualizer.Misc
             var file = await BSPImport.ImportAsync(File.FullName);
             return file;
         }
+        /// <summary>
+        /// Opens the specified <see cref="MAPFile"/> and returns a reference to it
+        /// </summary>
+        /// <param name="File"></param>
+        /// <returns></returns>
         public static async Task<MAPFile?> OpenMAPFile(FileInfo File)
         {
             //MAP IMPORT LOGIC   
@@ -224,6 +257,11 @@ namespace StarFoxMapVisualizer.Misc
                     "Errors Occured when Importing this File");
             return rObj;
         }
+        /// <summary>
+        /// Opens a <see cref="MSGFile"/> and returns a reference to it
+        /// </summary>
+        /// <param name="File"></param>
+        /// <returns></returns>
         public static async Task<ASMFile?> OpenMSGFile(FileInfo File)
         {
             //MSG IMPORT LOGIC   
@@ -239,11 +277,11 @@ namespace StarFoxMapVisualizer.Misc
         /// Will import an *.ASM file into the project's OpenFiles collection and return the parsed result.
         /// <para>NOTE: This function WILL call a dialog to have the user select which kind of file this is. 
         /// This can cause a softlock if this logic is nested with other Parse logic.</para>
-        /// <para>To avoid this, please make diligent use of the ContextualFileType parameter.</para>
+        /// <para>To avoid this, please make diligent use of the <paramref name="ContextualFileType"/> parameter.</para>
         /// </summary>
         /// <param name="File">The file to parse.</param>
         /// <param name="ContextualFileType">Will skip the Dialog asking what kind of file this is parsing by using this value
-        /// <para>If <see langword="default"/>, the dialog is displayed.</para></param>
+        /// <para>If <see langword="default"/>, a dialog is displayed.</para></param>
         /// <returns></returns>
         private static async Task<ASMFile?> ParseFile(FileInfo File, SFFileType.ASMFileTypes? ContextualFileType = default)
         {                     
@@ -294,8 +332,14 @@ namespace StarFoxMapVisualizer.Misc
                 AppResources.OpenFiles.Add(File.FullName, asmfile);
             return asmfile;
         }
-
-        private static async Task<ASMFile?> OpenDEFSPRFile(FileInfo file)
+        /// <summary>
+        /// Opens a <see cref="MSpritesDefinitionFile"/> and returns a reference to it
+        /// <para/>This function will NOT add the file to <see cref="AppResources.OpenFiles"/> --
+        /// use <see cref="ParseFile(FileInfo, SFFileType.ASMFileTypes?)"/>
+        /// </summary>
+        /// <param name="file"></param>
+        /// <returns></returns>
+        private static async Task<MSpritesDefinitionFile?> OpenDEFSPRFile(FileInfo file)
         {
             //DEFSPR IMPORT LOGIC   
             if (!await HandleImportMessages(file, DEFSPRImport)) return default;

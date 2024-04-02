@@ -224,8 +224,16 @@ namespace StarFox.Interop.BSP.SHAPE
         /// A set of faces that reference points with this shape.
         /// </summary>
         public HashSet<BSPFace> Faces { get; set; } = new();
-
-        public HashSet<string> ReferencedPalettes { get; } = new();
+        /// <summary>
+        /// A list of all Colgroups used on this shape.
+        /// See <see cref="SFPalette.ReferencedPaletteNames"/> for a list of all possible col groups
+        /// </summary>
+        public HashSet<string> UsingColGroups { get; } = new();
+        /// <summary>
+        /// A list of all Textures used on this shape.
+        /// See <see cref="SFPalette.ReferencedTextures"/> for a list of all possible textures
+        /// </summary>
+        public HashSet<string> UsingTextures { get; } = new();
 
         /// <summary>
         /// Creates a blank shape
@@ -240,7 +248,6 @@ namespace StarFox.Interop.BSP.SHAPE
         /// <param name="Header"></param>
         public BSPShape(BSPShapeHeader Header) : this() {
             this.Header = Header;
-            ReferencedPalettes.Add(Header.ColorPalettePtr);
         }
         /// <summary>
         /// Get points for a given keyframe

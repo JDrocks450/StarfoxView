@@ -41,7 +41,22 @@ namespace StarFox.Interop.GFX
         /// A filtered list of just colnorms (colors based on normal of face ... in relation to a supposed source)
         /// </summary>
         public Dictionary<int, Color> Colnorms { get; } = new();
+        /// <summary>
+        /// External palettes (such as animations) are listed here to include in Editors
+        /// </summary>
+        public HashSet<string> ReferencedPaletteNames { get; } = new();
+        /// <summary>
+        /// External textures (such as <see cref="MSprites"/>) are listed here to include in Editors
+        /// </summary>
+        public HashSet<string> ReferencedTextureNames { get; } = new();
+
         private bool IsOdd = false;
+        private int colorPaletteStartIndex = -1;
+        private Color GetColorByIndex(int Index)
+        {
+            var colors = palette.GetPalette();
+            return colors[Math.Min(colors.Length-1, Index + colorPaletteStartIndex)];
+        }
 
         /// <summary>
         /// Create a new <see cref="SFPalette"/> taking colors from Palette and context from Group.
@@ -52,6 +67,18 @@ namespace StarFox.Interop.GFX
         {
             palette = Palette;
             group = Group;
+
+            var colors = palette.GetPalette();
+            //skip all black color except palette
+            for(int i = 0; i < colors.Length; i++)
+            {
+                var color = colors[i];
+                if (color.R == 0 && color.G == 0 && color.B == 0) // black
+                    continue;
+                colorPaletteStartIndex = i - 1;
+                break;
+            }
+            if (colorPaletteStartIndex < 1) colorPaletteStartIndex = 0;
         }
         public Bitmap RenderPalette()
         {
@@ -83,6 +110,11 @@ namespace StarFox.Interop.GFX
         public Color[] GetPalette()
         {
             Collites.Clear(); // clear previous colors now
+            Coldepths.Clear();
+            Colnorms.Clear();
+            ReferencedPaletteNames.Clear();
+            ReferencedTextureNames.Clear();
+
             IsOdd = false;
             var colors = new Color[0];
             int i = -1, actualPosition = -1;
@@ -95,17 +127,17 @@ namespace StarFox.Interop.GFX
                     COLDefinition.CallTypes.Collite => HandleCollite(definition as COLLite),
                     COLDefinition.CallTypes.Coldepth => HandleColdepth(definition as COLDepth),
                     COLDefinition.CallTypes.Colnorm => HandleColnorm(definition as COLNorm),
-                    COLDefinition.CallTypes.Colsmooth => HandleColsmooth(definition as COLSmooth),
+                    //COLDefinition.CallTypes.Colsmooth => HandleColsmooth(definition as COLSmooth),                    
                     _ => default
                 };
-                if (color == null)
-                {
-                    i--;
-                    continue;
-                }
+                if (definition is COLAnimationReference anim)
+                    ReferencedPaletteNames.Add(anim.TableName);
+                if (definition is COLTexture texture)
+                    ReferencedTextureNames.Add(texture.Reference);
+                if (color == null)                        
+                    continue;                
                 Array.Resize(ref colors, i + 1);
-                colors[i] = color.Value;
-                if (actualPosition == 41) break;
+                colors[i] = color.Value;               
             }
             return Colors = colors;
         }
@@ -113,7 +145,7 @@ namespace StarFox.Interop.GFX
         {
             return a + (b - a) * t;
         }
-        public static Color LerpColor(Color color1, Color color2, float t)
+        public static Color LerpColor(Color color1, Color color2, float t = .5f)
         {
             float r = Lerp(color1.R, color2.R, t);
             float g = Lerp(color1.G, color2.G, t);
@@ -122,16 +154,13 @@ namespace StarFox.Interop.GFX
             return Color.FromArgb(255, (byte)r, (byte)g, (byte)b);
         }
         private Color GetGreyscale(float Intensity) =>
-            GetGreyscale(ColorTranslator.FromHtml("#192419"), Color.White, Intensity);
+            GetGreyscale(GetColorByIndex(0x9), Color.White, Intensity);
         private Color GetGreyscale(Color From, Color To, float Intensity) => LerpColor(From, To, Intensity);
         Color GetSolidColor(int ColorByte)
         { // SOLID COLOR
-            if (Coldepths.TryGetValue(ColorByte, out var Coldepth))
-                return Coldepth;
             var dirtyByte = ColorByte - 10;
             int index = (dirtyByte / 2) + (dirtyByte % 2);
-            var thisColor = palette.GetPalette()[index]; // 8BPP get color by index
-            Coldepths.Add(ColorByte, thisColor);
+            var thisColor = GetColorByIndex(index); // 8BPP get color by index
             return thisColor;
         }
         private Color GetMixies(int ColorByte)
@@ -141,42 +170,49 @@ namespace StarFox.Interop.GFX
             switch (ColorByte)
             {
                 case 0x19:
-                    Color2 = GetSolidColor(0x0b); // dark red
+                    Color2 = GetColorByIndex(1); // dark red
                     break;
                 case 0x1a:
-                    Color2 = GetSolidColor(0x0d); // dark red
+                    Color2 = GetColorByIndex(2); // coral
                     break;
                 case 0x1b:
-                    Color2 = GetSolidColor(0x11); // bright orange
+                    Color2 = GetColorByIndex(3); // orange
                     break;
                 case 0x1c:
-                    Color2 = GetSolidColor(0x0f); // orange
+                    Color2 = GetColorByIndex(4); // bright orange
                     break;
                 case 0x1d:
-                    Color1 = GetSolidColor(0x1e);
-                    Color2 = GetSolidColor(0x02);
+                    Color1 = GetColorByIndex(0xF); // green
+                    Color2 = GetColorByIndex(0xA); // dark grey
                     break;
                 case 0x1f:
-                    Color1 = GetSolidColor(0x1e);
-                    Color2 = GetSolidColor(0x18);
+                    Color1 = GetColorByIndex(0xF); // green
+                    Color2 = GetColorByIndex(0xD); // silver
                     break;
             }
             return LerpColor(Color1, Color2, .5f);
         }
         private Color? HandleColdepth(COLDepth DepthColor)
         {
-            return HandleDepthColorByte(DepthColor.ColorByte);
+            var color = HandleDepthColorByte(DepthColor.ColorByte);
+            if (!color.HasValue) return null;
+            Coldepths.TryAdd(DepthColor.ColorByte, color.Value);
+            return color;
         }
         private Color? HandleDepthColorByte(int ColorByte)
         {
             if (ColorByte < 0x0B)
             { // 1-10 reserved for greyscale
                 var grey = GetGreyscale(ColorByte / 10.0f);
-                Coldepths.Add(ColorByte, grey);
                 return grey;
             }
             if (ColorByte == 0x1f || (ColorByte >= 0x19 && ColorByte < 0x1e)) // 0x19 -> 0x1d && 0x1f is mixies
                 return GetMixies(ColorByte);
+            if (ColorByte == 0x1e)
+            {
+                var color = GetColorByIndex(0xF);
+                return color;
+            }
             if (ColorByte == 0x12)
             {
                 IsOdd = false;
@@ -189,7 +225,6 @@ namespace StarFox.Interop.GFX
                 var previousColor = Coldepths[ColorByte - 1];
                 var nextColor = GetSolidColor(ColorByte + 1);
                 var thisColor = LerpColor(previousColor, nextColor, .5f); // lerp by half of both colors
-                Coldepths.Add(ColorByte, thisColor);
                 return thisColor;
             }
             IsOdd = true;
@@ -199,21 +234,38 @@ namespace StarFox.Interop.GFX
         {
             if (Collites.TryGetValue(ColorByte, out var color))
                 return color;
-            // Falling back on CoolK definitions until parser is complete
-            var collite = ColorTranslator.FromHtml(ColorByte switch
+
+            var collite = ColorByte switch
             {
-                0 => "#E7E7E7", //Solid Dark Grey
-                1 => "#AAAAAA", // = Solid Darker Grey
-                2 => "#BA392A", //= Shaded Bright Red/Dark Red
-                3 => "#5144D4", //= Shaded Blue/Bright Blue
-                4 => "#D8A950", // = Shaded Bright Orange/Black
-                5 => "#190646", //= Shaded Turquoise/Black
-                6 => "#801009", //= Solid Dark Red
-                7 => "#2411A3", //= Solid Blue
-                8 => "#7C11A3", //= Shaded Red/blue (Purple)
-                9 => "#2F9E28", //= Shaded Green/Dark Green
-                _ => "#FFFFFF" // = Error -- color not found
-            });
+                0 => LerpColor(GetColorByIndex(10), GetColorByIndex(11)), // dark grey - grey
+                1 => LerpColor(GetColorByIndex(9), GetColorByIndex(10)), // dark blue - dark grey
+                2 => LerpColor(GetColorByIndex(9), GetColorByIndex(2)), // dark blue - dark red
+                3 => LerpColor(GetColorByIndex(9), GetColorByIndex(5)), // dark blue - blue
+                4 => LerpColor(GetColorByIndex(9), GetColorByIndex(3)), // dark blue - coral
+                5 => LerpColor(GetColorByIndex(9), GetColorByIndex(6)), // dark blue - light blue
+                6 => LerpColor(GetColorByIndex(2), GetColorByIndex(9)), // dark red - dark blue
+                7 => LerpColor(GetColorByIndex(5), GetColorByIndex(9)), // blue - dark blue
+                8 => LerpColor(GetColorByIndex(2), GetColorByIndex(5)), // dark red - dark blue
+                9 => LerpColor(GetColorByIndex(0xF), GetColorByIndex(0x9))
+            };
+            if (false)
+            {
+                // Falling back on CoolK definitions until parser is complete
+                collite = ColorTranslator.FromHtml(ColorByte switch
+                {
+                    0 => "#E7E7E7", //Solid Dark Grey
+                    1 => "#AAAAAA", // = Solid Darker Grey
+                    2 => "#BA392A", //= Shaded Bright Red/Dark Red
+                    3 => "#5144D4", //= Shaded Blue/Bright Blue
+                    4 => "#D8A950", // = Shaded Bright Orange/Black
+                    5 => "#190646", //= Shaded Turquoise/Black
+                    6 => "#801009", //= Solid Dark Red
+                    7 => "#2411A3", //= Solid Blue
+                    8 => "#7C11A3", //= Shaded Red/blue (Purple)
+                    9 => "#2F9E28", //= Shaded Green/Dark Green
+                    _ => "#FFFFFF" // = Error -- color not found
+                });
+            }
             Collites.Add(ColorByte, collite);
             return collite;
         }
@@ -230,8 +282,8 @@ namespace StarFox.Interop.GFX
         /// <returns></returns>
         private Color HandleColnorm(COLNorm LightColor)
         {
-            var color = palette.GetPalette()[LightColor.ColorByte];
-            Colnorms.Add(LightColor.ColorByte, color);
+            var color = GetColorByIndex(LightColor.ColorByte);
+            Colnorms.TryAdd(LightColor.ColorByte, color);
             return color;
         }
         /// <summary>
