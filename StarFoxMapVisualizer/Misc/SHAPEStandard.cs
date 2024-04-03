@@ -61,6 +61,7 @@ namespace StarFoxMapVisualizer.Misc
             SFPaletteCache.Add(ColGroupName, Palette);
             return true;
         }
+        internal static void ClearSFPaletteCache() => SFPaletteCache.Clear();
 
         private static List<FXCGXFile> CGXCache = new List<FXCGXFile>();
         private static Dictionary<MSprite, ImageSource> RenderCache = new();

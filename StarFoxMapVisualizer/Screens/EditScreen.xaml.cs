@@ -68,7 +68,7 @@ namespace StarFoxMapVisualizer.Screens
         {
             CurrentMode = ViewMode.NONE;
             await HandleViewModes();
-            UpdateInterface();
+            await UpdateInterface();
             EDITORStandard.HideLoadingWindow();
         }
         /// <summary>
@@ -85,6 +85,10 @@ namespace StarFoxMapVisualizer.Screens
                 throw new InvalidDataException("No project loaded.");
             if (Flush)
                 await currentProject.EnumerateAsync();
+
+            //Show welcome wagon if not shown once to the user yet this session
+            await EDITORStandard.WelcomeWagon();
+
             var expandedHeaders = new List<string>();
             void CheckNode(in TreeViewItem Node)
             {
@@ -97,7 +101,7 @@ namespace StarFoxMapVisualizer.Screens
                 CheckNode(in treeNode);
             var selectedItemHeader = (SolutionExplorerView.SelectedItem as TreeViewItem)?.Tag as SFCodeProjectNode;
             SolutionExplorerView.Items.Clear();
-            if (currentProject == null) return;
+
             void CreateClosableContextMenu(SFCodeProjectNode FileNode, in ContextMenu contextMenu, string Message = "Close File")
             {
                 //CLOSABLE FILE ITEM
@@ -113,7 +117,7 @@ namespace StarFoxMapVisualizer.Screens
                     {
                         MessageBox.Show("That file could not be closed at this time.", "File Close Error");
                     }
-                    UpdateInterface();
+                    _ = UpdateInterface();
                 };
                 contextMenu.Items.Add(importItem);
             }
@@ -132,7 +136,7 @@ namespace StarFoxMapVisualizer.Screens
                     {
                         MessageBox.Show("That file could not be imported at this time.", "File Include Error");
                     }
-                    UpdateInterface();
+                    await UpdateInterface();
                 };
                 contextMenu.Items.Add(importItem);
             }
@@ -148,7 +152,7 @@ namespace StarFoxMapVisualizer.Screens
                     EDITORStandard.ShowLoadingWindow();
                     foreach (var brrNode in FileNode.ChildNodes.Where(x => x.RecognizedFileType is SFCodeProjectFileTypes.BRR))
                         await AUDIOStandard.OpenBRR(new FileInfo(brrNode.FilePath), false, false, true);
-                    UpdateInterface();
+                    await UpdateInterface();
                     CurrentMode = ViewMode.BRR;
                     await HandleViewModes();
                     EDITORStandard.HideLoadingWindow();                    
@@ -170,7 +174,7 @@ namespace StarFoxMapVisualizer.Screens
                     {
                         MessageBox.Show("That file could not be imported at this time.", "File Include Error");
                     }
-                    UpdateInterface();
+                    await UpdateInterface();
                 };
                 contextMenu.Items.Add(importItem);
             }
@@ -319,7 +323,7 @@ namespace StarFoxMapVisualizer.Screens
                     item.BringIntoView();
                 Parent.Items.Add(item);
             }
-            SolutionExplorerView.Items.Add(await AddProjectNode(currentProject.ParentNode));
+            SolutionExplorerView.Items.Add(await AddProjectNode(currentProject.ParentNode));            
         }
         /// <summary>
         /// Changes the current Editor View Mode to the one provided
@@ -427,11 +431,11 @@ namespace StarFoxMapVisualizer.Screens
                 case SFCodeProjectFileTypes.Palette: // HANDLE PALETTE
                     await FILEStandard.OpenPalette(File);
                     EDITORStandard.HideLoadingWindow();
-                    UpdateInterface();
+                    await UpdateInterface();
                     return true;
                 case SFCodeProjectFileTypes.BRR:
                     await AUDIOStandard.OpenBRR(File);
-                    UpdateInterface();
+                    await UpdateInterface();
                     CurrentMode = ViewMode.BRR;
                     await HandleViewModes();
                     EDITORStandard.HideLoadingWindow();
@@ -455,17 +459,17 @@ namespace StarFoxMapVisualizer.Screens
                     {
                         case SFFileType.BINFileTypes.COMPRESSED_CGX:
                             await SFGFXInterface.TranslateDATFile(File.FullName);
-                            UpdateInterface(true); // Files changed!
+                            await UpdateInterface(true); // Files changed!
                             break;
                         case SFFileType.BINFileTypes.BRR:
                             await AUDIOStandard.OpenBRR(File);
-                            UpdateInterface();
+                            await UpdateInterface();
                             CurrentMode = ViewMode.BRR;
                             await HandleViewModes();
                             break;
                         case SFFileType.BINFileTypes.SPC:
                             if (await AUDIOStandard.ConvertBINToSPC(File))
-                                UpdateInterface(true);
+                                await UpdateInterface(true);
                             break;
                     }
                     EDITORStandard.HideLoadingWindow();
@@ -474,21 +478,21 @@ namespace StarFoxMapVisualizer.Screens
                     {
                         await GFXStandard.ExtractCCR(File);
                         EDITORStandard.HideLoadingWindow();
-                        UpdateInterface(true); // Files changed!
+                        await UpdateInterface(true); // Files changed!
                     }
                     return true;
                 case SFCodeProjectFileTypes.PCR: // EXTRACT COMPRESSED GRAPHICS
                     {
                         await SFGFXInterface.TranslateCompressedPCR(File.FullName);
                         EDITORStandard.HideLoadingWindow();
-                        UpdateInterface(true); // Files changed!
+                        await UpdateInterface(true); // Files changed!
                     }
                     return true;
                 case SFCodeProjectFileTypes.SCR: // screens
                     //OPEN THE SCR FILE
                     GFXStandard.OpenSCR(File);
                     EDITORStandard.HideLoadingWindow();
-                    UpdateInterface();
+                    await UpdateInterface();
                     CurrentMode = ViewMode.GFX;
                     await HandleViewModes();
                     return true;
@@ -496,7 +500,7 @@ namespace StarFoxMapVisualizer.Screens
                     //OPEN THE CGX FILE
                     await GFXStandard.OpenCGX(File);
                     EDITORStandard.HideLoadingWindow();
-                    UpdateInterface();
+                    await UpdateInterface();
                     CurrentMode = ViewMode.GFX;
                     await HandleViewModes();
                     return true;
@@ -560,7 +564,7 @@ namespace StarFoxMapVisualizer.Screens
                 //ENQUEUE THIS FILE TO BE OPENED BY THE ASM VIEWER
                 await ASMViewer.OpenFileContents(File, asmfile); // tell the ASMControl to look at the new file            
             }
-            UpdateInterface();
+            await UpdateInterface();
             EDITORStandard.HideLoadingWindow();
             MacroFileCombo.SelectedValue = System.IO.Path.GetFileNameWithoutExtension(File.Name);
         }
@@ -568,7 +572,7 @@ namespace StarFoxMapVisualizer.Screens
         /// Refreshes the Workspace Explorer, Macros and Open Files for some Editors
         /// </summary>
         /// <param name="FlushFiles"></param>
-        private async void UpdateInterface(bool FlushFiles = false)
+        private async Task UpdateInterface(bool FlushFiles = false)
         {
             //update explorer
             await ImportCodeProject(FlushFiles);
@@ -738,13 +742,7 @@ namespace StarFoxMapVisualizer.Screens
 
         private async Task SFOptimRefreshBase(SFOptimizerTypeSpecifiers Type, string Noun)
         {
-            var sfOptim = await EDITORStandard.Editor_RefreshMap(Type);
-            var dirNode = AppResources.ImportedProject.SearchDirectory(Path.GetFileName(sfOptim.DirectoryPath)).FirstOrDefault();
-            if (dirNode == default)
-                AppResources.ShowCrash(new FileNotFoundException("Couldn't find the node that matches this directory in the Code Project."),
-                    false, $"Could not refresh {Type} because the directory it corresponds with isn't in this project.");
-            dirNode.AddOptimizer(Noun, sfOptim);
-            MessageBox.Show($"The {Noun} Code Project Optimizer has been updated with {sfOptim.ObjectMap.Count} items.");
+            _ = await EDITORStandard.Editor_RefreshMap(Type);            
             UpdateInterface(true); // files updated!
         }
 
@@ -763,7 +761,7 @@ namespace StarFoxMapVisualizer.Screens
         /// <param name="e"></param>
         /// <exception cref="FileNotFoundException"></exception>
         private async void STAGEMapRefreshButton_Click(object sender, RoutedEventArgs e) => 
-            await SFOptimRefreshBase(SFOptimizerTypeSpecifiers.Levels, "StagesMap");
+            await SFOptimRefreshBase(SFOptimizerTypeSpecifiers.Maps, "StagesMap");
         /// <summary>
         /// Opens the Level Background viewer dialog
         /// </summary>

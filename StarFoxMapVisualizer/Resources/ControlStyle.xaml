@@ -217,4 +217,19 @@
             </Setter.Value>
         </Setter>
     </Style>
+    <Style TargetType="ContentControl" x:Key="ContractableMenuStyle">
+        <Setter Property="HorizontalAlignment" Value="Right"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContentControl">
+                    <Grid>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <ContentPresenter/>
+                        </ScrollViewer>
+                        <Button Content="{Binding ContractContent, RelativeSource={RelativeSource AncestorType=ContentControl}}" VerticalAlignment="Bottom" HorizontalAlignment="Right" Padding="10,5"/>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 </ResourceDictionary>

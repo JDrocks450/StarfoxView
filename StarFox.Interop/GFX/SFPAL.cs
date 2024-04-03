@@ -134,8 +134,11 @@ namespace StarFox.Interop.GFX
                     ReferencedPaletteNames.Add(anim.TableName);
                 if (definition is COLTexture texture)
                     ReferencedTextureNames.Add(texture.Reference);
-                if (color == null)                        
-                    continue;                
+                if (color == null)
+                {
+                    i--;
+                    continue;
+                }
                 Array.Resize(ref colors, i + 1);
                 colors[i] = color.Value;               
             }
@@ -145,7 +148,7 @@ namespace StarFox.Interop.GFX
         {
             return a + (b - a) * t;
         }
-        public static Color LerpColor(Color color1, Color color2, float t = .5f)
+        public static Color LerpColor(Color color1, Color color2, float t = .75f)
         {
             float r = Lerp(color1.R, color2.R, t);
             float g = Lerp(color1.G, color2.G, t);
@@ -158,8 +161,9 @@ namespace StarFox.Interop.GFX
         private Color GetGreyscale(Color From, Color To, float Intensity) => LerpColor(From, To, Intensity);
         Color GetSolidColor(int ColorByte)
         { // SOLID COLOR
-            var dirtyByte = ColorByte - 10;
+            var dirtyByte = ColorByte - 11;
             int index = (dirtyByte / 2) + (dirtyByte % 2);
+            index++;
             var thisColor = GetColorByIndex(index); // 8BPP get color by index
             return thisColor;
         }
@@ -215,8 +219,7 @@ namespace StarFox.Interop.GFX
             }
             if (ColorByte == 0x12)
             {
-                IsOdd = false;
-                return default;
+                IsOdd = false;                
             }
             bool isInbetween = IsOdd; // simple alternator
             if (isInbetween)

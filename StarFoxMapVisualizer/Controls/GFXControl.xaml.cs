@@ -71,7 +71,7 @@ namespace StarFoxMapVisualizer.Controls
         /// <summary>
         /// The currently selected Palette
         /// </summary>
-        public COL SelectedPalette { get; private set; }        
+        public COL? SelectedPalette => PaletteSelection.SelectedPalette?.Palette;       
         private CopyableImage DragImage;
         private GFXEditorState? CurrentState => ((TabItem)FileSelectorTabViewer.SelectedItem)?.Tag as GFXEditorState;
         private string? CurrentCGXFromState => CurrentState?.SelectedObjectPath;
@@ -151,21 +151,8 @@ namespace StarFoxMapVisualizer.Controls
                         FileSelectorTabViewer.SelectedItem = item;
                 }
             }
-            void FillPalettes()
-            {
-                var COLFiles = AppResources.ImportedProject.Palettes;
-                foreach (var col in COLFiles)
-                {
-                    var item = new ListViewItem()
-                    {
-                        Content = System.IO.Path.GetFileNameWithoutExtension(col.Key),
-                        Tag = col.Value
-                    };
-                    PaletteSelection.Items.Add(item);
-                    if (col.Value == SelectedPalette)
-                        PaletteSelection.SelectedItem = item;
-                }
-            }
+            void FillPalettes() => PaletteSelection.InvalidatePalettes();
+
             FileSelectorTabViewer.SelectionChanged -= FileChanged;
             PaletteSelection.SelectionChanged -= PaletteChanged;
             FileSelectorTabViewer.Items.Clear();
@@ -183,11 +170,7 @@ namespace StarFoxMapVisualizer.Controls
             await RenderOne();
         }
 
-        private async void PaletteChanged(object sender, SelectionChangedEventArgs e)
-        {
-            SelectedPalette = ((ListViewItem)PaletteSelection.SelectedItem).Tag as COL;
-            await RenderOne();
-        }
+        private async void PaletteChanged(object sender, SelectionChangedEventArgs e) => await RenderOne();
 
         private async void FileChanged(object sender, SelectionChangedEventArgs e)
         {

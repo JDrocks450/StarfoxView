@@ -410,7 +410,7 @@ namespace StarFoxMapVisualizer.Misc
         internal static async Task<MAPScript?> GetMapScriptByMacroName(string LevelMacroName)
         {
             var HeaderName = LevelMacroName;
-            var stageOptim = GetOptimizerByType(SFOptimizerTypeSpecifiers.Levels);
+            var stageOptim = GetOptimizerByType(SFOptimizerTypeSpecifiers.Maps);
             var stageMap = stageOptim.OptimizerData.ObjectMap;
             //Try to find the file that contains the stage we want
             if (!stageMap.TryGetValue(HeaderName, out var FileName)) return default;

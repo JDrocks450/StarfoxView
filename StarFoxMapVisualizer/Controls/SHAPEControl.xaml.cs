@@ -69,6 +69,8 @@ namespace StarFoxMapVisualizer.Controls
 
         SFPalette? currentSFPalette;
         COLGroup? currentGroup;
+        string modelPaletteName = "NIGHT";
+        string? cachedModelPaletteName;
 
         private Storyboard SceneAnimation;
 
@@ -128,16 +130,21 @@ namespace StarFoxMapVisualizer.Controls
         /// <returns></returns>
         private bool CreateSFPalette(string ColorPaletteName)
         {
-            if (currentGroup != null && currentGroup.Name.ToUpper() == ColorPaletteName.ToUpper()) return true;            
+            if (cachedModelPaletteName != default && cachedModelPaletteName == modelPaletteName) // check if the palette changed
+            {
+                if (currentGroup != null && currentGroup.Name.ToUpper() == ColorPaletteName.ToUpper()) return true;
+            }
+            else SHAPEStandard.ClearSFPaletteCache(); // clear cache and re render palettes
             try
             {
-                return SHAPEStandard.CreateSFPalette(ColorPaletteName, out currentSFPalette, out currentGroup);
+                cachedModelPaletteName = modelPaletteName;
+                return SHAPEStandard.CreateSFPalette(ColorPaletteName, out currentSFPalette, out currentGroup, modelPaletteName);
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"While trying to make a SFPalette, this error occured: \n{ex.ToString()}\n" +
-                    $" Execution cannot proceed.", "Palette Parse Procedure");
-                return false;
+                    $"\n\nWant to try viewing with id_0_c for compatibility?", "Palette Parse Procedure Error");
+                return false;                
             }
         }
 
@@ -366,15 +373,21 @@ namespace StarFoxMapVisualizer.Controls
         /// </summary>
         /// <param name="shape"></param>
         /// <param name="Frame"></param>
-        private bool ShowShape(BSPShape? shape, int Frame = -1)
+        private bool ShowShape(BSPShape? shape, int Frame = -1, bool ForceRefreshViews = false)
         {           
             if (!canShowShape) return false; // showing shapes is blocked rn
             if (shape == null) return false; // there is no shape to speak of            
             // our palette hasn't been rendered or we're forced to update it
-            if (!CreateSFPalette(shape.Header.ColorPalettePtr)) return false;
+            if (!CreateSFPalette(shape.Header.ColorPalettePtr))
+            {
+                if (MessageBox.Show("Want to try viewing model with Color Group: id_0_c for compatibility?",
+                    "Compatibility Mode", MessageBoxButton.YesNo) == MessageBoxResult.No) return false;
+                shape.Header.ColorPalettePtr = "id_0_c";
+                if (!CreateSFPalette(shape.Header.ColorPalettePtr)) return false;
+            }
             if (shape.Frames.Count <= 0) Frame = -1;
 
-            bool shapeChanging = currentShape != shape;
+            bool shapeChanging = currentShape != null ? currentShape != shape : true;
 
             currentShape = shape;
             
@@ -419,10 +432,12 @@ namespace StarFoxMapVisualizer.Controls
 
             if (shapeChanging)
                 TransitionCameraToLookAtObject(shape); // shape changed: transition camera
-            RefreshEditorInfoViews(shape, currentSFPalette, Frame, shapeChanging); // safely
+            RefreshEditorInfoViews(shape, currentSFPalette, Frame, shapeChanging || ForceRefreshViews); // safely
                                              // refresh views (if exception occurs, is handled)
             return true;
         }
+
+        public bool ShowShape(bool RefreshViews = false) => ShowShape(currentShape, -1, RefreshViews);
 
         private void TransitionCameraToLookAtObject(BSPShape Shape)
         {
@@ -746,6 +761,21 @@ namespace StarFoxMapVisualizer.Controls
         private void CopyImageButton_Click(object sender, RoutedEventArgs e)
         {
             Render2Clipboard();
+        }
+
+        private void PaletteWindowButton_Click(object sender, RoutedEventArgs e)
+        {
+            PaletteSelectionWindow window = new PaletteSelectionWindow()
+            {
+                Owner = Application.Current.MainWindow
+            };
+            window.Closed += delegate
+            {
+                if (window.SelectedPalette == default) return;
+                modelPaletteName = System.IO.Path.GetFileNameWithoutExtension(window.SelectedPalette?.Name) ?? "NIGHT";
+                ShowShape(true);
+            };
+            window.Show();
         }
     }
 }

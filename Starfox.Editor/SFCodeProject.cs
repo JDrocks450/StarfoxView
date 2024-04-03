@@ -159,7 +159,29 @@ namespace Starfox.Editor
             });
         }
 
-        public SFOptimizerNode GetOptimizerByTypeOrDefault(SFOptimizerTypeSpecifiers type)=> Optimizers.FirstOrDefault(x =>
-                x.OptimizerData.TypeSpecifier == type);
+        /// <summary>
+        /// Returns a reference to the <see cref="SFOptimizerNode"/> added matching the given <paramref name="type"/>
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public SFOptimizerNode? GetOptimizerByTypeOrDefault(SFOptimizerTypeSpecifiers type)=> Optimizers.FirstOrDefault(x =>
+                x?.OptimizerData?.TypeSpecifier == type);
+
+        /// <summary>
+        /// Ensures necessary <see cref="SFOptimizerNode"/>s are included in the <see cref="SFCodeProject"/>
+        /// <para/>Any missing optimizers are placed into the <paramref name="TypesMissing"/> array
+        /// </summary>
+        /// <returns></returns>
+        public bool EnsureOptimizers(out SFOptimizerTypeSpecifiers[] TypesMissing)
+        {
+            var list = new List<SFOptimizerTypeSpecifiers>();
+            foreach(var type in Enum.GetValues<SFOptimizerTypeSpecifiers>())
+            {
+                if (GetOptimizerByTypeOrDefault(type) == default)
+                    list.Add(type);
+            }
+            TypesMissing = list.ToArray();
+            return !list.Any();
+        }
     }
 }

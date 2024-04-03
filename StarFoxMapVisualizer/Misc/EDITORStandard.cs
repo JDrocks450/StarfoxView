@@ -24,6 +24,7 @@ namespace StarFoxMapVisualizer.Misc
         /// </summary>
         internal static EditScreen? CurrentEditorScreen { get; set; }
         private static LoadingWindow? _loadingWindow;
+        private static bool WelcomeWagonShownOnce = false;
 
         /// <summary>
         /// Shows a Loading... Window in the middle of the Window.
@@ -119,60 +120,42 @@ namespace StarFoxMapVisualizer.Misc
             AppResources.ImportedProject.ShapesDirectoryPath = directory;
             return new DirectoryInfo(directory);
         }
-        /// <summary>
-        /// Refreshes the SHAPESMap SFOptimizer directory with the latest 3D model list
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        /// <exception cref="FileNotFoundException"></exception>
-        private static async Task<SFOptimizerDataStruct?> Editor_RefreshShapeMap(string? InitialDirectory = default)
+
+        private static async Task<SFOptimizerDataStruct?> Editor_BaseDoRefreshMap(SFOptimizerTypeSpecifiers Type, 
+            Func<FileInfo,Dictionary<string,string>, Task<bool>> ProcessFunction, string? InitialDirectory = default, string? KeyFile = default)
         {
-            //This function will create a SHAPE Map -- a file that links SHAPESX.ASM files to Shape Names
-            string dirString = InitialDirectory;
+            string? dirString = InitialDirectory;
             DirectoryInfo? dirInfo = default;
-            if (dirString != null) 
+            if (dirString != null)
                 dirInfo = new DirectoryInfo(dirString);
-        retry:
-            if (dirInfo == default)
-                dirInfo = Editor_SelectShapeDirectory();
+            retry:
+            if (dirString == default)
+                dirString = FILEStandard.ShowGenericFileBrowser($"Select your {Type.ToString().ToUpper()} Directory", true);
+            dirInfo = new DirectoryInfo(dirString);
             if (dirInfo == default) return default; // User Cancelled
             StringBuilder errorBuilder = new(); // ERRORS
-            Dictionary<string, string> shapeMap = new();
             //TEST SOMETHING OUT
-            if (!File.Exists(Path.Combine(dirInfo.FullName, "shapes.asm")))
+            if (!File.Exists(Path.Combine(dirInfo.FullName, KeyFile)))
             {
                 if (MessageBox.Show("It looks like the directory you selected doesn't have at least " +
-                    "a SHAPES.ASM file in it. Have you selected the SHAPES directory in your workspace?\n" +
+                    $"a {KeyFile.ToUpper()} file in it. Have you selected the {Type.ToString().ToUpper()} directory in your workspace?\n" +
                     "\n" +
                     "Would you like to continue anyway? No will go back to file selection.", "Directory Selection Message",
                     MessageBoxButton.YesNo) != MessageBoxResult.Yes)
                 {
-                    AppResources.ImportedProject.ShapesDirectoryPath = default;
                     dirInfo = null;
                     goto retry;
                 }
             }
             //GET IMPORTS SET
             FILEStandard.ReadyImporters();
+            Dictionary<string, string> shapesMap = new();
             foreach (var file in dirInfo.GetFiles()) // ITERATE OVER DIR FILES
             {
                 try
-                {
-                    var bspFile = await FILEStandard.OpenBSPFile(file); // IMPORT THE BSP
-                    foreach (var shape in bspFile.Shapes)
-                    {
-                        var sName = shape.Header.Name.ToUpper();
-                        var fooSName = sName;
-                        int tries = 1;
-                        while (shapeMap.ContainsKey(fooSName))
-                        {
-                            fooSName = sName + "_" + tries;
-                            tries++;
-                        }
-                        sName = fooSName;
-                        shapeMap.Add(sName, file.Name);
-                    }
-                    int delta = bspFile.ShapeHeaderEntries.Count - bspFile.Shapes.Count;
+                {                   
+                    bool result = await ProcessFunction(file, shapesMap);
+                    if (!result) break;
                 }
                 catch (Exception ex)
                 {
@@ -180,8 +163,12 @@ namespace StarFoxMapVisualizer.Misc
                         $"***\n{ex.ToString()}\n***"); // ERROR INFO
                 }
             }
-            return new SFOptimizerDataStruct(SFOptimizerTypeSpecifiers.Shapes, dirInfo.FullName, shapeMap);
+            return new SFOptimizerDataStruct(Type, dirInfo.FullName, shapesMap)
+            {
+                ErrorOut = errorBuilder
+            };
         }
+
         /// <summary>
         /// Prompts the user to export all 3D models and will export them
         /// </summary>
@@ -239,66 +226,78 @@ namespace StarFoxMapVisualizer.Misc
             HideLoadingWindow();
         }
 
-        private static async Task<SFOptimizerDataStruct?> Editor_RefreshLevelMap(string? InitialDirectory = default)
-        {
-            //This function will create a STAGE Map -- a file that links LEVEL.ASM files to Level Macro Names
-            string? dirString = InitialDirectory;
-        retry:
-            if (dirString == default)
-                dirString = FILEStandard.ShowGenericFileBrowser("Select your LEVELS Directory", true);
-            if (dirString == default) return default; // User Cancelled
-            StringBuilder errorBuilder = new(); // ERRORS
-            Dictionary<string, string> stageMap = new();
-            //TEST SOMETHING OUT
-            if (!File.Exists(Path.Combine(dirString, "level1_1.asm")))
-            {
-                if (MessageBox.Show("It looks like the directory you selected doesn't have at least " +
-                    "a level1_1.ASM file in it. Have you selected the LEVELS directory in your workspace?\n" +
-                    "\n" +
-                    "Would you like to continue anyway? No will go back to file selection.", "Directory Selection Message",
-                    MessageBoxButton.YesNo) != MessageBoxResult.Yes)
-                {
-                    dirString = null;
-                    goto retry;
-                }
-            }
-            //GET IMPORTS SET
-            FILEStandard.ReadyImporters();
-            foreach (var file in new DirectoryInfo(dirString).GetFiles()) // ITERATE OVER DIR FILES
-            {
-                try
-                {
-                    var mapFile = await FILEStandard.OpenMAPFile(file); // IMPORT THE MAP
-                    foreach (var level in mapFile.Scripts)
-                    {
-                        var sName = level.Key;
-                        stageMap.TryAdd(sName, file.Name);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    errorBuilder.AppendLine($"The file: {file.FullName} could not be exported.\n" +
-                        $"***\n{ex.ToString()}\n***"); // ERROR INFO
-                }
-            }
-            return new SFOptimizerDataStruct(SFOptimizerTypeSpecifiers.Levels, dirString, stageMap);
-        }
-
         /// <summary>
         /// Refreshes the map that is provided using the <paramref name="Type"/> parameter
         /// </summary>
         /// <param name="Type"></param>
         /// <returns></returns>
-        internal static Task<SFOptimizerDataStruct?> Editor_RefreshMap(SFOptimizerTypeSpecifiers Type, string? InitialDirectory = null)
+        internal static async Task<SFOptimizerNode?> Editor_RefreshMap(SFOptimizerTypeSpecifiers Type, string? InitialDirectory = null)
         {
-            switch (Type)
+            async Task<bool> GetShapeMap(FileInfo File, Dictionary<string, string> Map)
             {
-                case SFOptimizerTypeSpecifiers.Shapes:
-                    return Editor_RefreshShapeMap(InitialDirectory);
-                case SFOptimizerTypeSpecifiers.Levels:
-                    return Editor_RefreshLevelMap(InitialDirectory);
+                Dictionary<string, string> shapeMap = Map;
+                var bspFile = await FILEStandard.OpenBSPFile(File); // IMPORT THE BSP
+                foreach (var shape in bspFile.Shapes)
+                {
+                    var sName = shape.Header.Name.ToUpper();
+                    var fooSName = sName;
+                    int tries = 1;
+                    while (shapeMap.ContainsKey(fooSName))
+                    {
+                        fooSName = sName + "_" + tries;
+                        tries++;
+                    }
+                    sName = fooSName;
+                    shapeMap.Add(sName, File.Name);
+                }
+                int delta = bspFile.ShapeHeaderEntries.Count - bspFile.Shapes.Count;
+                return true;
             }
-            return default;
+            async Task<bool> GetLevelMap(FileInfo File, Dictionary<string, string> Map)
+            {
+                Dictionary<string, string> stageMap = Map;
+                var mapFile = await FILEStandard.OpenMAPFile(File); // IMPORT THE MAP
+                foreach (var level in mapFile.Scripts)
+                {
+                    var sName = level.Key;
+                    stageMap.TryAdd(sName, File.Name);
+                }
+                return true;
+            }
+
+            if (AppResources.ImportedProject == null) return default;
+
+            SFOptimizerDataStruct? dataStruct = default;
+            try
+            {
+                switch (Type)
+                {
+                    case SFOptimizerTypeSpecifiers.Shapes:
+                        dataStruct = await Editor_BaseDoRefreshMap(Type, GetShapeMap, InitialDirectory, "shapes.asm"); break;
+                    case SFOptimizerTypeSpecifiers.Maps:
+                        dataStruct = await Editor_BaseDoRefreshMap(Type, GetLevelMap, InitialDirectory, "level1_1.asm"); break;
+                }
+            }
+            catch (Exception ex)
+            {
+                AppResources.ShowCrash(ex, false, $"Refreshing the {Type} optimizer");
+            }
+            if (dataStruct == null) return null;
+
+            if (dataStruct.HasErrors)
+                MessageBox.Show($"The following error(s) occured with optimizing that directory.\n{dataStruct.ErrorOut}");
+
+            //Attempt to add to project
+            var dirNode = AppResources.ImportedProject.SearchDirectory(Path.GetFileName(dataStruct.DirectoryPath)).FirstOrDefault();
+            if (dirNode == null)
+            {
+                AppResources.ShowCrash(new FileNotFoundException("Couldn't find the node that matches this directory in the Code Project."),
+                    false, $"Could not refresh {Type} because the directory it corresponds with isn't in this project.");
+                return default;
+            }
+            var node = dirNode.AddOptimizer(Type.ToString(), dataStruct);
+            MessageBox.Show($"The {Type} Code Project Optimizer has been updated with {dataStruct.ObjectMap.Count} items.");
+            return node;
         }
 
         /// <summary>
@@ -313,10 +312,31 @@ namespace StarFoxMapVisualizer.Misc
             {
                 case SFOptimizerTypeSpecifiers.Shapes:
                     return ShapeEditor_ShowShapeByName(ObjectName);
-                case SFOptimizerTypeSpecifiers.Levels:
+                case SFOptimizerTypeSpecifiers.Maps:
                 default:
                     throw new NotImplementedException("There is no way to handle that item yet.");
             }            
+        }
+
+        /// <summary>
+        /// Ensures all prerequesites are added to the project
+        /// </summary>
+        /// <returns></returns>
+        internal static async Task<bool> WelcomeWagon()
+        {
+            if (WelcomeWagonShownOnce) return true;
+            if (AppResources.ImportedProject == null) return false;
+            if (AppResources.ImportedProject.EnsureOptimizers(out SFOptimizerTypeSpecifiers[] missing)) return true;
+            foreach (var missingType in missing)
+            {
+                if (MessageBox.Show($"Your project is missing the {missingType}Map optimizer.\n" +
+                    $"\nWould you like to add this now?", $"Missing {missingType}Map Optimizer", MessageBoxButton.YesNo)
+                    == MessageBoxResult.No)
+                    continue;
+                await Editor_RefreshMap(missingType);
+            }
+            WelcomeWagonShownOnce = true;
+            return AppResources.ImportedProject.EnsureOptimizers(out _);
         }
     }
 }

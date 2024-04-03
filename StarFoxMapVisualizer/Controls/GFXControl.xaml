@@ -34,47 +34,7 @@
                     <ScrollViewer Margin="10,0,0,0" Grid.Row="1">
                         <DockPanel Margin="0,0,5,0">
                             <TextBlock DockPanel.Dock="Top" Style="{StaticResource TitleText}">Available</TextBlock>
-                            <ListView FontFamily="Courier New" Name="PaletteSelection" SelectedIndex="1">
-                                <ListView.Template>
-                                    <ControlTemplate TargetType="ListView">
-                                        <WrapPanel IsItemsHost="True" Orientation="Horizontal"/>
-                                    </ControlTemplate>
-                                </ListView.Template>
-                                <ListView.Resources>
-                                    <Style TargetType="ListViewItem">
-                                        <Style.Triggers>
-                                            <Trigger Property="IsSelected" Value="True">
-                                                <Setter Property="Foreground" Value="Black"/>
-                                                <Setter Property="Background" Value="{DynamicResource PaletteNodeColor}"/>
-                                            </Trigger>
-                                            <Trigger Property="IsSelected" Value="False">
-                                                <Setter Property="Background" Value="Transparent"/>
-                                                <Setter Property="Foreground" Value="{DynamicResource PaletteNodeColor}"/>
-                                            </Trigger>
-                                        </Style.Triggers>
-                                        <Setter Property="Margin" Value="10"/>
-                                        <Setter Property="Width" Value="55"/>
-                                        <Setter Property="Template">
-                                            <Setter.Value>
-                                                <ControlTemplate TargetType="ListViewItem">
-                                                    <DockPanel>
-                                                        <Border HorizontalAlignment="Center" DockPanel.Dock="Bottom" Background="{TemplateBinding Background}" Padding="5,2">
-                                                            <ContentPresenter>
-                                                                <ContentPresenter.ToolTip>
-                                                                    <TextBlock Text="{TemplateBinding ContentStringFormat}"/>
-                                                                </ContentPresenter.ToolTip>
-                                                            </ContentPresenter>
-                                                        </Border>
-                                                        <Image Width="50" Source="/Resources/Image/palette.png" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
-                                                    </DockPanel>
-                                                </ControlTemplate>
-                                            </Setter.Value>
-                                        </Setter>
-                                    </Style>
-                                </ListView.Resources>
-                                <ListViewItem Content="HELLO"/>
-                                <ListViewItem Content="HELLO"/>
-                            </ListView>
+                            <subcontrols:PaletteListView x:Name="PaletteSelection"/>
                         </DockPanel>
                     </ScrollViewer>
                 </Grid>

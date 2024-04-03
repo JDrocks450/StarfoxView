@@ -10,21 +10,13 @@ namespace Starfox.Editor
     public enum SFOptimizerTypeSpecifiers
     {
         /// <summary>
-        /// NOT SET!
-        /// </summary>
-        Error,
-        /// <summary>
         /// A shapes optimizer, which is ShapeName -> File
         /// </summary>
         Shapes,
         /// <summary>
-        /// Custom
-        /// </summary>
-        Custom,
-        /// <summary>
         /// A stages optimizer, which is LevelMacroName -> File
         /// </summary>
-        Levels
+        Maps
     }
 
     /// <summary>
@@ -34,10 +26,9 @@ namespace Starfox.Editor
     public class SFOptimizerDataStruct
     {
         public SFOptimizerDataStruct(SFOptimizerTypeSpecifiers typeSpecifier, string directoryPath,
-            Dictionary<string, string> objectMap, string? customOptimizerCodeName = default)
+            Dictionary<string, string> objectMap)
         {
             TypeSpecifier = typeSpecifier;
-            CustomOptimizerCodeName = customOptimizerCodeName;
             ObjectMap = objectMap;
             DirectoryPath = directoryPath;
         }
@@ -47,10 +38,6 @@ namespace Starfox.Editor
         /// </summary>
         public SFOptimizerTypeSpecifiers TypeSpecifier { get; set; }
         /// <summary>
-        /// If <see cref="TypeSpecifier"/> is <see cref="SFOptimizerTypeSpecifiers.Custom"/>, this can be used to describe what you're doing
-        /// </summary>
-        public string? CustomOptimizerCodeName { get; set; } = default;
-        /// <summary>
         /// The map of objects this optimizer links
         /// </summary>
         public Dictionary<string, string> ObjectMap { get; set; } = new();
@@ -58,6 +45,11 @@ namespace Starfox.Editor
         /// The path to the files included in this <see cref="SFOptimizerDataStruct"/>
         /// </summary>
         public string DirectoryPath { get; set; }
+        /// <summary>
+        /// Importer errors can be added here to communicate with the User
+        /// </summary>
+        public StringBuilder ErrorOut { get; set; } = new();
+        public bool HasErrors => ErrorOut?.Length > 0;
     }
     /// <summary>
     /// An optimizer links an Object Name to a file that contains it
