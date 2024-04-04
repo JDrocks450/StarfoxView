@@ -550,14 +550,14 @@ namespace StarFoxMapVisualizer.Screens
                 await HandleViewModes();
             }
             else if (isMSG)
-            {
+            { // COMMUNICATIONS VIEWER
                 CurrentMode = ViewMode.MSG;
                 await HandleViewModes();
             }
             else if (isDEFSPR)
             { // 3D MSPRITES VIEWER
                 MSpritesViewer viewer = new MSpritesViewer(asmfile as MSpritesDefinitionFile);
-                viewer.ShowDialog();
+                viewer.Show();
             }
             else
             {

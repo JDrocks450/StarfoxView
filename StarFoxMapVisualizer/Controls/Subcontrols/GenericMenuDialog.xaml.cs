@@ -43,11 +43,13 @@ namespace StarFoxMapVisualizer.Controls.Subcontrols
                 index++;
                 var item = new MenuItem()
                 {
-                    Header = selection
+                    Header = selection,
+                    Tag = index
                 };
                 item.PreviewMouseLeftButtonUp += delegate
                 {
-                    Dismiss(index);
+                    int selectIndex = (int)item.Tag;
+                    Dismiss(selectIndex);
                 };
                 SelectionMenu.Items.Add(item);
             }

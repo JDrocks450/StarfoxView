@@ -25,7 +25,10 @@ namespace StarFoxMapVisualizer.Controls
         public PaletteView()
         {
             InitializeComponent();
+            MouseLeftButtonDown += PaletteView_MouseLeftButtonDown;
         }
+
+        private void PaletteView_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) => DragMove();
 
         public void SetupControl(COL Palette)
         {

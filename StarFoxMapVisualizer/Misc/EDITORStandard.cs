@@ -1,5 +1,6 @@
 ﻿using Starfox.Editor;
 using StarFox.Interop.ASM;
+using StarFox.Interop.GFX.DAT.MSPRITES;
 using StarFox.Interop.MAP.EVT;
 using StarFoxMapVisualizer.Controls;
 using StarFoxMapVisualizer.Dialogs;
@@ -264,6 +265,21 @@ namespace StarFoxMapVisualizer.Misc
                 }
                 return true;
             }
+            async Task<bool> GetMSpriteMap(FileInfo File, Dictionary<string, string> Map)
+            {
+                if (File.Extension.ToUpper() == ".BIN")
+                    Map.Add(File.FullName, "");
+                return true;
+                var defSpr = await FILEStandard.OpenDEFSPRFile(File, true);
+                if (defSpr == default) return false;
+                // IMPORT THE DEFSPR
+                foreach (var bank in defSpr.Banks)
+                {
+                    foreach(var sprite in bank.Value.Sprites)                    
+                        Map.Add(sprite.Key, File.Name);                    
+                }
+                return true;
+            }
 
             if (AppResources.ImportedProject == null) return default;
 
@@ -276,6 +292,8 @@ namespace StarFoxMapVisualizer.Misc
                         dataStruct = await Editor_BaseDoRefreshMap(Type, GetShapeMap, InitialDirectory, "shapes.asm"); break;
                     case SFOptimizerTypeSpecifiers.Maps:
                         dataStruct = await Editor_BaseDoRefreshMap(Type, GetLevelMap, InitialDirectory, "level1_1.asm"); break;
+                    case SFOptimizerTypeSpecifiers.MSprites:
+                        dataStruct = await Editor_BaseDoRefreshMap(Type, GetMSpriteMap, InitialDirectory, "tex_01.bin"); break;
                 }
             }
             catch (Exception ex)

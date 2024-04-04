@@ -45,22 +45,45 @@ namespace StarFoxMapVisualizer.Controls
         {
             public MAPViewerObject3D(BSPShape shape, Vector3D InitialPosition = default)
             {
+                AssetName = shape.Header.Name;
                 Shape = shape;
                 Position = InitialPosition;
                 Scale = new Vector3D(shape.XScaleFactor, shape.YScaleFactor, shape.ZScaleFactor);                
             }
+            public MAPViewerObject3D(string AssetName, Vector3D InitialPosition = default)
+            {
+                this.AssetName = AssetName;
+                Position = InitialPosition;
+                Scale = new Vector3D(16, 16, 1);
+            }
+
             public Vector3D Position { get; set; }
             public Vector3D Rotation { get; set; }
             public Vector3D Scale { get; set; }
-            public BSPShape Shape { get; set; }
-            public Vector3D ColSize => new Vector3D(Shape.Header.XMax, Shape.Header.YMax, Shape.Header.ZMax);
+            public BSPShape? Shape { get; set; }
+            public Vector3D ColSize => new Vector3D(Shape?.Header.XMax ?? 0, Shape?.Header.YMax ?? 0, Shape?.Header.ZMax ?? 0);
+            public string AssetName { get; }
+
             /// <summary>
             /// Renders to a Model3DGroup and transforms to the parameters provided
             /// </summary>
             /// <returns></returns>
             public Model3DGroup Render(bool DrawHeightLine = true)
             {
-                var modelContent = SHAPEStandard.MakeBSPShapeMeshGeometry(Shape);
+                List<GeometryModel3D> modelContent = new();
+                if (Shape != default)
+                    modelContent = SHAPEStandard.MakeBSPShapeMeshGeometry(Shape);
+                else
+                {
+                    //MSprites
+                    var defSpr = FILEStandard.EnsureMSpritesDefinitionOpen().Result;
+                    if (defSpr != default && defSpr.TryGetSpriteByName(AssetName, out var Sprite))
+                    {
+                        var mSprite = SHAPEStandard.Make3DMSpriteGeometry(Sprite).Result;
+                        if (mSprite == default) throw new Exception();
+                        modelContent.Add(mSprite);
+                    }
+                }
                 var transform = new Transform3DGroup();
                 var scale = new ScaleTransform3D(Scale);
                 var fooPos = Position;                
@@ -289,16 +312,24 @@ namespace StarFoxMapVisualizer.Controls
             var assetsReferenced = SelectedFile.LevelData.ShapeEvents;
             HashSet<string> attempted = new();
             int loaded = 0, eligible = 0;
-            foreach(var asset in assetsReferenced)
+
+            //MSprites
+            var defSpr = await FILEStandard.EnsureMSpritesDefinitionOpen();
+
+            foreach (var asset in assetsReferenced)
             {
                 var shapeName = asset.ShapeName;
                 if (referencedShapes.ContainsKey(shapeName)) continue;
                 if (attempted.Contains(shapeName)) continue;
                 attempted.Add(shapeName);
                 eligible++;
-                var shapes = await SHAPEStandard.GetShapesByHeaderNameOrDefault(shapeName);                
+                var shapes = await SHAPEStandard.GetShapesByHeaderNameOrDefault(shapeName);
                 if (shapes == default || shapes.Count() == 0)
+                {
+                    if (defSpr != default && defSpr.TryGetSpriteByName(shapeName, out _))
+                        loaded++; // MSPRITE!!
                     continue;
+                }
                 var shape = shapes.First();
                 referencedShapes.Add(shapeName, shape);
                 loaded++;
@@ -401,13 +432,16 @@ namespace StarFoxMapVisualizer.Controls
             string? iStrat = default;
             if (Evt is IMAPStrategyEvent strat)
                 iStrat = strat.StrategyName;
-            if (ShapeName != null && referencedShapes.ContainsKey(ShapeName))
-            {
-                var asset = referencedShapes[ShapeName];
-                var newObject = new MAPViewerObject3D(asset)
+            if (ShapeName != null)
+            {                
+                MAPViewerObject3D newObject = default;
+                if (referencedShapes.ContainsKey(ShapeName))
                 {
-                    Position = Location,
-                };
+                    var asset = referencedShapes[ShapeName];
+                    newObject = new MAPViewerObject3D(asset);
+                }
+                else newObject = new MAPViewerObject3D(ShapeName);
+                newObject.Position = Location;
                 if (iStrat != default) PerformBasicIStrat(iStrat, newObject);
                 //rotational alvars *******
                 var rotx = AlGet("rotx");

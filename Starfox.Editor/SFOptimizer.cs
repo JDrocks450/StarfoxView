@@ -16,7 +16,11 @@ namespace Starfox.Editor
         /// <summary>
         /// A stages optimizer, which is LevelMacroName -> File
         /// </summary>
-        Maps
+        Maps,
+        /// <summary>
+        /// Model sprites optimizer, which is MSpritename -> File
+        /// </summary>
+        MSprites
     }
 
     /// <summary>

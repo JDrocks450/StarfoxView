@@ -1,8 +1,10 @@
-﻿using Starfox.Editor.Settings;
+﻿using Microsoft.SolverFoundation.Services;
+using Starfox.Editor.Settings;
 using StarFox.Interop.BSP;
 using StarFox.Interop.BSP.SHAPE;
 using StarFox.Interop.GFX;
 using StarFox.Interop.GFX.COLTAB;
+using StarFox.Interop.GFX.DAT.MSPRITES;
 using StarFoxMapVisualizer.Controls.Subcontrols;
 using StarFoxMapVisualizer.Misc;
 using System;
@@ -66,6 +68,7 @@ namespace StarFoxMapVisualizer.Controls
         /// </summary>
         private int EDITOR_AnimationFPS => (int)AppResources.ImportedProject.
             GetSettings<GraphicsUserSettings>(SFCodeProjectSettingsTypes.Graphics).AnimationFPS.Value;
+        private bool CanShowTextures = false;
 
         SFPalette? currentSFPalette;
         COLGroup? currentGroup;
@@ -361,9 +364,23 @@ namespace StarFoxMapVisualizer.Controls
             ShapeSelector.SelectionChanged -= ShapeSelector_SelectionChanged;
             ShapeSelector.SelectedValue = ShapeName;
             ShapeSelector.SelectionChanged += ShapeSelector_SelectionChanged;
-
+            
             var results = await SHAPEStandard.GetShapesByHeaderNameOrDefault(ShapeName);
-            if (!results?.Any() ?? true) return false;
+
+            if (!results?.Any() ?? true)
+            {
+                var defSpr = await FILEStandard.EnsureMSpritesDefinitionOpen();
+                if (defSpr != default && defSpr.TryGetSpriteByName(ShapeName, out var Sprite))
+                {
+                    Clear3DScreen();
+                    var model = await SHAPEStandard.Make3DMSpriteGeometry(Sprite);
+                    if (model != null)
+                        MainSceneGroup.Children.Add(model); // render in viewer
+                    return true;
+                }
+                if (!results?.Any() ?? true)
+                    return false;
+            }            
 
             return ShowShape(results.First(), Frame);
         }
@@ -402,9 +419,12 @@ namespace StarFoxMapVisualizer.Controls
             List<GeometryModel3D> models = new();
             try
             {
+                if (shapeChanging)
+                    CanShowTextures = AppResources.ImportedProject?.GetOptimizerByTypeOrDefault(
+                        Starfox.Editor.SFOptimizerTypeSpecifiers.MSprites) != default; // everytime the shape is refreshed, ensure this optimizer exists
                 //Use the standard SHAPE library function to render the shape to a MeshGeom
                 models = SHAPEStandard.MakeBSPShapeMeshGeometry(
-                    shape, in group, in currentSFPalette, Frame, materialAnimationFrame, EDITOR_SelectedFace);
+                    shape, in group, in currentSFPalette, Frame, materialAnimationFrame, CanShowTextures, EDITOR_SelectedFace);
             }
             catch (Exception ex)
             {

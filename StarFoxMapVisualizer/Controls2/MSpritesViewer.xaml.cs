@@ -58,5 +58,10 @@ namespace StarFoxMapVisualizer.Controls2
                 AppResources.ShowCrash(ex, false, "Viewing an MSprite");
             }
         }
+
+        private void Window_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            DragMove();
+        }
     }
 }
