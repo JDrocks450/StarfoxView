@@ -108,35 +108,18 @@ namespace StarFoxMapVisualizer.Misc
             await CurrentEditorScreen.ASMViewer.OpenSymbol(Symbol);            
         }
 
-        /// <summary>
-        /// Prompts the user to select a new shapes directory
-        /// </summary>
-        /// <returns></returns>
-        private static DirectoryInfo? Editor_SelectShapeDirectory()
-        {
-            if (AppResources.ImportedProject.ShapesDirectoryPathSet)
-                return new DirectoryInfo(AppResources.ImportedProject.ShapesDirectoryPath);
-            var directory = FILEStandard.ShowGenericFileBrowser("Select a Directory that contains Shape files", true);
-            if (directory == default) return default;
-            AppResources.ImportedProject.ShapesDirectoryPath = directory;
-            return new DirectoryInfo(directory);
-        }
-
         private static async Task<SFOptimizerDataStruct?> Editor_BaseDoRefreshMap(SFOptimizerTypeSpecifiers Type, 
             Func<FileInfo,Dictionary<string,string>, Task<bool>> ProcessFunction, string? InitialDirectory = default, string? KeyFile = default)
         {
-            string? dirString = InitialDirectory;
-            DirectoryInfo? dirInfo = default;
-            if (dirString != null)
-                dirInfo = new DirectoryInfo(dirString);
             retry:
-            if (dirString == default)
-                dirString = FILEStandard.ShowGenericFileBrowser($"Select your {Type.ToString().ToUpper()} Directory", true);
-            dirInfo = new DirectoryInfo(dirString);
-            if (dirInfo == default) return default; // User Cancelled
+            var FilesSelected = FILEStandard.ShowGenericFileBrowser($"Select ALL of your {Type.ToString().ToUpper()} Files", false, InitialDirectory, true);
+            if (FilesSelected == default) return default; // User Cancelled
             StringBuilder errorBuilder = new(); // ERRORS
+            if (!FilesSelected.Any()) return default;
+            var dirInfo = System.IO.Path.GetDirectoryName(FilesSelected.First());
+            if (dirInfo == null || !Directory.Exists(dirInfo)) return default;
             //TEST SOMETHING OUT
-            if (!File.Exists(Path.Combine(dirInfo.FullName, KeyFile)))
+            if (!FilesSelected.Select(x => System.IO.Path.GetFileName(x).ToLower()).Contains(KeyFile.ToLower()))
             {
                 if (MessageBox.Show("It looks like the directory you selected doesn't have at least " +
                     $"a {KeyFile.ToUpper()} file in it. Have you selected the {Type.ToString().ToUpper()} directory in your workspace?\n" +
@@ -144,14 +127,13 @@ namespace StarFoxMapVisualizer.Misc
                     "Would you like to continue anyway? No will go back to file selection.", "Directory Selection Message",
                     MessageBoxButton.YesNo) != MessageBoxResult.Yes)
                 {
-                    dirInfo = null;
                     goto retry;
                 }
             }
             //GET IMPORTS SET
             FILEStandard.ReadyImporters();
             Dictionary<string, string> shapesMap = new();
-            foreach (var file in dirInfo.GetFiles()) // ITERATE OVER DIR FILES
+            foreach (var file in FilesSelected.Select(x => new FileInfo(x))) // ITERATE OVER DIR FILES
             {
                 try
                 {                   
@@ -164,7 +146,7 @@ namespace StarFoxMapVisualizer.Misc
                         $"***\n{ex.ToString()}\n***"); // ERROR INFO
                 }
             }
-            return new SFOptimizerDataStruct(Type, dirInfo.FullName, shapesMap)
+            return new SFOptimizerDataStruct(Type, dirInfo, shapesMap)
             {
                 ErrorOut = errorBuilder
             };
@@ -185,15 +167,18 @@ namespace StarFoxMapVisualizer.Misc
                 $"You will get a manifest of all files dumped with their model names as well.\n" +
                 $"Happy hacking! - Love Bisquick <3", "Export 3D Assets Wizard", MessageBoxButton.OKCancel); // WELCOME MSG
             if (r is MessageBoxResult.Cancel) return; // OOPSIES!
-            var dirInfo = Editor_SelectShapeDirectory();
-            if (dirInfo == default) return; // OOPSIES!
+
+            var FilesSelected = FILEStandard.ShowGenericFileBrowser($"Select ALL of your SHAPES Files", false, null, true);
+            if (FilesSelected == default) return; // User Cancelled
+            if (!FilesSelected.Any()) return;
+
             EDITORStandard.ShowLoadingWindow();
             StringBuilder errorBuilder = new(); // ERRORS
             StringBuilder exportedBSPs = new(); // BSPS
             StringBuilder exportedFiles = new(); // ALL FILES
             //GET IMPORTS SET
             FILEStandard.ReadyImporters();
-            foreach (var file in dirInfo.GetFiles()) // ITERATE OVER DIR FILES
+            foreach (var file in FilesSelected.Select(x => new FileInfo(x))) // ITERATE OVER DIR FILES
             {
                 try
                 {
@@ -267,7 +252,8 @@ namespace StarFoxMapVisualizer.Misc
             }
             async Task<bool> GetMSpriteMap(FileInfo File, Dictionary<string, string> Map)
             {
-                if (File.Extension.ToUpper() == ".BIN")
+                string ext = File.Extension.ToUpper();
+                if (ext == ".BIN" || ext == ".DAT")
                     Map.Add(File.FullName, "");
                 return true;
                 var defSpr = await FILEStandard.OpenDEFSPRFile(File, true);
@@ -339,12 +325,12 @@ namespace StarFoxMapVisualizer.Misc
         /// <summary>
         /// Ensures all prerequesites are added to the project
         /// </summary>
-        /// <returns></returns>
+        /// <returns>True if any changes were made to the project, false if there are no changes</returns>
         internal static async Task<bool> WelcomeWagon()
         {
-            if (WelcomeWagonShownOnce) return true;
+            if (WelcomeWagonShownOnce) return false;
             if (AppResources.ImportedProject == null) return false;
-            if (AppResources.ImportedProject.EnsureOptimizers(out SFOptimizerTypeSpecifiers[] missing)) return true;
+            if (AppResources.ImportedProject.EnsureOptimizers(out SFOptimizerTypeSpecifiers[] missing)) return false;
             foreach (var missingType in missing)
             {
                 if (MessageBox.Show($"Your project is missing the {missingType}Map optimizer.\n" +
@@ -354,7 +340,7 @@ namespace StarFoxMapVisualizer.Misc
                 await Editor_RefreshMap(missingType);
             }
             WelcomeWagonShownOnce = true;
-            return AppResources.ImportedProject.EnsureOptimizers(out _);
+            return true;
         }
     }
 }

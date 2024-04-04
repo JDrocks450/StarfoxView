@@ -294,9 +294,9 @@ namespace StarFoxMapVisualizer.Controls
                                         MessageBoxButton.YesNo) == MessageBoxResult.No)
                                 break; // User gives up
                             var file = FILEStandard.ShowGenericFileBrowser("Select the MAP file that contains this section");
-                            if (file == default) break;
+                            if (file == default || !file.Any()) break;
 
-                            sub_map = FILEStandard.OpenMAPFile(new FileInfo(file)).Result;
+                            sub_map = FILEStandard.OpenMAPFile(new FileInfo(file.First())).Result;
                             if (sub_map == default ||
                                 !sub_map.Scripts.TryGetValue(mapjsr.SubroutineName, out sub_script)) // FAILED! Still isn't the right file.
                             { // prompt the user for a new file

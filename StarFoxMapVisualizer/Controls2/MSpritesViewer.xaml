@@ -8,6 +8,10 @@
         Title="MSPRITES VIEWER" Foreground="White" SizeToContent="WidthAndHeight" Background="{StaticResource WindowBackgroundColor}">
     <DockPanel Margin="0">
         <ComboBox Name="SelectionCombo" DockPanel.Dock="Top" SelectionChanged="SelectionCombo_SelectionChanged" Margin="0,0,0,10"/>
+        <Grid DockPanel.Dock="Bottom" Margin="0,5,0,0" >
+            <Button IsCancel="True" Name="ButtonOK"  HorizontalAlignment="Right" Width="75" Click="ButtonOK_Click">OK</Button>
+            <Button Background="{Binding Background, ElementName=ButtonOK}" HorizontalAlignment="Left" Style="{StaticResource SFChangePaletteButton}" Name="PaletteWindowButton" Click="PaletteWindowButton_Click" Width="168" Height="33">Change Color Palette</Button>
+        </Grid>
         <GroupBox Style="{StaticResource SFContentBorder}" Grid.Column="1" Width="256" Height="256" Background="Black">
             <subcontrols:CopyableImage x:Name="RenderImage" />
         </GroupBox>

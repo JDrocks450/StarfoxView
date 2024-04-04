@@ -232,4 +232,22 @@
             </Setter.Value>
         </Setter>
     </Style>
+    <Style TargetType="Button" x:Key="SFChangePaletteButton">
+        <Setter Property="Background" Value="DarkTurquoise"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Button Background="{TemplateBinding Background}" Foreground="{TemplateBinding Foreground}">
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="/Resources/Image/palette.png"/>
+                            <ContentControl FontFamily="Segoe UI" FontSize="12" Foreground="{TemplateBinding Foreground}">
+                                <ContentPresenter Content="{TemplateBinding Content}" VerticalAlignment="Center" Margin="5,0,0,0"/>
+                            </ContentControl>
+                        </StackPanel>
+                    </Button>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 </ResourceDictionary>

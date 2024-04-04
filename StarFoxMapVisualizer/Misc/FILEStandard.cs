@@ -399,7 +399,7 @@ namespace StarFoxMapVisualizer.Misc
         /// <param name="InitialDirectory"></param>
         /// <param name="Multiselect"></param>
         /// <returns></returns>
-        internal static string? ShowGenericFileBrowser(string Title, bool FolderBrowser = false, string? InitialDirectory = null, bool Multiselect = false)
+        internal static IEnumerable<string>? ShowGenericFileBrowser(string Title, bool FolderBrowser = false, string? InitialDirectory = null, bool Multiselect = false)
         {
             if (InitialDirectory == default) InitialDirectory = AppResources.ImportedProject.WorkspaceDirectory.FullName;
             CommonOpenFileDialog d = new CommonOpenFileDialog()
@@ -410,9 +410,7 @@ namespace StarFoxMapVisualizer.Misc
                 InitialDirectory = InitialDirectory
             }; // CREATE THE FOLDER PICKER
             if (d.ShowDialog() is not CommonFileDialogResult.Ok) return default; // OOPSIES x2
-            var directory = d.FileName; // Selected DIR
-            if (!Directory.Exists(directory)) return default; // Random error?
-            return directory;
+            return d.FileNames;
         }
         /// <summary>
         /// Attempts to load the given <see cref="SFOptimizerNode"/> for the given type

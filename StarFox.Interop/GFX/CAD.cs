@@ -299,6 +299,18 @@ namespace StarFox.Interop.GFX
                 unk = Utility.Subarray(dat2, 0x100, 0x100);
                 swap = false;
             }
+            /// <summary>
+            /// Copies a COL from one to another but overwrites to colors to be what you provide
+            /// </summary>
+            /// <param name="Original"></param>
+            /// <param name="OverwrittenColors"></param>
+            private COL(COL Original, Color[] OverwrittenColors)
+            {
+                col = OverwrittenColors;
+                ext = Original.ext;
+                unk = Original.unk;
+                swap = false;
+            }
 
             public void SetPaletteSwap(bool v)
             {
@@ -318,6 +330,34 @@ namespace StarFox.Interop.GFX
                     return Utility.Subarray(col, base_id + (swap ? 128 : 0), 16);
                 else    //if (fmt == 2)     //8BPP
                     return Utility.Subarray(col, base_id + (swap ? 128 : 0), 256);
+            }
+            /// <summary>
+            /// Copies an entire row to another row and returns a new palette
+            /// </summary>
+            /// <param name="SourcePalette"></param>
+            /// <param name="SourceRow"></param>
+            /// <param name="DestinationRow"></param>
+            /// <returns></returns>
+            public static COL TransmutateByRow(COL SourcePalette, int SourceRow, int DestinationRow)
+            {
+                const int ROW_LEN = 16;
+                Color[] paletteSwap = SourcePalette.GetPalette();
+                Color[] rowData = paletteSwap[(SourceRow * 16)..((SourceRow + 1) * 16)];
+                rowData.CopyTo(paletteSwap, (DestinationRow * ROW_LEN));
+                return new COL(SourcePalette, paletteSwap);
+            }
+            /// <summary>
+            /// Copies an entire row to another row
+            /// </summary>
+            /// <param name="SourceRow"></param>
+            /// <param name="DestinationRow"></param>
+            public void TransmutateByRow(int SourceRow, int DestinationRow)
+            {
+                const int ROW_LEN = 16;
+                Color[] paletteSwap = GetPalette();
+                Color[] rowData = paletteSwap[(SourceRow * 16)..((SourceRow + 1) * 16)];
+                rowData.CopyTo(paletteSwap, (DestinationRow * ROW_LEN));
+                col = rowData;
             }
 #if RENDER
             public Bitmap RenderPalette()

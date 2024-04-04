@@ -28,6 +28,7 @@ namespace StarFoxMapVisualizer.Misc
     /// </summary>
     internal static class SHAPEStandard
     {
+        internal const string DefaultMSpritePalette = "NIGHT.COL";
         static Dictionary<string, SFPalette> SFPaletteCache { get; } = new();
         /// <summary>
         /// Gets the Color Table defined in this project
@@ -46,6 +47,7 @@ namespace StarFoxMapVisualizer.Misc
         /// <returns></returns>
         internal static bool CreateSFPalette(string ColGroupName, out SFPalette Palette, out COLGroup Group, string ColorPaletteName = "BLUE")
         {
+            ColorPaletteName = ColorPaletteName.ToUpper().Replace(".COL", "");
             COL? palette = AppResources.ImportedProject.Palettes.FirstOrDefault
                 (x => System.IO.Path.GetFileNameWithoutExtension(x.Key).ToUpper() == ColorPaletteName).Value;
             var group = default(COLGroup);
@@ -55,7 +57,7 @@ namespace StarFoxMapVisualizer.Misc
                 throw new Exception($"There was a problem loading the palette: {ColorPaletteName} and/or color table group: {ColGroupName}.");
             Group = group;
             if (SFPaletteCache.TryGetValue(ColGroupName, out Palette)) { return true; }            
-            SFPalette sfPalette = new SFPalette(in palette, in group);
+            SFPalette sfPalette = new SFPalette(ColorPaletteName, in palette, in group);
             sfPalette.GetPalette();
             Palette = sfPalette;            
             SFPaletteCache.Add(ColGroupName, Palette);
@@ -68,6 +70,7 @@ namespace StarFoxMapVisualizer.Misc
         internal static void ClearSFPaletteCache() => SFPaletteCache.Clear();
 
         private static List<FXCGXFile> CGXCache = new List<FXCGXFile>();
+        private static string? RenderCachePalette;
         private static Dictionary<MSprite, ImageSource> RenderCache = new();
         private static Dictionary<string, MSprite> MSpriteNameMap = new();
 
@@ -120,6 +123,7 @@ namespace StarFoxMapVisualizer.Misc
                 }
             }
             // attempt to find the palette provided to us (should be P_COL)
+            if (!PaletteName.Contains(".COL")) PaletteName = PaletteName + ".COL";
             var colHit = AppResources.ImportedProject.SearchFile(PaletteName).FirstOrDefault();
             if (colHit == default)
                 throw new FileNotFoundException($"Could not find {PaletteName}");
@@ -127,6 +131,7 @@ namespace StarFoxMapVisualizer.Misc
             var pCol = await FILEStandard.GetPalette(new FileInfo(colHit.FilePath));
             if (pCol == default)
                 throw new InvalidDataException($"Palette: {PaletteName} was not found.");
+            pCol = COL.TransmutateByRow(pCol, 7, 0);
             return (mSpriteDef, pCol, CGXCache);
         }
 
@@ -137,9 +142,12 @@ namespace StarFoxMapVisualizer.Misc
         /// <returns></returns>
         /// <exception cref="FileNotFoundException"></exception>
         /// <exception cref="InvalidDataException"></exception>
-        internal static async Task<(ImageSource Image, MSprite Sprite)> RenderMSprite(string MSpriteName, string PaletteName = "P_COL.COL")
+        internal static async Task<(ImageSource Image, MSprite Sprite)> RenderMSprite(string MSpriteName, string PaletteName = DefaultMSpritePalette)
         {
             if (MSpriteName.EndsWith("_spr")) MSpriteName = MSpriteName.Replace("_spr", "");
+            if (RenderCachePalette == null || PaletteName != RenderCachePalette)
+                RenderCache.Clear();
+            RenderCachePalette = PaletteName;
             if (MSpriteNameMap.TryGetValue(MSpriteName, out var cachedSprite))
                 if (RenderCache.TryGetValue(cachedSprite, out var render)) return (render, cachedSprite);
             string defAsmName = "DEFSPR.ASM";
@@ -162,11 +170,14 @@ namespace StarFoxMapVisualizer.Misc
         /// <returns></returns>
         /// <exception cref="FileNotFoundException"></exception>
         /// <exception cref="InvalidDataException"></exception>
-        internal static async Task<ImageSource> RenderMSprite(MSprite Sprite, string PaletteName = "P_COL.COL")
+        internal static async Task<ImageSource> RenderMSprite(MSprite Sprite, string PaletteName = DefaultMSpritePalette)
         {
+            if (RenderCachePalette == null || PaletteName != RenderCachePalette)
+                RenderCache.Clear();
+            RenderCachePalette = PaletteName;
             if (RenderCache.TryGetValue(Sprite, out var render)) return render;
             string defAsmName = "DEFSPR.ASM";
-            if (PaletteName == null) PaletteName = "P_COL.COL";
+            if (PaletteName == null) PaletteName = DefaultMSpritePalette;
             var (mSpriteDef, pCol, cgxs) = await BaseRenderMSprite(PaletteName, defAsmName);
             //Try to render the sprite
             using (var bmp = SFGFXInterface.RenderMSprite(Sprite, pCol, cgxs.ToArray()))
@@ -426,7 +437,7 @@ namespace StarFoxMapVisualizer.Misc
                                 var textDef = definition as COLTexture;
                                 try
                                 {
-                                    var (bmp, sprite) = RenderMSprite(textDef.Reference).Result;
+                                    var (bmp, sprite) = RenderMSprite(textDef.Reference, Palette.Name).Result;
                                     /*var imgBrush = new ImageBrush(bmp)
                                     {
                                         Stretch = Stretch.Fill,

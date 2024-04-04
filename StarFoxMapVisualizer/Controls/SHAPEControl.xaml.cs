@@ -577,7 +577,7 @@ namespace StarFoxMapVisualizer.Controls
             {
                 try
                 {
-                    var (bmp, sprite) = await SHAPEStandard.RenderMSprite(MSpriteName);
+                    var (bmp, sprite) = await SHAPEStandard.RenderMSprite(MSpriteName, modelPaletteName);
                     bool Loaded = bmp != default;
 
                     TextBlock block = new TextBlock()

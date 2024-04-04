@@ -83,11 +83,12 @@ namespace StarFoxMapVisualizer.Screens
             var currentProject = AppResources.ImportedProject;
             if (currentProject == null)
                 throw new InvalidDataException("No project loaded.");
-            if (Flush)
-                await currentProject.EnumerateAsync();
 
             //Show welcome wagon if not shown once to the user yet this session
-            await EDITORStandard.WelcomeWagon();
+            bool changesMade = await EDITORStandard.WelcomeWagon();            
+
+            if (Flush || changesMade)
+                await currentProject.EnumerateAsync();            
 
             var expandedHeaders = new List<string>();
             void CheckNode(in TreeViewItem Node)
@@ -788,8 +789,8 @@ namespace StarFoxMapVisualizer.Screens
         private async void OpenItem_Click(object sender, RoutedEventArgs e)
         {
             var file = FILEStandard.ShowGenericFileBrowser("Select a File to View");
-            if (file == default) return;
-            await FileSelected(new FileInfo(file));
+            if (file == default || !file.Any()) return;
+            await FileSelected(new FileInfo(file.First()));
         }
 
         private void CloseProjectMenuItem_Click(object sender, RoutedEventArgs e)
