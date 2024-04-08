@@ -1,6 +1,7 @@
 ﻿using Microsoft.Win32;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using StarFox.Interop.ASM;
+using StarFoxMapVisualizer.Controls;
 using StarFoxMapVisualizer.Controls2;
 using StarFoxMapVisualizer.Misc;
 using System;
@@ -34,6 +35,9 @@ namespace StarFoxMapVisualizer.Screens
         public LandingScreen()
         {
             InitializeComponent();
+
+            MAP3DControl control = new();
+            control.Show();
 
             if (!RecentExists)
                 ClearRecentFile.Visibility = Visibility.Collapsed;

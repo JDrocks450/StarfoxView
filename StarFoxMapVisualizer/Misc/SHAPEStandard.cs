@@ -252,11 +252,12 @@ namespace StarFoxMapVisualizer.Misc
         }
         public static bool PushLine(ref MeshGeometry3D geometry, Point3D Point1, Point3D Point2)
         {
+            double thickness = .5;
             int index = geometry.Positions.Count(); // used to push indices
             geometry.Positions.Add(new(Point1.X, Point1.Y, Point1.Z)); // i
-            geometry.Positions.Add(new(Point1.X - 1, Point1.Y, Point1.Z + 1)); // i + 1            
+            geometry.Positions.Add(new(Point1.X - thickness, Point1.Y, Point1.Z + thickness)); // i + 1            
             geometry.Positions.Add(new(Point2.X, Point2.Y, Point2.Z)); // i + 2
-            geometry.Positions.Add(new(Point2.X + 1, Point2.Y, Point2.Z - 1)); // i + 3
+            geometry.Positions.Add(new(Point2.X + thickness, Point2.Y, Point2.Z - thickness)); // i + 3
             geometry.TriangleIndices.Add(index);
             geometry.TriangleIndices.Add(index + 1);
             geometry.TriangleIndices.Add(index + 2);
@@ -289,12 +290,24 @@ namespace StarFoxMapVisualizer.Misc
         /// <param name="Frame">The frame of animation to use as the rendered frame</param>
         /// <returns></returns>
         public static List<GeometryModel3D> MakeBSPShapeMeshGeometry(
-            BSPShape Shape, int Frame = -1, int MaterialAnimationFrame = -1)
+            BSPShape Shape, int Frame = -1, int MaterialAnimationFrame = -1, bool HandleColGroupErrors = true)
         {
             bool TexturesActivated = AppResources.ImportedProject?.
                 GetOptimizerByTypeOrDefault(SFOptimizerTypeSpecifiers.MSprites) != default;
-            CreateSFPalette(Shape.Header.ColorPalettePtr, out var palette, out var group);
-            return MakeBSPShapeMeshGeometry(Shape, in group, in palette, Frame, MaterialAnimationFrame, TexturesActivated);
+            try
+            {
+                CreateSFPalette(Shape.Header.ColorPalettePtr, out var palette, out var group);
+                return MakeBSPShapeMeshGeometry(Shape, in group, in palette, Frame, MaterialAnimationFrame, TexturesActivated);
+            }
+            catch (Exception ex)
+            {
+                if (HandleColGroupErrors)
+                {
+                    CreateSFPalette("id_0_c", out var palette, out var group);
+                    return MakeBSPShapeMeshGeometry(Shape, in group, in palette, Frame, MaterialAnimationFrame, TexturesActivated);
+                }
+                else throw ex;
+            }            
         }
 
         public static GeometryModel3D Make3DTexturedPlaneGeometry(ImageSource image)

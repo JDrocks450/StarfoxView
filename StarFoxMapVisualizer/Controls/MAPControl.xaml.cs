@@ -54,7 +54,7 @@ namespace StarFoxMapVisualizer.Controls
             }
         }
         private MAPScript? selectedScript => ((TabItem)MAPTabViewer.SelectedItem).Tag as MAPScript;
-        
+        private MAPContextDefinition? selectedContext;
 
         //3D VIEWER VARS
         private MAP3DControl? MapWindow;
@@ -104,6 +104,8 @@ namespace StarFoxMapVisualizer.Controls
                 View3DButton.Visibility= Visibility.Visible;
             };
             map3D.Show();
+            //update the 3D editor view
+            await SwitchEditorBackground();
             View3DButton.Visibility = Visibility.Collapsed;
         }        
 
@@ -184,9 +186,9 @@ namespace StarFoxMapVisualizer.Controls
                     Owner = Application.Current.MainWindow
                 };
             }
-            viewer.EditorPreviewSelectionChanged += delegate
+            viewer.EditorPreviewSelectionChanged += async (object? sender, MAPContextDefinition definition) =>
             {
-
+                await SwitchEditorBackground(definition);
             };
             viewer.Show();
         }
@@ -436,12 +438,27 @@ namespace StarFoxMapVisualizer.Controls
         {
             //await SetupEditor(selectedFile, EventCanvas, true);
         }
-
+        /// <summary>
+        /// Changes the editor's background and also the backgrounds of any attached views that this applies
+        /// to (like a <see cref="MAP3DControl"/>)
+        /// </summary>
+        /// <param name="Definition"></param>
+        /// <returns></returns>
         private async Task SwitchEditorBackground(MAPContextDefinition? Definition)
         {
-            await BackgroundRender.Attach(Definition);
+            selectedContext = Definition;
+            //Update the context of the background viewer
+            await BackgroundRender.SetContext(Definition);
             BackgroundRender.ResizeViewports((int)ActualWidth, (int)ActualHeight);
+            //Set 3D scene viewer background to match the one selected, if opened
+            if (MapWindowOpened && Definition != null)
+                await MapWindow.SkyBackground.SetContext(Definition);
         }
+        /// <summary>
+        /// Calls <see cref="SwitchEditorBackground(MAPContextDefinition?)"/> with the <see cref="selectedContext"/>
+        /// </summary>
+        /// <returns></returns>
+        private Task SwitchEditorBackground() => SwitchEditorBackground(selectedContext);
         /// <summary>
         /// This function is used when the user selects a MapNode in the MAPControl.
         /// <para/>Map Nodes can represent many types of information, using the <paramref name="ComponentSelected"/>

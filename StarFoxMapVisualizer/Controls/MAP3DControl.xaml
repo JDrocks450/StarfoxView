@@ -3,10 +3,20 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:StarFoxMapVisualizer.Controls"
-             mc:Ignorable="d" Background="Black"
+             xmlns:local="clr-namespace:StarFoxMapVisualizer.Controls" xmlns:shapes="clr-namespace:WPF.UI.Extensions.Shapes;assembly=WPF.UI.Extensions" xmlns:renderers="clr-namespace:StarFoxMapVisualizer.Renderers"
+        mc:Ignorable="d" Background="Black"
              Height="768" Width="1024" MinHeight="600" MinWidth="800" PreviewMouseMove="Window_PreviewMouseMove" PreviewKeyDown="Window_PreviewKeyDown">
+    <Window.Resources>
+        <!--<shapes:NormalSphere x:Key="SphereGeometrySource1"/>
+        <MeshGeometry3D x:Key="SphereGeometry1" 
+                  Positions="{Binding Source={StaticResource 
+                             SphereGeometrySource1}, Path=Points}"
+                TriangleIndices="{Binding Source={StaticResource 
+                                  SphereGeometrySource1}, 
+                                  Path=TriangleIndices}"/>-->
+    </Window.Resources>
     <Grid>
+        <renderers:BackgroundSkyRenderer x:Name="SkyBackground" HorizontalAlignment="Center" VerticalAlignment="Center"/>
         <Viewport3D Name="ThreeDViewer" SizeChanged="ThreeDViewer_SizeChanged">
             <Viewport3D.Resources>
                 <DiffuseMaterial x:Key="DefaultBrush">
@@ -21,15 +31,35 @@
                         LookDirection="0,0,1" 
                         UpDirection="0,1,0" 
                         NearPlaneDistance="1" 
-                        Position="0,25,-200" 
-                        FieldOfView="70" />
+                        Position="0,150,-200" 
+                        FieldOfView="70" >
+                </PerspectiveCamera>
             </Viewport3D.Camera>
             <Viewport3D.Children>
                 <ModelVisual3D>
                     <ModelVisual3D.Content>
                         <Model3DGroup>
                             <!-- Lights, MeshGeometry3D and DiffuseMaterial objects are added to the ModelVisual3D. -->
-                            <AmbientLight x:Name="MainLight" Color="#FFFFFFFF"/>
+                            <AmbientLight Color="White"/>
+                            <!--<GeometryModel3D x:Name="Sky" Geometry="{StaticResource SphereGeometry1}">
+                                <GeometryModel3D.Material>
+                                    <MaterialGroup>
+                                        <DiffuseMaterial>
+                                            <DiffuseMaterial.Brush>
+                                                <SolidColorBrush Color="DeepSkyBlue"/>
+                                            </DiffuseMaterial.Brush>
+                                        </DiffuseMaterial>
+                                    </MaterialGroup>
+                                </GeometryModel3D.Material>
+                                <GeometryModel3D.Transform>
+                                    <Transform3DGroup>
+                                        <ScaleTransform3D ScaleX="10000" ScaleY="10000" ScaleZ="10000"/>
+                                        <TranslateTransform3D OffsetX="{Binding Position.X, ElementName=Camera}"
+                                                          OffsetY="{Binding Position.Y, ElementName=Camera}"
+                                                          OffsetZ="{Binding Position.Z, ElementName=Camera}"/>
+                                    </Transform3DGroup>
+                                </GeometryModel3D.Transform>
+                            </GeometryModel3D> -->
                             <GeometryModel3D x:Name="GroundGeom" Material="{StaticResource DefaultBrush}">
                                 <GeometryModel3D.Geometry>
                                     <MeshGeometry3D 
@@ -81,6 +111,9 @@
                     X: <Run Text="{Binding Position.X, ElementName=Camera}" FontWeight="Regular"/><LineBreak/>
                     Y: <Run Text="{Binding Position.Y, ElementName=Camera}" FontWeight="Regular"/><LineBreak/>
                     Z: <Run Text="{Binding Position.Z, ElementName=Camera}" FontWeight="Regular"/><LineBreak/>
+                    Look X: <Run Text="{Binding LookDirection.X, ElementName=Camera}" FontWeight="Regular"/><LineBreak/>
+                    Look Y: <Run Text="{Binding LookDirection.Y, ElementName=Camera}" FontWeight="Regular"/><LineBreak/>
+                    Look Z: <Run Text="{Binding LookDirection.Z, ElementName=Camera}" FontWeight="Regular"/><LineBreak/>
                     Render Distance: <Run Text="{Binding FarPlaneDistance, ElementName=Camera}" FontWeight="Regular"/><LineBreak/>
                     FOV: <Run Text="{Binding FieldOfView, ElementName=Camera}" FontWeight="Regular"/><LineBreak/>
                     </TextBlock>

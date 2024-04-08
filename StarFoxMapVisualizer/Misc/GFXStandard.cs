@@ -178,6 +178,7 @@ namespace StarFoxMapVisualizer.Misc
         {
             //LOAD THE CGX
             var fxCGX = await OpenCGX(CGX);
+            if (fxCGX == null) throw new InvalidDataException("The CGX file is not available.");
             //LOAD THE SCR
             var fxSCR = OpenSCR(SCR);
             //RENDER OUT

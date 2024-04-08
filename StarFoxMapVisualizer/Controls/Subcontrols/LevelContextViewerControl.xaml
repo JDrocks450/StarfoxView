@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:StarFoxMapVisualizer.Controls.Subcontrols"
+             xmlns:local="clr-namespace:StarFoxMapVisualizer.Controls.Subcontrols" xmlns:renderers="clr-namespace:StarFoxMapVisualizer.Renderers"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800"  Background="{DynamicResource WindowBackgroundColor}" Foreground="White">
     <Grid>
@@ -64,7 +64,7 @@
             </Grid>
         </GroupBox>
         <ContentControl x:Name="ImageContentHost" Grid.Column="1" Margin="10,0,0,0" Style="{StaticResource SFContentBorder}">
-            <local:BackgroundRenderer x:Name="ImageContent" MouseLeftButtonDown="BG2Render_MouseLeftButtonUp"/>
+            <renderers:BackgroundRenderer x:Name="ImageContent" MouseLeftButtonDown="BG2Render_MouseLeftButtonUp"/>
         </ContentControl>
     </Grid>
 </UserControl>

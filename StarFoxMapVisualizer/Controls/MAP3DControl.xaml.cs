@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using System.Reflection.Metadata;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -35,8 +36,8 @@ namespace StarFoxMapVisualizer.Controls
         private static double Editor_ZScrunchPercentage = 1;
 
         private static double Editor_ZFarPlaneRenderDistance => UserSettings.ViewingDistance3D.Value;
-        private static GraphicsUserSettings UserSettings => 
-            AppResources.ImportedProject.GetSettings<GraphicsUserSettings>(SFCodeProjectSettingsTypes.Graphics);
+        private static GraphicsUserSettings? UserSettings => 
+            AppResources.ImportedProject?.GetSettings<GraphicsUserSettings>(SFCodeProjectSettingsTypes.Graphics);
 
         /// <summary>
         /// A basic port of Glider Game Object 3D with basic Positional, Scale, etc. parameters and render code
@@ -148,9 +149,13 @@ namespace StarFoxMapVisualizer.Controls
         /// Creates a new control, optionally with the <see cref="SelectedFile"/> property set
         /// </summary>
         /// <param name="MapFile"></param>
-        public MAP3DControl(MAPScript? MapFile = default)
+        public MAP3DControl()
         {
-            InitializeComponent();
+            InitializeComponent();            
+        }
+
+        public MAP3DControl(MAPScript? MapFile = default) : this()
+        {
             SelectedFile = MapFile;
             ScrunchSlider.ValueChanged += ScrunchValueChanged;
 
@@ -308,6 +313,7 @@ namespace StarFoxMapVisualizer.Controls
         /// <returns></returns>
         private async Task<bool> LoadContent()
         {
+            return true;
             if (!await LoadConstants()) return false;
             var assetsReferenced = SelectedFile.LevelData.ShapeEvents;
             HashSet<string> attempted = new();
@@ -362,7 +368,16 @@ namespace StarFoxMapVisualizer.Controls
                 var createdObject = SpawnEventObject(nodeData, (int)depth, out var drawLoc);
                 mapFar = Math.Max(mapFar, drawLoc.Z);
                 if (createdObject != default)
-                    Render(createdObject); // render the new object
+                {
+                    try
+                    {
+                        Render(createdObject); // render the new object
+                    }
+                    catch (Exception ex)
+                    {
+                        AppResources.ShowCrash(ex, false, "Rendering 3D imagery");
+                    }
+                }
             }
             while (currentZDepth * Editor_ZScrunchPercentage < SpawnZDepthMax);
             MapZFar = Math.Max(MapZFar, mapFar);
@@ -461,7 +476,9 @@ namespace StarFoxMapVisualizer.Controls
         }
 
         private void CameraMoved(Point3D NewPosition)
-        {
+        {            
+            SkyBackground.ScrollToCamera(Camera);
+            if (SelectedFile == null) return;
             if (true)
                 SetPlayfieldGround();
             else AdjustGroundToCam(NewPosition);
@@ -505,7 +522,7 @@ namespace StarFoxMapVisualizer.Controls
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
         {
             bool fast = e.KeyboardDevice.IsKeyDown(Key.LeftShift) || e.KeyboardDevice.IsKeyDown(Key.RightShift);
-            Camera.MoveBy(e.Key, fast ? UserSettings.Scene3DFastSpeed : UserSettings.Scene3DSpeed.Value).RotateBy(e.Key, 3);
+            Camera.MoveBy(e.Key, fast ? UserSettings?.Scene3DFastSpeed ?? 10 : UserSettings?.Scene3DSpeed?.Value ?? 5).RotateBy(e.Key, 3);
             CameraMoved(Camera.Position);
         }
 
@@ -517,7 +534,9 @@ namespace StarFoxMapVisualizer.Controls
         /// <param name="e"></param>
         private void Window_PreviewMouseMove(object sender, MouseEventArgs e)
         {
-            var till = e.GetPosition(sender as IInputElement);
+            // Scale bounds to [0,0] - [2,2]
+            var p = e.GetPosition(sender as IInputElement);
+            var till = p;
             double dx = till.X - from.X;
             double dy = till.Y - from.Y;
             from = till;
@@ -531,7 +550,7 @@ namespace StarFoxMapVisualizer.Controls
                 var angle = (distance / Camera.FieldOfView) % 45d;
                 Camera.Rotate(new(dy, -dx, 0d), angle);
                 CameraMoved(Camera.Position);
-            }            
+            }
         }
 
         private async void ThreeDViewer_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -545,6 +564,6 @@ namespace StarFoxMapVisualizer.Controls
         }
 
         private void CamJumpStartButton_Click(object sender, RoutedEventArgs e) =>
-            CameraTransitionToPoint(new Point3D(0, 100, 0), new Vector3D(0, 0, 1));
+            CameraTransitionToPoint(new Point3D(0, 150, 0), new Vector3D(0, 0, 1));
     }
 }

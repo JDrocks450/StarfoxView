@@ -51,7 +51,7 @@ namespace StarFoxMapVisualizer.Controls.Subcontrols
 
             ApplyButton.IsEnabled = false;            
             ContextDataGrid.ItemsSource = new[] { levelContext };
-            await ImageContent.Attach(LevelContext, ExtractCCR, ExtractPCR);
+            await ImageContent.SetContext(LevelContext, ExtractCCR, ExtractPCR);
             ScrWidth = ScrHeight = ImageContent.Width = ImageContent.ActualHeight;
             ResetViewSettings();
         }        

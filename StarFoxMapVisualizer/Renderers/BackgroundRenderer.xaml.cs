@@ -17,38 +17,46 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace StarFoxMapVisualizer.Controls.Subcontrols
+namespace StarFoxMapVisualizer.Renderers
 {
     /// <summary>
     /// Interaction logic for BackgroundRenderer.xaml
     /// </summary>
-    public partial class BackgroundRenderer : UserControl
+    public partial class BackgroundRenderer : UserControl, ISCRRendererBase
     {
-        public MAPContextDefinition LevelContext { get; private set; }
+        public MAPContextDefinition? LevelContext { get; set; }
+        public Dictionary<string, string> ReferencedFiles { get; } = new();
 
         public BackgroundRenderer()
         {
             InitializeComponent();
         }
-
+        /// <summary>
+        /// Sets the viewport of this Image to be passed argument
+        /// </summary>
+        /// <param name="Viewport"></param>
         public void ResetViewports(Rect Viewport)
         {
             ResetViewports(Viewport, Viewport);
         }
+        /// <summary>
+        /// Sets individually the BG2 and BG3 viewports by themselves
+        /// </summary>
+        /// <param name="BG2Viewport"></param>
+        /// <param name="BG3Viewport"></param>
         public void ResetViewports(Rect BG2Viewport, Rect BG3Viewport)
         {
             BG2Render.Viewport = BG2Viewport;
             BG3Render.Viewport = BG3Viewport;
         }
         /// <summary>
-        /// This function should be called before rendering to the screen but after <see cref="Attach(MAPContextDefinition?, bool, bool)"/>
+        /// This function should be called before rendering to the screen but after <see cref="SetContext(MAPContextDefinition?, bool, bool)"/>
         /// it cannot be used without a valid <see cref="LevelContext"/> property.
         /// <para>This function will take a ScreenSize, and optionally some screen scroll registers,
         /// and setup the view to match the given parameters and also match the mode in the <see cref="LevelContext"/></para>
         /// <para>Remember that <see cref="MAPContextDefinition.AppearancePreset"/> determines how the Background is displayed. This 
         /// function will handle that for you.</para>
         /// </summary>
-        /// <param name="ScreenSize"></param>
         /// <param name="ScreenBG2XScroll">Measured as the original game does, in viewport units as if the background was 512 wide and tall.</param>
         /// <param name="ScreenBG2YScroll">Measured as the original game does, in viewport units as if the background was 512 wide and tall.</param>
         /// <param name="ScreenBG3XScroll">Measured as the original game does, in viewport units as if the background was 512 wide and tall.</param>
@@ -109,32 +117,8 @@ namespace StarFoxMapVisualizer.Controls.Subcontrols
             var BG2X = LevelContext.BG2.HorizontalOffset;
             var BG2Y = LevelContext.BG2.VerticalOffset;
             SetViewportsToUniformSize(Width, Height, BG2X, BG2Y, BG3X, BG3Y);
-        }
-
-        public async Task Attach(MAPContextDefinition? SelectedContext, bool ExtractCCR = false, bool ExtractPCR = false) { 
-            LevelContext = SelectedContext;
-            await SetBGS(ExtractCCR, ExtractPCR);
-        }
-
-        //FILE PATH -> FILE TYPE
-        public Dictionary<string, string> ReferencedFiles { get; } = new();
-        private async Task<Bitmap> RenderSCR(string ColorPaletteName, string SCRName, string CHRName, bool ExtractCCR = false, bool ExtractPCR = false)
-        {
-            var palette = GFXStandard.MAPContext_GetPaletteByName(ColorPaletteName, out var palettePath);
-            if (palette == default) throw new FileNotFoundException($"{ColorPaletteName} was not found as" +
-                $" an included Palette in this project."); // NOPE IT WASN'T
-            ReferencedFiles.Add(palettePath, "Palette");
-            //SET THE CHRName TO BE THE SCR NAME IF DEFAULT
-            if (CHRName == null) CHRName = SCRName;
-            //MAKE SURE BOTH OF THESE FILES ARE EXTRACTED AND EXIST
-            //SEARCH AND EXTRACT CGX FIRST
-            var CGXFileInfo = await GFXStandard.FindProjectCGXByName(CHRName, ExtractCCR);
-            ReferencedFiles.Add(CGXFileInfo.FullName, "CGX");
-            //THEN SCR
-            var SCRFileInfo = await GFXStandard.FindProjectSCRByName(SCRName, ExtractPCR);
-            ReferencedFiles.Add(SCRFileInfo.FullName, "SCR");
-            return await GFXStandard.RenderSCR(palette, CGXFileInfo, SCRFileInfo);
-        }
+        }        
+              
         private async Task SetBGS(bool ExtractCCR = false, bool ExtractPCR = false)
         {
             ReferencedFiles.Clear();
@@ -146,7 +130,7 @@ namespace StarFoxMapVisualizer.Controls.Subcontrols
             {
                 try
                 {
-                    using (var source = await RenderSCR(
+                    using (var source = await GFXStandard.RenderSCR(
                         LevelContext.BackgroundPalette,
                         LevelContext.BG2ScrFile,
                         LevelContext.BG2ChrFile,
@@ -181,6 +165,12 @@ namespace StarFoxMapVisualizer.Controls.Subcontrols
                     MessageBox.Show(ex.ToString());
                 }
             }
+        }
+
+        public async Task SetContext(MAPContextDefinition? SelectedContext, bool ExtractCCR = false, bool ExtractPCR = false)
+        {
+            LevelContext = SelectedContext;
+            await SetBGS(ExtractCCR, ExtractPCR);
         }
     }
 }
