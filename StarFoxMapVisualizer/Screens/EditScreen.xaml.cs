@@ -15,6 +15,7 @@ using StarFoxMapVisualizer.Controls.Subcontrols;
 using StarFoxMapVisualizer.Controls2;
 using StarFoxMapVisualizer.Dialogs;
 using StarFoxMapVisualizer.Misc;
+using StarFoxMapVisualizer.Renderers;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

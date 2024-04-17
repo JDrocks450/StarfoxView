@@ -17,10 +17,11 @@ namespace StarFoxMapVisualizer.Misc
         /// </summary>
         /// <param name="src">A bitmap image</param>
         /// <returns>The image as a BitmapImage for WPF</returns>
-        public static BitmapImage Convert(this Bitmap src, bool TransparentEnabled = false)
+        public static BitmapImage Convert(this Bitmap src, bool TransparentEnabled = true)
         {
             MemoryStream ms = new MemoryStream();
             src.Save(ms, TransparentEnabled ? ImageFormat.Png : ImageFormat.Bmp);
+            //src.Save("test.png");
             BitmapImage image = new BitmapImage();
             image.CacheOption = BitmapCacheOption.OnLoad;
             image.BeginInit();

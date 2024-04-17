@@ -10,6 +10,7 @@ using System.IO;
 using System.Drawing;
 using StarFox.Interop.MISC;
 using System.Runtime.Intrinsics.X86;
+using static StarFox.Interop.GFX.CAD;
 
 // ********************************
 // THANK YOU LUIGIBLOOD!
@@ -166,7 +167,8 @@ namespace StarFox.Interop.GFX
                             p = palForce * 128;
                     }
 
-                    Bitmap tile = RenderTile(i, 8, pal.GetPalette(fmt, p));
+                    var palette = pal.GetPalette(fmt, p);
+                    Bitmap tile = RenderTile(i, 8, palette);
 
                     using (Graphics g = Graphics.FromImage(output))
                     {
@@ -175,15 +177,15 @@ namespace StarFox.Interop.GFX
                         g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
                         g.DrawImage(tile, x, y, s, s);
                     }
-                }
-
+                }                
                 return output;
             }
 
             public Bitmap RenderTile(int tile, int size, Color[] pal, bool xflip = false, bool yflip = false)
             {
                 Bitmap output = new Bitmap(size, size);
-                
+                pal[0] = Color.Transparent; // STARFOX!!!
+
                 for (int y = 0; y < (size / 8); y++)
                 {
                     for (int x = 0; x < (size / 8); x++)
@@ -210,7 +212,7 @@ namespace StarFox.Interop.GFX
                         }
                     }
                 }
-
+                //output.MakeTransparent(pal[0]);
                 return output;
             }
 
@@ -524,7 +526,7 @@ namespace StarFox.Interop.GFX
                         RenderScreen(s);
                     }
                 }
-                else RenderScreen(Screen);
+                else RenderScreen(Screen);               
                 return output;
             }
 #endif

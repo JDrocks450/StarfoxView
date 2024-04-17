@@ -1,4 +1,5 @@
-﻿using StarFox.Interop.MAP.CONTEXT;
+﻿using StarFox.Interop.EFFECTS;
+using StarFox.Interop.MAP.CONTEXT;
 using StarFoxMapVisualizer.Misc;
 using System;
 using System.Collections.Generic;
@@ -29,7 +30,18 @@ namespace StarFoxMapVisualizer.Controls.Subcontrols
 
         public LevelContextViewerControl()
         {
-            InitializeComponent();            
+            InitializeComponent();
+
+            Loaded += delegate
+            {
+                //item selector for dynamic backgrounds
+                DynamicBackgroundAnimationSelector.ItemsSource = Enum.GetValues<WavyBackgroundRenderer.WavyEffectStrategies>();
+                PendingChangesMessage.Visibility = Visibility.Collapsed; // pending changes message for dynamic backgrounds
+            };
+            Unloaded += delegate
+            { // Dispose of the Background Renderer as it is IDisposable
+                ImageContent.Dispose();
+            };
         }        
 
         public MAPContextDefinition LevelContext { get; private set; }
@@ -51,8 +63,19 @@ namespace StarFoxMapVisualizer.Controls.Subcontrols
 
             ApplyButton.IsEnabled = false;            
             ContextDataGrid.ItemsSource = new[] { levelContext };
-            await ImageContent.SetContext(LevelContext, ExtractCCR, ExtractPCR);
+            await ImageContent.SetContext(LevelContext, StarFox.Interop.EFFECTS.
+                WavyBackgroundRenderer.WavyEffectStrategies.None, ExtractCCR, ExtractPCR);
             ScrWidth = ScrHeight = ImageContent.Width = ImageContent.ActualHeight;
+
+            DynamicBackgroundAnimationSelector.SelectionChanged -= DynamicBackgroundAnimationSelector_SelectionChanged;
+            DynamicBackgroundAnimationSelector.SelectedIndex = 0;
+            DynamicBackgroundAnimationSelector.SelectionChanged += DynamicBackgroundAnimationSelector_SelectionChanged;
+
+            PendingChangesMessage.Visibility = Visibility.Collapsed;
+            LatencyBox.TextChanged -= LatencyBox_TextChanged;
+            LatencyBox.Text = ImageContent.TargetFrameRate.TotalMilliseconds.ToString();
+            LatencyBox.TextChanged += LatencyBox_TextChanged;
+
             ResetViewSettings();
         }        
 
@@ -71,6 +94,31 @@ namespace StarFoxMapVisualizer.Controls.Subcontrols
             ApplyButton.IsEnabled = false;
             await Attach(LevelContext);
         }
+
+        private void DynamicBackgroundAnimationSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (DynamicBackgroundAnimationSelector.SelectedItem == null) return;
+            WavyBackgroundRenderer.WavyEffectStrategies selection = (WavyBackgroundRenderer.WavyEffectStrategies)DynamicBackgroundAnimationSelector.SelectedItem;
+            ImageContent.ChangeAnimationMode(selection);
+        }
+
+        private void LatencyBox_TextChanged(object sender, TextChangedEventArgs e)
+        {            
+            string text = LatencyBox.Text;
+            if (string.IsNullOrWhiteSpace(text)) return;
+            if (!double.TryParse(text, out var milliseconds)) return;
+            var timeSpan = TimeSpan.FromMilliseconds(milliseconds);
+            if (ImageContent.TargetFrameRate == timeSpan) return;
+            ImageContent.TargetFrameRate = timeSpan;
+            PendingChangesMessage.Visibility = Visibility.Visible;
+        }
+
+        private void SixtyFPSButton_Click(object sender, RoutedEventArgs e) => 
+            LatencyBox.Text = WavyBackgroundRenderer.GetFPSTimeSpan(60).TotalMilliseconds.ToString();
+
+        private void TwelveFPSButton_Click(object sender, RoutedEventArgs e) =>
+            LatencyBox.Text = WavyBackgroundRenderer.GetFPSTimeSpan(12).TotalMilliseconds.ToString();
+
         bool open = false;
         private void BG2Render_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
@@ -107,7 +155,7 @@ namespace StarFoxMapVisualizer.Controls.Subcontrols
 
         private void BreakdownButton_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show(string.Join("\n",ImageContent.ReferencedFiles.Select(x => $"{x.Value}: {x.Key}")));
+            MessageBox.Show(string.Join("\n",ImageContent.ReferencedFiles.Select(x => $"{x.Key}: {x.Value}")));
         }
 
         private void ViewOptions_BG2_ScrollValueChanged(object sender, (bool Horizontal, double Value) e)

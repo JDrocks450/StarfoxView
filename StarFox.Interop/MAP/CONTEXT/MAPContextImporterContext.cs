@@ -33,6 +33,30 @@ namespace StarFox.Interop.MAP.CONTEXT
             return true;
         }
         /// <summary>
+        /// Uses <c>STRATEQU.INC</c> to find constants like ViewCY, etc.
+        /// </summary>
+        internal void SetLevelConstraints()
+        {
+            var stratequ = Includes.FirstOrDefault(x => ((IImporterObject)x).FileName == "STRATEQU");
+            if (stratequ == null) throw new NullReferenceException("STRATEQU was not imported.");
+
+            var Definition = CurrentDefinition;
+
+            string noun = Definition.AppearancePreset;
+
+            if (!stratequ.ConstantExists(noun + "_viewCY"))
+                noun = "planet"; // default to planet
+
+            Definition.ViewCY = stratequ[noun + "_viewCY"];
+            Definition.MinX = stratequ[noun + "_minX"];
+            Definition.MaxX = stratequ[noun + "_maxX"];
+            Definition.M_MinX = stratequ[noun + "_MminX"];
+            Definition.M_MaxX = stratequ[noun + "_MmaxX"];
+            Definition.MinY = stratequ[noun + "_minY"];
+            Definition.MaxY = stratequ[noun + "_maxY"];
+            Definition.M_MaxY = stratequ[noun + "_MmaxY"];
+        }
+        /// <summary>
         /// Reads the contents of the line to check for whether or not any recognizable information is given.
         /// </summary>
         /// <param name="line"></param>
@@ -115,6 +139,7 @@ namespace StarFox.Interop.MAP.CONTEXT
                 case "final":
                 case "undergnd":
                     SetupMapAppearance(macroName, param1str);
+                    SetLevelConstraints();
                     return true;
             }
             return false;

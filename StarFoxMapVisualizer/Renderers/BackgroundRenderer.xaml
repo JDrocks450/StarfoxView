@@ -1,10 +1,10 @@
-﻿<UserControl x:Class="StarFoxMapVisualizer.Renderers.BackgroundRenderer"
+﻿<renderers:SCRRendererControlBase xmlns:renderers="clr-namespace:StarFoxMapVisualizer.Renderers" x:Class="StarFoxMapVisualizer.Renderers.BackgroundRenderer"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              mc:Ignorable="d" 
-             d:DesignHeight="512" d:DesignWidth="512">
+             d:DesignHeight="512" d:DesignWidth="512" Unloaded="UserControl_Unloaded">
     <Grid Name="ImageContent">
         <Rectangle RenderOptions.BitmapScalingMode="NearestNeighbor"> 
             <Rectangle.Fill>
@@ -16,5 +16,12 @@
                 <ImageBrush x:Name="BG2Render" ImageSource="/Resources/Image/SectorY.png" TileMode="Tile" Viewport="0,0,512,512" ViewportUnits="Absolute" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
             </Rectangle.Fill>
         </Rectangle>
+        <TextBlock Foreground="LawnGreen" VerticalAlignment="Top" HorizontalAlignment="Right" TextAlignment="Right" FontWeight="Bold">
+            <Run>***Animator Debug***</Run> <LineBreak/>
+            <Run>Target Latency: </Run> <Run x:Name="TgtLatencyDebugBlock">0</Run> <Run>ms</Run> <LineBreak/>
+            <Run>Render Time: </Run> <Run x:Name="ActLatencyDebugBlock">0</Run> <Run>ms</Run> <LineBreak/>
+            <Run>Buffers: </Run> <Run x:Name="BuffersBlock">0</Run> <LineBreak/>
+            <Run>Memory (approx): </Run> <Run x:Name="MemoryBlock">0</Run> <Run>bytes</Run> <LineBreak/>
+        </TextBlock>
     </Grid>
-</UserControl>
+</renderers:SCRRendererControlBase>

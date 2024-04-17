@@ -213,7 +213,9 @@ namespace StarFox.Interop.BSP
                 throw new InvalidOperationException($"You're not in the correct mode to define a point like that. M: {PointsMode} T: {PointType}");
             bool XMode = PointsMode is PointsModes.PointsXb or PointsModes.PointsXw;
         XMode:
-            var point = MakePoint(x, y, z, divisor);
+            int shift = CurrentShape?.Header?.Shift ?? 0;
+            shift = 0;
+            var point = MakePoint(x << shift, y << shift, z << shift, divisor);
             CurrentShape.LargestXPoint = Math.Max(CurrentShape.LargestXPoint, Math.Abs(x));
             CurrentShape.LargestYPoint = Math.Max(CurrentShape.LargestYPoint, Math.Abs(y));
             CurrentShape.LargestZPoint = Math.Max(CurrentShape.LargestZPoint, Math.Abs(z));

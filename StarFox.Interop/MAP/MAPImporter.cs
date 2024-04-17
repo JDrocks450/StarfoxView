@@ -17,8 +17,9 @@ namespace StarFox.Interop.MAP
         {
             "MAPMACS.INC", // MAPMACS.INC is expected
             "BGS.ASM", // BGS.ASM contains data what what levels should appear like
-            "BGMACS.INC",
-            "VARS.INC"
+            "BGMACS.INC", // Contains macros related to rendering backgrounds
+            "VARS.INC", // contains various variables
+            "STRATEQU.INC" // contains constraints like the level XMax, YMax, etc.
         };
         private MAPContextFile? mapContextDefinitions;
         /// <summary>
@@ -46,10 +47,10 @@ namespace StarFox.Interop.MAP
         /// <param name="BGSASM">The full path to the <c>BGS.ASM</c> file.</param>
         /// <param name="BGMACS">The BGMACS file imported for finding symbols.</param>
         /// <returns></returns>
-        public async Task<MAPContextFile> ProcessLevelContexts(string BGSASM, ASMFile BGMACS)
+        public async Task<MAPContextFile> ProcessLevelContexts(string BGSASM, ASMFile BGMACS, ASMFile STRATEQU)
         {
             var importer = new MAPContextImporter();
-            importer.SetImports(BGMACS);
+            importer.SetImports(BGMACS,STRATEQU);
             var message = importer.CheckWarningMessage(BGSASM);
             if (message != default) throw new Exception(message);
             var bgsASM = mapContextDefinitions = await importer.ImportAsync(BGSASM);
@@ -67,7 +68,10 @@ namespace StarFox.Interop.MAP
             var bgmacs = baseImporter.Context.Includes.FirstOrDefault(x =>
                 Path.GetFileName(x.OriginalFilePath).ToUpper() == "BGMACS.INC");
             if (bgmacs == default) throw new FileNotFoundException("BGMACS.INC is not imported.");
-            return ProcessLevelContexts(BGSASM, bgmacs);
+            var stratequ = baseImporter.Context.Includes.FirstOrDefault(x =>
+                Path.GetFileName(x.OriginalFilePath).ToUpper() == "STRATEQU.INC");
+            if (stratequ == default) throw new FileNotFoundException("STRATEQU.INC is not imported.");
+            return ProcessLevelContexts(BGSASM, bgmacs, stratequ);
         }
         /// <summary>
         /// Optionally, this importer can attach <see cref="CONTEXT.MAPContextDefinition"/> info

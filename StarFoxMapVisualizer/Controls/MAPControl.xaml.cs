@@ -306,7 +306,6 @@ namespace StarFoxMapVisualizer.Controls
                             }
                         }
                     }
-                    else MessageBox.Show("SFOptim worked perfectly!");
                     if (sub_script == default) continue; // Could not load the file at all, move on
                                                          
                     CurrentState.StateObject.Subsections.Add(sub_script);
@@ -452,7 +451,7 @@ namespace StarFoxMapVisualizer.Controls
             BackgroundRender.ResizeViewports((int)ActualWidth, (int)ActualHeight);
             //Set 3D scene viewer background to match the one selected, if opened
             if (MapWindowOpened && Definition != null)
-                await MapWindow.SkyBackground.SetContext(Definition);
+                await MapWindow.SetContext(Definition);
         }
         /// <summary>
         /// Calls <see cref="SwitchEditorBackground(MAPContextDefinition?)"/> with the <see cref="selectedContext"/>

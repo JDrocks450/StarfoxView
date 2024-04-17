@@ -167,6 +167,43 @@
         /// </summary>
         public string? AppearancePreset { get; set; }
 
+        /// <summary>
+        /// Generally, the offset of the camera from the player's position <para/>
+        /// <c>planet_viewCY</c> in STRATEQU.INC
+        /// </summary>
+        public int ViewCY { get; internal set; }
+        /// <summary>
+        /// The low-bound of the Player's X coordinate range<para/>
+        /// <c>planet_minX</c> in STRATEQU.INC
+        /// </summary>
+        public int MinX { get; internal set; }
+        /// <summary>
+        /// The high-bound of the Player's X coordinate range<para/>
+        /// <c>planet_maxX</c> in STRATEQU.INC
+        /// </summary>
+        public int MaxX { get; internal set; }
+        /// <summary>
+        /// Not sure.
+        /// <c>planet_MminX</c> in STRATEQU.INC
+        /// </summary>
+        public int M_MinX { get; internal set; }
+        /// <summary>
+        /// Not sure.
+        /// <c>planet_MmaxX</c> in STRATEQU.INC
+        /// </summary>
+        public int M_MaxX { get; internal set; }
+        /// <summary>
+        /// The low-bound of the Player's Y coordinate range<para/>
+        /// <c>planet_minY</c> in STRATEQU.INC
+        /// </summary>
+        public int MinY { get; internal set; }
+        /// <summary>
+        /// The high-bound of the Player's Y coordinate range<para/>
+        /// <c>planet_maxY</c> in STRATEQU.INC
+        /// </summary>
+        public int MaxY { get; internal set; }
+        public int M_MaxY { get; internal set; }
+
         public void SetBackground(int BGNum, MAPBGDefinition Definition)
         {
             switch (BGNum)

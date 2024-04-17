@@ -14,8 +14,8 @@
         <GroupBox Header="LEVEL CONTEXT PROPERTIES" Margin="0,0,10,0">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="1*"/>
-                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition Width="139.939"/>
                 </Grid.ColumnDefinitions>
                 <DataGrid HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Hidden" CellEditEnding="ContextDataGrid_CellEditEnding" FontSize="18" FontFamily="{StaticResource Atlantis}" Name="ContextDataGrid" Margin="0,10,0,0" Foreground="White" Background="{StaticResource WindowBackgroundColor}" BorderThickness="0" BorderBrush="{StaticResource WindowBackgroundColor}">
                     <DataGrid.LayoutTransform>
@@ -60,6 +60,21 @@
                     <Popup IsOpen="{Binding IsChecked, ElementName=ViewOptionsButton}" Placement="Left" PopupAnimation="Slide">
                         <local:BackgroundRendererViewOptions x:Name="ViewOptions" BG2_ScrollValueChanged="ViewOptions_BG2_ScrollValueChanged" BG3_ScrollValueChanged="ViewOptions_BG3_ScrollValueChanged"/>
                     </Popup>
+                    <GroupBox Header="Dynamic Background">
+                        <StackPanel>
+                            <ComboBox Margin="0,5" Name="DynamicBackgroundAnimationSelector" SelectionChanged="DynamicBackgroundAnimationSelector_SelectionChanged"/>
+                            <UniformGrid Rows="2" Columns="2">
+                                <TextBlock VerticalAlignment="Center">Latency (ms)</TextBlock>
+                                <TextBox x:Name="LatencyBox" TextChanged="LatencyBox_TextChanged"></TextBox>
+                                <Button x:Name="SixtyFPSButton" Click="SixtyFPSButton_Click">60 FPS</Button>
+                                <Button x:Name="TwelveFPSButton" Click="TwelveFPSButton_Click">12 FPS</Button>
+                            </UniformGrid>
+                            <Viewbox>
+                            <TextBlock x:Name="PendingChangesMessage" Margin="5" Width="170" TextWrapping="Wrap" FontWeight="Bold">Your changes will take effect the next time 
+                                you choose a new background.</TextBlock>
+                            </Viewbox>
+                        </StackPanel>
+                    </GroupBox>
                 </StackPanel>
             </Grid>
         </GroupBox>

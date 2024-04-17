@@ -148,7 +148,7 @@ namespace StarFox.Interop.BSP.SHAPE
             XMax = xMax << shift;
             YMax = yMax << shift;
             ZMax = zMax << shift;
-            Size = size << Shift;
+            Size = size << shift;
             ColorPalettePtr = colorPalettePtr;
             Shadow = shadow;
             Simple1 = simple1;

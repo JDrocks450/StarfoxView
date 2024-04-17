@@ -56,7 +56,7 @@ namespace StarFox.Interop.Audio.ABIN
         public static async Task<ABINExportDescriptor> ExportToDirectory(string DirectoryPath, AudioBINFile File)
         {
             //Create file names / paths
-            string asmFilePath = MakeASMPathFromDirectory(DirectoryPath, File.FileName);
+            string asmFilePath = MakeASMPathFromDirectory(DirectoryPath, ((IImporterObject)File).FileName);
             //Next, Export the BIN file containing the raw song data
             ABINExportDescriptor Descriptor = new()
             {
@@ -75,7 +75,7 @@ namespace StarFox.Interop.Audio.ABIN
             foreach (AudioBINSongData song in File.Songs)
             {
 
-                string binFileName = $"SONG_DATA_{File.FileName}_{song.SPCAddress.ToString("X4")}.BIN";
+                string binFileName = $"SONG_DATA_{((IImporterObject)File).FileName}_{song.SPCAddress.ToString("X4")}.BIN";
                 string binFilePath = Path.Combine(Descriptor.DirectoryPath, binFileName);
                 await baseExportSongDataBin(binFilePath, song);
                 Descriptor.BinSongFileNames.Add(song.SPCAddress, binFilePath);
@@ -86,7 +86,7 @@ namespace StarFox.Interop.Audio.ABIN
                 AudioBINChunk? sampleChunk = File.Chunks.FirstOrDefault(x => x.ChunkType == AudioBINChunk.ChunkTypes.SampleData);
                 if (sampleChunk != default)
                 {
-                    string smplBinFileName = $"SMPL_DATA_{File.FileName}_{sampleChunk.SPCAddress.ToString("X4")}.BIN";
+                    string smplBinFileName = $"SMPL_DATA_{((IImporterObject)File).FileName}_{sampleChunk.SPCAddress.ToString("X4")}.BIN";
                     smplBinFileName = Path.Combine(Descriptor.DirectoryPath, smplBinFileName);
                     Descriptor.SampleBINFilePath= smplBinFileName;
                     await baseExportSampleDataBin(smplBinFileName, sampleChunk, sourceDataStream);

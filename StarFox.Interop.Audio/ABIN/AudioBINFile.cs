@@ -27,10 +27,6 @@
         /// The raw chunk data taken from the BIN file
         /// </summary>
         public List<AudioBINChunk> Chunks { get; private set; } = new();
-        /// <summary>
-        /// The file name of this BIN file ... using <see cref="OriginalFilePath"/>
-        /// </summary>
-        public string FileName => Path.GetFileNameWithoutExtension(OriginalFilePath);
 
         public AudioBINFile(string originalFilePath)
         {

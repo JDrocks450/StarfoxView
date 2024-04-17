@@ -4,6 +4,7 @@ using StarFox.Interop.ASM;
 using StarFoxMapVisualizer.Controls;
 using StarFoxMapVisualizer.Controls2;
 using StarFoxMapVisualizer.Misc;
+using StarFoxMapVisualizer.Renderers;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -36,8 +37,12 @@ namespace StarFoxMapVisualizer.Screens
         {
             InitializeComponent();
 
-            MAP3DControl control = new();
-            control.Show();
+            PlanetRendererControl render = new();
+            Window window = new Window()
+            {
+                Content = render,
+            };
+            window.Show();
 
             if (!RecentExists)
                 ClearRecentFile.Visibility = Visibility.Collapsed;

@@ -162,7 +162,7 @@ namespace StarFox.Interop.GFX
                 {
                     grD.DrawImage(Src, new Rectangle(0, 0, ViewRect.Width, ViewRect.Height), ViewRect, GraphicsUnit.Pixel);                    
                 }
-                newBmp.MakeTransparent(P_Col.GetPalette()[0]);
+                newBmp.MakeTransparent(Color.Transparent);
                 return newBmp;
             }
             if (CGXBanks.Length % 2 != 0) throw new ArgumentOutOfRangeException("CGX banks provided should be High AND Low banks.");

@@ -39,7 +39,7 @@ namespace StarFox.Interop.ASM.TYP.STRUCT
             var blocks = input.Split(' ');
             result = default;
             if (blocks.Length <= 0) return false;
-            if (blocks.Length > 2 && blocks[1].ToLower().Contains("equ"))
+            if (blocks.Length > 2 && (blocks[1].ToLower().Contains("equ") || blocks[1].Contains("=")))
             { // define found
                 var name = blocks[0];
                 var value = blocks[2];

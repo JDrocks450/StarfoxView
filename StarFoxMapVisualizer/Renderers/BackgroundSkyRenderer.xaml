@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="StarFoxMapVisualizer.Renderers.BackgroundSkyRenderer"
+﻿<renderers:SCRRendererControlBase xmlns:renderers="clr-namespace:StarFoxMapVisualizer.Renderers" x:Class="StarFoxMapVisualizer.Renderers.BackgroundSkyRenderer"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
@@ -9,11 +9,11 @@
     <Viewbox Stretch="UniformToFill">
         <Rectangle Width="224" Height="192">
             <Rectangle.Fill>
-                <ImageBrush x:Name="BackgroundBrush" ImageSource="../Resources/Image/1423.png" 
+                <ImageBrush x:Name="BackgroundBrush" 
                             Viewbox="0,0,224,192" ViewboxUnits="Absolute" AlignmentX="Left" AlignmentY="Top"
                             Viewport="0,0,512,512" Stretch="None" ViewportUnits="Absolute"
                             TileMode="FlipY"/>
             </Rectangle.Fill>
         </Rectangle>
     </Viewbox>
-</UserControl>
+</renderers:SCRRendererControlBase>

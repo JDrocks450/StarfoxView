@@ -2,6 +2,7 @@
 using StarFox.Interop.ASM;
 using StarFox.Interop.BSP.SHAPE;
 using StarFox.Interop.MAP;
+using StarFox.Interop.MAP.CONTEXT;
 using StarFox.Interop.MAP.EVT;
 using StarFoxMapVisualizer.Misc;
 using System;
@@ -123,6 +124,12 @@ namespace StarFoxMapVisualizer.Controls
         //STARFOX CONSTANTS
         private ASMFile STRATEQU_Constants { get; set; }
         private int ShipMedSpeed => STRATEQU_Constants["medPspeed"];
+
+        /// <summary>
+        /// The current MapContext being used for this level
+        /// </summary>
+        public MAPContextDefinition CurrentContext { get; private set; }
+
         private double MapZFar = 0;
         private int TranslateDelayToZDepth(int Delay)
         {
@@ -313,7 +320,6 @@ namespace StarFoxMapVisualizer.Controls
         /// <returns></returns>
         private async Task<bool> LoadContent()
         {
-            return true;
             if (!await LoadConstants()) return false;
             var assetsReferenced = SelectedFile.LevelData.ShapeEvents;
             HashSet<string> attempted = new();
@@ -491,12 +497,16 @@ namespace StarFoxMapVisualizer.Controls
         /// <param name="Position"></param>
         private void SetPlayfieldGround()
         {
-            int w = 10000, h = (int)Math.Max(Math.Max(SelectedFile.LevelData.EventsByDelay.Values.Max(), MapZFar), 5000);
+            int middle = (CurrentContext.MaxX + CurrentContext.MinX) / 2,
+                width = Math.Abs(CurrentContext.MaxX) + Math.Abs(CurrentContext.MinX), 
+                depth = (int)Math.Max(Math.Max(SelectedFile.LevelData.EventsByDelay.Values.Max(), MapZFar), 5000);
+            int centerY = Math.Abs((CurrentContext.MaxY + CurrentContext.MinY)) / 2,
+                height = Math.Abs(CurrentContext.MaxY) + Math.Abs(CurrentContext.MinY);
             var transformGroup = new Transform3DGroup();
             transformGroup.Children.Add(new ScaleTransform3D(
-                w, 1, h));
+                width, 1, depth));
             transformGroup.Children.Add(new TranslateTransform3D(
-                -(w/2), 0, 0));
+                middle - (width/2), CurrentContext.MinY, 0));
             GroundGeom.Transform = transformGroup;
         }
         /// <summary>
@@ -565,5 +575,12 @@ namespace StarFoxMapVisualizer.Controls
 
         private void CamJumpStartButton_Click(object sender, RoutedEventArgs e) =>
             CameraTransitionToPoint(new Point3D(0, 150, 0), new Vector3D(0, 0, 1));
+
+        public async Task SetContext(MAPContextDefinition NewContext)
+        {
+            CurrentContext = NewContext;
+            SetPlayfieldGround();
+            await SkyBackground.SetContext(CurrentContext);
+        }
     }
 }

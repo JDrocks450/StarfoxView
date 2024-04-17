@@ -1,36 +1,27 @@
-﻿using StarFox.Interop.MAP.CONTEXT;
-using StarFoxMapVisualizer.Misc;
+﻿using StarFox.Interop;
+using StarFox.Interop.EFFECTS;
+using StarFox.Interop.MAP.CONTEXT;
 using System;
-using System.Collections.Generic;
 using System.Drawing;
-using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace StarFoxMapVisualizer.Renderers
 {
     /// <summary>
     /// Interaction logic for BackgroundRenderer.xaml
     /// </summary>
-    public partial class BackgroundRenderer : UserControl, ISCRRendererBase
-    {
-        public MAPContextDefinition? LevelContext { get; set; }
-        public Dictionary<string, string> ReferencedFiles { get; } = new();
-
+    public partial class BackgroundRenderer : SCRRendererControlBase, IDisposable
+    {       
         public BackgroundRenderer()
         {
             InitializeComponent();
         }
+
+        public override void BG2Invalidate(ImageSource NewImage) => BG2Render.ImageSource = NewImage;
+        public override void BG3Invalidate(ImageSource NewImage) => BG3Render.ImageSource = NewImage;
+
         /// <summary>
         /// Sets the viewport of this Image to be passed argument
         /// </summary>
@@ -102,6 +93,15 @@ namespace StarFoxMapVisualizer.Renderers
                 default:
                     //Base calculations on the Height of the control
                     ConvertAll();
+                    int renderW = StarfoxEqu.RENDER_W;
+                    int renderH = StarfoxEqu.RENDER_W;
+                    int centerW = (StarfoxEqu.SCR_W / 2) - (renderW / 2);
+                    int centerH = (StarfoxEqu.SCR_W / 2) - (renderW / 2);
+                    /*
+                     * ResetViewports(
+                        new Rect(centerW - ScreenBG2XScroll, centerH - ScreenBG2YScroll - LevelContext.ViewCY, renderW, renderH),
+                        new Rect(centerW - ScreenBG3XScroll, centerH - ScreenBG3YScroll, renderW, renderH));
+                    */
                     ResetViewports(
                         new Rect(-ScreenBG2XScroll, -ScreenBG2YScroll, awidth, awidth),
                         new Rect(-ScreenBG3XScroll, -ScreenBG3YScroll, awidth, awidth));
@@ -117,60 +117,59 @@ namespace StarFoxMapVisualizer.Renderers
             var BG2X = LevelContext.BG2.HorizontalOffset;
             var BG2Y = LevelContext.BG2.VerticalOffset;
             SetViewportsToUniformSize(Width, Height, BG2X, BG2Y, BG3X, BG3Y);
-        }        
-              
-        private async Task SetBGS(bool ExtractCCR = false, bool ExtractPCR = false)
+        }                             
+        
+        public override async Task SetContext(MAPContextDefinition? SelectedContext,
+            WavyBackgroundRenderer.WavyEffectStrategies Animation = WavyBackgroundRenderer.WavyEffectStrategies.None,
+            bool ExtractCCR = false, bool ExtractPCR = false)
         {
+            LevelContext = SelectedContext;
+            AnimationMode = Animation;
+
+            //**dispose previous session
+            if (bgRenderer != null)
+            {
+                bgRenderer.Dispose();
+                bgRenderer = null;
+            }
             ReferencedFiles.Clear();
             BG2Render.ImageSource = null;
             BG3Render.ImageSource = null;
+            //**
+
             if (LevelContext == default) return;
-            //RENDER BG2
-            if (LevelContext?.BG2ChrFile != null && LevelContext?.BG2ScrFile != null)
-            {
-                try
-                {
-                    using (var source = await GFXStandard.RenderSCR(
-                        LevelContext.BackgroundPalette,
-                        LevelContext.BG2ScrFile,
-                        LevelContext.BG2ChrFile,
-                        ExtractCCR, ExtractPCR))
-                        await Dispatcher.InvokeAsync(delegate
-                        {
-                            BG2Render.ImageSource = source.Convert(true);
-                        });
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.ToString());
-                }
-            }
-            //RENDER BG3
-            if (LevelContext?.BG3ChrFile != null && LevelContext?.BG3ScrFile != null)
-            {
-                try
-                {
-                    using (var source = await GFXStandard.RenderSCR(
-                        LevelContext.BackgroundPalette,
-                        LevelContext.BG3ScrFile,
-                        LevelContext.BG3ChrFile,
-                        ExtractCCR, ExtractPCR))
-                        await Dispatcher.InvokeAsync(delegate
-                        {
-                            BG3Render.ImageSource = source.Convert();
-                        });
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.ToString());
-                }
-            }
+            //Set the backgrounds for this control to update the visual
+            //this also creates a bgRenderer -- which handles dynamic backgrounds
+            await InvalidateBGS(ExtractCCR, ExtractPCR);
+            //if animating, start the animation clock
+            if (AnimationMode != WavyBackgroundRenderer.WavyEffectStrategies.None &&
+                bgRenderer != null)
+                StartAnimatedBackground(AnimatorEffect<object>.GetFPSTimeSpan(60));                
         }
 
-        public async Task SetContext(MAPContextDefinition? SelectedContext, bool ExtractCCR = false, bool ExtractPCR = false)
+        public override void DebugInfoUpdated(AnimatorEffect<Bitmap>.DiagnosticInfo DiagnosticInformation)
         {
-            LevelContext = SelectedContext;
-            await SetBGS(ExtractCCR, ExtractPCR);
+            base.DebugInfoUpdated(DiagnosticInformation);
+
+            TgtLatencyDebugBlock.Text = DiagnosticInformation.TimerInterval.TotalMilliseconds.ToString();
+            ActLatencyDebugBlock.Text = DiagnosticInformation.RenderTime.TotalMilliseconds.ToString();
+            BuffersBlock.Text = DiagnosticInformation.OpenBuffers.ToString();
+            MemoryBlock.Text = DiagnosticInformation.MemoryUsage.ToString();
+        }
+
+        private void UserControl_Unloaded(object sender, RoutedEventArgs e)
+        {
+           //maybe dispose here? causes too many issues though   
+        }
+
+        /// <summary>
+        /// Disposes of any unreleased resources
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        public void Dispose()
+        {
+            bgRenderer?.Dispose();
         }
     }
 }

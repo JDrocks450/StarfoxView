@@ -49,15 +49,43 @@ namespace StarFox.Interop.ASM
             this.Constants = From.Constants;
             OriginalFilePath = From.OriginalFilePath;
         }
-        public object GetConstantValue(string ConstantName) => 
+        /// <summary>
+        /// Returns whether a constant was found by name in the current file
+        /// </summary>
+        /// <param name="ConstantName"></param>
+        /// <returns></returns>
+        public bool ConstantExists(string ConstantName) => Constants.Select(x => x.Name).Contains(ConstantName);
+        /// <summary>
+        /// Gets the value of the given constant by name.
+        /// <para/>Will throw an exception if not found, use <see cref="ConstantExists(string)"/> to be safe
+        /// </summary>
+        /// <param name="ConstantName"></param>
+        /// <returns></returns>
+        public string? GetConstantValue(string ConstantName) => 
             GetConstantValue(Constants.First(x => x.Name == ConstantName));
-        public object GetConstantValue(ASMConstant constant) => constant.TryParseOrDefault();
+        /// <summary>
+        /// Gets the value of the given constant by name.
+        /// <para/>Will throw an exception if not found, use <see cref="ConstantExists(string)"/> to be safe
+        /// </summary>
+        /// <param name="ConstantName"></param>
+        /// <returns></returns>
+        public string? GetConstantValue(ASMConstant constant) => constant.Value;
+
+        public int GetConstantNumericValue(ASMConstant constant, params ASMFile[] Includes)
+        {
+            ASMExtensions.BeginConstantsContext(Includes);
+            int value = constant.TryParseOrDefault();
+            ASMExtensions.EndConstantsContext();
+            return value;
+        }
+
         /// <summary>
         /// Gets the given constant value as an integer. 
+        /// <para/>Will throw an exception if not found. Use <see cref="ConstantExists(string)"/> to be safe.
         /// <para>If <see cref="int"/> is not the desired type, use: <see cref="GetConstantValue(string)"/></para>
         /// </summary>
         /// <param name="Constant">The name of the constant</param>
         /// <returns></returns>
-        public int this[string Constant] => (int)GetConstantValue(Constant);
+        public int this[string Constant] => ASMExtensions.TryParseOrDefault(GetConstantValue(Constant));
     }
 }

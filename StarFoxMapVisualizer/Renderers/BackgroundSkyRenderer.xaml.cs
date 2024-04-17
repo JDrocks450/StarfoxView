@@ -8,21 +8,18 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using StarFoxMapVisualizer.Misc;
 using System.Windows.Media;
+using StarFox.Interop.EFFECTS;
+using StarFox.Interop;
 
 namespace StarFoxMapVisualizer.Renderers
 {
     /// <summary>
     /// Interaction logic for BackgroundSkyRenderer.xaml
     /// </summary>
-    public partial class BackgroundSkyRenderer : UserControl, ISCRRendererBase
+    public partial class BackgroundSkyRenderer : SCRRendererControlBase
     {
-        const int RENDER_W = 224, RENDER_H = 192,
-                  SCR_W = 512, SCR_H = 512;
-
+        const int RENDER_W = StarfoxEqu.RENDER_W, RENDER_H = StarfoxEqu.RENDER_H, SCR_W = StarfoxEqu.SCR_W, SCR_H = StarfoxEqu.SCR_H;
         double BackgroundX, BackgroundY, ViewportWidth, ViewportHeight;
-
-        public MAPContextDefinition? LevelContext { get; set; }
-        public Dictionary<string, string> ReferencedFiles { get; } = new();
 
         public BackgroundSkyRenderer()
         {
@@ -35,6 +32,7 @@ namespace StarFoxMapVisualizer.Renderers
 
             UpdateViewport();
         }
+
         public BackgroundSkyRenderer(MAPContextDefinition levelContext) : this()
         {
             LevelContext = levelContext;
@@ -77,7 +75,9 @@ namespace StarFoxMapVisualizer.Renderers
             UpdateViewport();
         }
 
-        public async Task SetContext(MAPContextDefinition? SelectedContext, bool ExtractCCR = false, bool ExtractPCR = false)
+        public override async Task SetContext(MAPContextDefinition? SelectedContext, 
+            WavyBackgroundRenderer.WavyEffectStrategies Animation = WavyBackgroundRenderer.WavyEffectStrategies.None,
+            bool ExtractCCR = false, bool ExtractPCR = false)
         {
             LevelContext = SelectedContext;
 
@@ -89,14 +89,14 @@ namespace StarFoxMapVisualizer.Renderers
             UpdateViewport();
 
             if (LevelContext != null)
-            {
-                using (var scr = await GFXStandard.RenderSCR(
-                SelectedContext.BackgroundPalette,
-                SelectedContext.BG2ScrFile,
-                SelectedContext.BG2ChrFile))
-                    BackgroundBrush.ImageSource = scr.Convert();
-                RenderOptions.SetBitmapScalingMode(this, BitmapScalingMode.NearestNeighbor);
-            }
+                await InvalidateBGS();
+        }
+
+        public override void BG2Invalidate(ImageSource NewImage) => BackgroundBrush.ImageSource = NewImage;
+
+        public override void BG3Invalidate(ImageSource NewImage)
+        {
+            ;
         }
     }
 }
