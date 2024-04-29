@@ -18,6 +18,10 @@ Thank you very much to the following projects for being Open-Source and helping 
 
 You are all appreciated.
 
+## Disclaimer
+NO copyrighted content is distributed through this project. I do not endorse any form of piracy or otherwise to 
+use this program. This program will interpret only files you provide to be used with it.
+
 ## Setup
 Instructions for setup I have split into two user-groups.
 
