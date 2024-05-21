@@ -4,26 +4,15 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:StarFoxMapVisualizer.Renderers"
-             mc:Ignorable="d" 
-             Height="500" Width="500">
-    <Grid>
-        <Image x:Name="RenderImage" Stretch="Uniform" RenderOptions.BitmapScalingMode="NearestNeighbor" RenderTransformOrigin="0.5,0.5">
-            <Image.RenderTransform>
-                <TransformGroup>
-                    <ScaleTransform/>
-                    <SkewTransform/>
-                    <RotateTransform Angle="-45"/>
-                    <TranslateTransform/>
-                </TransformGroup>
-            </Image.RenderTransform>
-        </Image>
-        <Ellipse Visibility="Collapsed">
-            <Ellipse.Fill>
-                <RadialGradientBrush GradientOrigin="0.25,0.25" RadiusX="2" RadiusY="2">
-                    <GradientStop Color="#CC000000" Offset="0.863"/>
-                    <GradientStop Color="#00000000" Offset="0"/>
-                </RadialGradientBrush>
-            </Ellipse.Fill>
-        </Ellipse>
-    </Grid>
+             mc:Ignorable="d">
+    <Image x:Name="RenderImage" Stretch="Uniform" RenderOptions.BitmapScalingMode="NearestNeighbor" RenderTransformOrigin="0.5,0.5">
+        <Image.RenderTransform>
+            <TransformGroup>
+                <ScaleTransform/>
+                <SkewTransform/>
+                <RotateTransform x:Name="PlanetRotation" Angle="-45"/>
+                <TranslateTransform/>
+            </TransformGroup>
+        </Image.RenderTransform>
+    </Image>
 </UserControl>

@@ -227,7 +227,8 @@ namespace StarFox.Interop.EFFECTS
         {
             if (Disposing)
                 throw new InvalidOperationException("Attempted to call dispose on an already Disposing object.");
-            Disposing = true;
+            if (AnimatorStatus != AnimatorStatus.DISPOSED)
+                AnimatorStatus = AnimatorStatus.DISPOSING;
 
             //**Dispose
             BackgroundCache = null;            
@@ -235,8 +236,6 @@ namespace StarFox.Interop.EFFECTS
                 lock (_SCRFile) 
                     _SCRFile.Dispose();
             //
-
-            Disposing = false;
             return true;
         }        
     }

@@ -37,13 +37,6 @@ namespace StarFoxMapVisualizer.Screens
         {
             InitializeComponent();
 
-            PlanetRendererControl render = new();
-            Window window = new Window()
-            {
-                Content = render,
-            };
-            window.Show();
-
             if (!RecentExists)
                 ClearRecentFile.Visibility = Visibility.Collapsed;
         }

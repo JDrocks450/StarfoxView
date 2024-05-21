@@ -149,9 +149,10 @@ namespace StarFoxMapVisualizer.Misc
         /// <param name="ColorPaletteName">The name of the color palette (not a file path)</param>
         /// <param name="SCRName">The name of the SCR file (not a file path)</param>
         /// <param name="CHRName">The name of the CGX file (not a file path). If default will just use the SCR name.</param>
+        /// <param name="Screen">Optionally can specify which quadrant of the SCR file to draw</param>
         /// <returns></returns>
-        internal static async Task<Bitmap> RenderSCR(string ColorPaletteName, string SCRName, string? CHRName, 
-            bool ForceExtractCCR = false, bool ForceExtractPCR = false)            
+        internal static async Task<Bitmap> RenderSCR(string ColorPaletteName, string SCRName, string? CHRName = default, 
+            int Screen = -1, bool ForceExtractCCR = false, bool ForceExtractPCR = false)            
         {          
             var palette = MAPContext_GetPaletteByName(ColorPaletteName, out _);
             if (palette == default) throw new FileNotFoundException($"{ColorPaletteName} was not found as" +
@@ -163,7 +164,7 @@ namespace StarFoxMapVisualizer.Misc
             var CGXFileInfo = await FindProjectCGXByName(CHRName, ForceExtractCCR);
             //THEN SCR
             var SCRFileInfo = await FindProjectSCRByName(SCRName, ForceExtractPCR);
-            return await RenderSCR(palette, CGXFileInfo, SCRFileInfo);
+            return await RenderSCR(palette, CGXFileInfo, SCRFileInfo, Screen);
         }
         /// <summary>
         /// Will render the provided <paramref name="SCR"/> file, using the given <paramref name="CGX"/> file as a base,
@@ -173,8 +174,9 @@ namespace StarFoxMapVisualizer.Misc
         /// <param name="Palette">The palette to use.</param>
         /// <param name="CGX">The file name of the CGX file to use. Has to be extracted.</param>
         /// <param name="SCR">The file name of the SCR file to use. Has to be extracted.</param>
+        /// <param name="Screen">Optionally can specify which quadrant of the SCR file to draw</param>
         /// <returns></returns>
-        internal static async Task<Bitmap> RenderSCR(COL Palette, FileInfo CGX, FileInfo SCR)
+        internal static async Task<Bitmap> RenderSCR(COL Palette, FileInfo CGX, FileInfo SCR, int Screen = -1)
         {
             //LOAD THE CGX
             var fxCGX = await OpenCGX(CGX);
@@ -182,7 +184,7 @@ namespace StarFoxMapVisualizer.Misc
             //LOAD THE SCR
             var fxSCR = OpenSCR(SCR);
             //RENDER OUT
-            return fxSCR.Render(fxCGX, Palette);
+            return fxSCR.Render(fxCGX, Palette, false, Screen);
         }
         /// <summary>
         /// Includes a *.CGX file into the project. 

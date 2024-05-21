@@ -9,6 +9,41 @@ using System.Runtime.InteropServices;
 namespace StarFox.Interop.EFFECTS
 {
     /// <summary>
+    /// Statuses for a <see cref="AnimatorEffect{T}"/>
+    /// </summary>
+    public enum AnimatorStatus
+    {
+        /// <summary>
+        /// Not initialized yet
+        /// </summary>
+        NOT_INIT,
+        /// <summary>
+        /// Ready to begin animating
+        /// </summary>
+        READY,
+        /// <summary>
+        /// Currently running
+        /// </summary>
+        ANIMATING,
+        /// <summary>
+        /// Paused, not animating
+        /// </summary>
+        PAUSED,
+        /// <summary>
+        /// Currently being disposed
+        /// </summary>
+        DISPOSING,
+        /// <summary>
+        /// Disposed -- cannot be used again.
+        /// </summary>
+        DISPOSED,
+        /// <summary>
+        /// Had an internal error and has been stopped.
+        /// </summary>
+        FAULTED,
+    }
+    
+    /// <summary>
     /// An abstract class that facilitates shared functionality for creating basic animations
     /// using a <see cref="Timer"/>
     /// <para/>This also has functionality for manipulating <see cref="Bitmap"/>s at high speed
@@ -20,6 +55,10 @@ namespace StarFox.Interop.EFFECTS
         protected TimeSpan animationTime = TimeSpan.Zero;
         protected Timer? animationTimer;
         protected TimeSpan animationInterval = TimeSpan.Zero;
+        /// <summary>
+        /// The current status of this <see cref="AnimatorEffect{T}"/>
+        /// </summary>
+        public AnimatorStatus AnimatorStatus { get; protected set; } = AnimatorStatus.NOT_INIT;
 
         /// <summary>
         /// Information about how the <see cref="AnimatorEffect{T}"/> is doing
@@ -58,27 +97,33 @@ namespace StarFox.Interop.EFFECTS
         public static TimeSpan GetFPSTimeSpan(double FramesPerSecond) => TimeSpan.FromMilliseconds(1000 / Math.Max(1,FramesPerSecond));
 
         /// <summary>
-        /// Gets or sets whether playback of the animation is enabled
+        /// Gets whether playback of the animation is ongoing
         /// </summary>
-        public bool IsPaused { get; set; }
+        public bool IsAnimating => AnimatorStatus == AnimatorStatus.ANIMATING;
+        /// <summary>
+        /// Gets whether playback of the animation is enabled
+        /// </summary>
+        public bool IsPaused => AnimatorStatus == AnimatorStatus.PAUSED;
 
         /// <summary>
         /// True when the object has been disposed: <see cref="Dispose"/>
         /// </summary>
-        public bool IsDisposed { get; private set; }
+        public bool IsDisposed => AnimatorStatus == AnimatorStatus.DISPOSED;
         /// <summary>
         /// True when the <see cref="Dispose"/> method is currently running 
         /// </summary>
-        public bool Disposing { get; protected set; }
+        public bool Disposing => AnimatorStatus == AnimatorStatus.DISPOSING;
 
         /// <summary>
         /// Creates a new <see cref="AnimatorEffect{T}"/>
+        /// <para/>This will set the <see cref="AnimatorStatus"/> to READY
         /// </summary>
         /// <param name="DiagnosticsEnabled">Dictates whether <see cref="DiagnosticsEnabled"/> is on or not</param>
         protected AnimatorEffect(bool DiagnosticsEnabled = false)
         {
             if (DiagnosticsEnabled)
                 DiagnosticInformation = new DiagnosticInfo(this);
+            AnimatorStatus = AnimatorStatus.READY;
         }
 
         /// <summary>
@@ -102,20 +147,26 @@ namespace StarFox.Interop.EFFECTS
         /// <paramref name="AutoDispose"/></param>
         public void StartAsync(Action<T> Ready, bool AutoDispose = true, TimeSpan? Interval = null, TimeSpan? DueTime = null)
         {
+            if (IsDisposed) throw new ObjectDisposedException($"{GetType().Name} instance has been disposed, yet is now trying to be used.");
             if (animationTimer != null)
                 throw new InvalidOperationException("This object is already playing a background animation. You cannot call StartAsync() on it once started.");
+            if (AnimatorStatus != AnimatorStatus.READY)
+                throw new InvalidOperationException("The status of this object is currently: " + AnimatorStatus + " when it should be: READY");
 
             var interval = animationInterval = Interval ?? DefaultFrameRate; // 12Fps
             var dueTime = DueTime ?? TimeSpan.FromSeconds(2);  //2secs
 
+            AnimatorStatus = AnimatorStatus.ANIMATING;
+
             T render1 = RenderOnce(TimeSpan.Zero);
             Ready(render1);
-            if (AutoDispose) SafeDispose(ref render1);
+            if (AutoDispose) SafeDisposeObject(ref render1);
 
             Stopwatch renderTime = new Stopwatch();
 
             animationTimer = new Timer(delegate {
                 if (IsPaused) return; // Paused
+                if (Disposing) return; // currently disposing
 
                 renderTime.Restart();
                 T render2 = RenderOnce(interval);
@@ -124,7 +175,7 @@ namespace StarFox.Interop.EFFECTS
                     DiagnosticInformation.RenderTime = renderTime.Elapsed;
 
                 Ready(render2);
-                if (AutoDispose) SafeDispose(ref render2);
+                if (AutoDispose) SafeDisposeObject(ref render2);
             }, null, dueTime, interval);
         }
 
@@ -133,16 +184,33 @@ namespace StarFox.Interop.EFFECTS
         /// and sets the reference to it to be null
         /// </summary>
         /// <param name="Disposable"></param>
-        protected void SafeDispose(ref T? Disposable)
+        protected void SafeDisposeObject(ref T? Disposable)
         {
             if (Disposable == null) return;
             if (Disposable is IDisposable disposable)
                 disposable.Dispose();
             Disposable = null;
         }
-
-        public void Pause() => IsPaused = true;
-        public void Resume() => IsPaused = false;
+        /// <summary>
+        /// Transitions from a <see cref="AnimatorStatus"/> of ANIMATING to PAUSED
+        /// </summary>
+        /// <exception cref="InvalidOperationException">If the status is not ANIMATING</exception>
+        public void Pause()
+        {
+            if (AnimatorStatus == AnimatorStatus.ANIMATING)
+                AnimatorStatus = AnimatorStatus.PAUSED;
+            else throw new InvalidOperationException("Tried to pause an animator that is: " + AnimatorStatus);
+        }
+        /// <summary>
+        /// Transitions from a <see cref="AnimatorStatus"/> of PAUSED to ANIMATING
+        /// </summary>
+        /// <exception cref="InvalidOperationException">If the status is not PAUSED</exception>
+        public void Resume()
+        {
+            if (AnimatorStatus == AnimatorStatus.PAUSED)
+                AnimatorStatus = AnimatorStatus.ANIMATING;
+            else throw new InvalidOperationException("Tried to pause an animator that is: " + AnimatorStatus);
+        }
 
         protected abstract bool OnDispose();
 
@@ -154,15 +222,20 @@ namespace StarFox.Interop.EFFECTS
                     animationTimer.Dispose();
             if (!OnDispose()) return;
             GC.SuppressFinalize(this);
-            IsDisposed = true;
+            AnimatorStatus = AnimatorStatus.DISPOSED;
         }
 
         //**HELPER FUNCTIONS
 
         //**BUFFER
         ConcurrentDictionary<long, Color[,]> buffers = new();        
-
-        bool hasBufferCreated(long Ticket) => buffers.TryGetValue(Ticket, out _);
+        /// <summary>
+        /// Use this to see if your <paramref name="Ticket"/> is valid for subsequent calls to <see cref="SetPixel(long, int, int, Color)"/>
+        /// or <see cref="GetPixel(long, int, int)"/>
+        /// </summary>
+        /// <param name="Ticket"></param>
+        /// <returns></returns>
+        bool BufferTicketExists(long Ticket) => buffers.TryGetValue(Ticket, out _);
 
         /// <summary>
         /// Creates a new <see cref="Bitmap"/> in memory to draw to,
@@ -183,7 +256,7 @@ namespace StarFox.Interop.EFFECTS
         /// <exception cref="InvalidOperationException"></exception>
         protected Bitmap CompleteBuffer(long Ticket)
         {
-            if (!hasBufferCreated(Ticket))
+            if (!BufferTicketExists(Ticket))
                 throw new InvalidOperationException("You don't have a buffer created yet. Please" +
                     " create a buffer first before completing it.");
             var bmp = PutPixels(buffers[Ticket]);
@@ -194,17 +267,30 @@ namespace StarFox.Interop.EFFECTS
         /// Discards the current buffer. See: <see cref="CreateBuffer(int, int)"/>
         /// </summary>
         protected bool DiscardBuffer(long Ticket) => buffers.Remove(Ticket, out _);
-
+        /// <summary>
+        /// Gets a Pixel color at a specified position on the buffer indicated by <paramref name="Ticket"/>
+        /// </summary>
+        /// <param name="Ticket"></param>
+        /// <param name="X"></param>
+        /// <param name="Y"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
         protected Color GetPixel(long Ticket, int X, int Y)
         {
-            if (!hasBufferCreated(Ticket))
+            if (!BufferTicketExists(Ticket))
                 throw new InvalidOperationException("You don't have a buffer created yet. Please" +
                     " create a buffer first before completing it.");
             return buffers[Ticket][X, Y];
         }
+        /// <summary>
+        /// Sets a Pixel color at a specified position on the buffer indicated by <paramref name="Ticket"/>
+        /// <para/>See: <see cref="CompleteBuffer(long)"/> when ready to render out your effect
+        /// <para/>This method is much faster than using <see cref="Bitmap.SetPixel(int, int, Color)"/>
+        /// as this approach can be batched before rendering the final product
+        /// </summary>
         protected void SetPixel(long Ticket, int X, int Y, Color Color)
         {
-            if (!hasBufferCreated(Ticket))
+            if (!BufferTicketExists(Ticket))
                 throw new InvalidOperationException("You don't have a buffer created yet. Please" +
                     " create a buffer first before completing it.");
             buffers[Ticket][X,Y] = Color;

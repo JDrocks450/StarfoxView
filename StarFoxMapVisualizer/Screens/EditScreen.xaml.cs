@@ -852,5 +852,16 @@ namespace StarFoxMapVisualizer.Screens
             }
             GoItem.SubmenuOpened -= GoItem_Load;
         }
+
+        /// <summary>
+        /// Fired when the Level Select Menu item is selected
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void LevelSelectItem_Click(object sender, RoutedEventArgs e)
+        {
+            LevelSelectWindow wnd = new();
+            wnd.Show();
+        }
     }
 }

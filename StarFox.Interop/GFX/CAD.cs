@@ -46,6 +46,24 @@ namespace StarFox.Interop.GFX
             }
         }
 
+        /// <summary>
+        /// Has variables that can be tweaked to make the library handle more specialized 
+        /// functionality than general usage
+        /// </summary>
+        public class CGXContext
+        {
+            /// <summary>
+            /// When true, all calls to RenderTile will set the 0 index color in the palette to be 
+            /// <see cref="Color.Transparent"/>
+            /// </summary>
+            public bool HandlePaletteIndex0AsTransparent { get; set; } = false;
+        }
+
+        /// <summary>
+        /// Observe that <see cref="CGX.GlobalContext"/> can be used to change this default behavior
+        /// <para/> See luigiblood's project on hcgcad
+        /// <para/><see href="https://github.com/LuigiBlood/hcgcad"/>
+        /// </summary>
         public class CGX
         {
             protected byte[] chr;     //Graphics Data
@@ -54,6 +72,15 @@ namespace StarFox.Interop.GFX
             protected byte col_half;  //Color (high, low)
             protected byte col_cell;  //Color Cell
             protected byte[] attr;    //Attribute Data
+
+            /// <summary>
+            /// The context that this library is being used in to facilitate the individualized needs of the project
+            /// </summary>
+            public static CGXContext GlobalContext { get; set; } = new();
+            /// <summary>
+            /// <see cref="CGXContext.HandlePaletteIndex0AsTransparent"/> on <see cref="GlobalContext"/>
+            /// </summary>
+            private bool pal0Transparent => GlobalContext.HandlePaletteIndex0AsTransparent;
 
             public CGX(byte[] dat)
             {
@@ -184,7 +211,8 @@ namespace StarFox.Interop.GFX
             public Bitmap RenderTile(int tile, int size, Color[] pal, bool xflip = false, bool yflip = false)
             {
                 Bitmap output = new Bitmap(size, size);
-                pal[0] = Color.Transparent; // STARFOX!!!
+                if (pal0Transparent)
+                    pal[0] = Color.Transparent; // GlobalContext.PAL0TRANS
 
                 for (int y = 0; y < (size / 8); y++)
                 {
@@ -212,7 +240,6 @@ namespace StarFox.Interop.GFX
                         }
                     }
                 }
-                //output.MakeTransparent(pal[0]);
                 return output;
             }
 

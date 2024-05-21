@@ -1,0 +1,34 @@
+﻿<UserControl x:Class="StarFoxMapVisualizer.Controls2.LevelSelectViewer"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:StarFoxMapVisualizer.Controls2" xmlns:subcontrols="clr-namespace:StarFoxMapVisualizer.Controls.Subcontrols"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800" Background="#314152">
+    <Grid>
+        <ContentControl HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Viewbox>
+                <Grid Name="ScreenSpaceGrid">
+                    <subcontrols:CopyableImage x:Name="MapBGImage" Width="256" Height="256"/>
+                    <Canvas Name="MapGraphics">
+                        <local:LevelSelectViewerItem LevelName="Space Armada" Width="32" Height="32" Canvas.Left="128" Canvas.Top="96"/>
+                        <local:LevelSelectViewerItem LevelName="Asteroid Belt" Width="32" Height="32" Canvas.Left="56" Canvas.Top="136"/>
+                        <local:LevelSelectViewerItem LevelName="Asteroid Belt" Width="32" Height="32" Canvas.Left="64" Canvas.Top="176"/>
+                        <local:LevelSelectViewerItem LevelName="Sector X" Width="32" Height="32" Canvas.Left="16" Canvas.Top="128"/>
+                        <local:LevelSelectViewerItem LevelName="Sector Y" Width="32" Height="32" Canvas.Left="112" Canvas.Top="32"/>
+                        <local:LevelSelectViewerItem LevelName="The Awesome Black Hole" Width="32" Height="32" Canvas.Left="80" Canvas.Top="80"/>
+                        <local:LevelSelectViewerItem LevelName="Meteor" Width="32" Height="32" Canvas.Left="168" Canvas.Top="96"/>
+                        <local:LevelSelectViewerItem LevelName="Sector Z" Width="32" Height="32" Canvas.Left="184" Canvas.Top="144"/>
+                        <local:LevelSelectViewerItem LevelName="Corneria" Width="30" Height="30" Canvas.Left="17" Canvas.Top="178" SpotlightPositionX=".8" SpotlightPositionY=".45" SpotlightMinLumination=".15" SpotlightMaxLumination="1.5" SpotlightDistance=".7"/>
+                        <local:LevelSelectViewerItem LevelName="Titania" Width="30" Height="30" Canvas.Left="41" Canvas.Top="66" SpotlightPositionX=".7" SpotlightPositionY=".5" SpotlightMinLumination=".15" SpotlightMaxLumination="1.7" SpotlightDistance=".7"/>
+                        <local:LevelSelectViewerItem LevelName="Fortuna" Width="30" Height="30" Canvas.Left="113" Canvas.Top="146" SpotlightPositionX=".5" SpotlightMaxLumination="1.5" SpotlightDistance=".55" PlanetAxisRotation="0" PlanetRotationalSpeedX="-15"/>
+                        <local:LevelSelectViewerItem LevelName="Macbeth" Width="30" Height="30" Canvas.Left="209" Canvas.Top="98" SpotlightPositionX=".30" PlanetAxisRotation="90" PlanetRotationalSpeedX="-15" SpotlightMaxLumination="1.5" SpotlightMinLumination=".1" SpotlightDistance=".8" SpotlightPositionY=".5"/>
+                        <local:LevelSelectViewerItem LevelName="Venom" Width="30" Height="30" Canvas.Left="193" Canvas.Top="43" SpotlightPositionX=".5" SpotlightPositionY=".5" SpotlightDistance=".6" SpotlightMaxLumination="1.7"/>
+                        <local:LevelSelectViewerItem LevelName="Out of this Dimension" Width="30" Height="30" Canvas.Left="140" Canvas.Top="176" SpotlightPositionX=".5" SpotlightPositionY=".5" SpotlightDistance=".6" SpotlightMaxLumination="1.7"/>
+                    </Canvas>
+                </Grid>
+            </Viewbox>
+        </ContentControl>
+    </Grid>
+</UserControl>

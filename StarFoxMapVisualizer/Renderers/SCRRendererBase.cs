@@ -105,7 +105,7 @@ namespace StarFoxMapVisualizer.Renderers
                         LevelContext.BackgroundPalette,
                         LevelContext.BG2ScrFile,
                         LevelContext.BG2ChrFile,
-                        ExtractCCR, ExtractPCR);
+                        -1, ExtractCCR, ExtractPCR);
                     bool diagnosticMode =
 #if DEBUG
                     true;
@@ -134,7 +134,7 @@ namespace StarFoxMapVisualizer.Renderers
                         LevelContext.BackgroundPalette,
                         LevelContext.BG3ScrFile,
                         LevelContext.BG3ChrFile,
-                        ExtractCCR, ExtractPCR))
+                        -1, ExtractCCR, ExtractPCR))
                         await Dispatcher.InvokeAsync(delegate
                         {
                             BG3Invalidate(source.Convert());

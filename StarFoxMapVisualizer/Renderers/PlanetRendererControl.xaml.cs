@@ -12,32 +12,47 @@ namespace StarFoxMapVisualizer.Renderers
     /// </summary>
     public partial class PlanetRendererControl : UserControl, IDisposable
     {
+        public double DefaultFrameRate = 8;
+
         PlanetRenderer planetRenderer;
 
-        public PlanetRendererControl()
+        public PlanetRenderer.PlanetRendererOptions Options
+        {
+            get => planetRenderer.Options; 
+            set => planetRenderer.Options = value;
+        }
+        public double SpotlightPositionX
+        {
+            get => planetRenderer.Options.SpotlightPositionX;
+            set => planetRenderer.Options.SpotlightPositionX = value;
+        }
+        public double SpotlightPositionY
+        {
+            get => planetRenderer.Options.SpotlightPositionY;
+            set => planetRenderer.Options.SpotlightPositionY = value;
+        }
+        public double PlanetRotationDegrees
+        {
+            get => PlanetRotation.Angle;
+            set => PlanetRotation.Angle = value;
+        }
+
+        public PlanetRendererControl() : base()
         {
             InitializeComponent();
-
-            Loaded += delegate
-            {
-                Load();
-                StartAnimation();
-            };  
+            planetRenderer = new PlanetRenderer();
+            Unloaded += PlanetRendererControl_Unloaded;
         }
 
-        Color[,]? cacheImage;
-        
-        private void Load()
-        {
-            string imagePath = "E:\\Solutions\\repos\\StarFoxMapVisualizer\\StarFoxMapVisualizer\\Resources\\Image\\planetb.png";
+        private void PlanetRendererControl_Unloaded(object sender, System.Windows.RoutedEventArgs e) => Dispose();
 
-            System.Drawing.Bitmap planetTexture = (System.Drawing.Bitmap)System.Drawing.Image.FromFile(imagePath);
-            planetRenderer = new PlanetRenderer(planetTexture);
-        }
+        public PlanetRendererControl(Bitmap PlanetTexture, PlanetRenderer.PlanetRendererOptions? Options = null) : this() => Load(PlanetTexture, Options);
+
+        public void Load(Bitmap PlanetTexture, PlanetRenderer.PlanetRendererOptions? Options = null) => planetRenderer.LoadTexture(PlanetTexture, Options);
 
         public void StartAnimation(TimeSpan? FrameRate = default)
         {
-            FrameRate = FrameRate ?? PlanetRenderer.GetFPSTimeSpan(60);
+            FrameRate = FrameRate ?? PlanetRenderer.GetFPSTimeSpan(DefaultFrameRate);
             if (planetRenderer == null) throw new NullReferenceException("PlanetRenderer is null, call Load first.");
             planetRenderer.StartAsync((Bitmap bmp) =>
             {

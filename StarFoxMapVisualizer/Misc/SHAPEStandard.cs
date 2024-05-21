@@ -144,23 +144,37 @@ namespace StarFoxMapVisualizer.Misc
         /// <exception cref="InvalidDataException"></exception>
         internal static async Task<(ImageSource Image, MSprite Sprite)> RenderMSprite(string MSpriteName, string PaletteName = DefaultMSpritePalette)
         {
+            if (MSpriteNameMap.TryGetValue(MSpriteName, out var cachedSprite))
+                if (RenderCache.TryGetValue(cachedSprite, out var render)) return (render, cachedSprite);
+            var result = await RenderMSpriteBitmap(MSpriteName, PaletteName);
+            var newTuple = (result.Image.Convert(), result.Sprite);
+            result.Image.Dispose();
+            return newTuple;
+        }
+        /// <summary>
+        /// Returns the given MSpriteName as a Bitmap and also the <see cref="MSprite"/> itself, if loaded.
+        /// </summary>
+        /// <param name="MSpriteName"></param>
+        /// <returns></returns>
+        /// <exception cref="FileNotFoundException"></exception>
+        /// <exception cref="InvalidDataException"></exception>
+        internal static async Task<(System.Drawing.Bitmap Image, MSprite Sprite)> RenderMSpriteBitmap(string MSpriteName, string PaletteName = DefaultMSpritePalette)
+        {
             if (MSpriteName.EndsWith("_spr")) MSpriteName = MSpriteName.Replace("_spr", "");
             if (RenderCachePalette == null || PaletteName != RenderCachePalette)
                 RenderCache.Clear();
-            RenderCachePalette = PaletteName;
-            if (MSpriteNameMap.TryGetValue(MSpriteName, out var cachedSprite))
-                if (RenderCache.TryGetValue(cachedSprite, out var render)) return (render, cachedSprite);
+            RenderCachePalette = PaletteName;            
             string defAsmName = "DEFSPR.ASM";
-            var (mSpriteDef, pCol, cgxs) = await BaseRenderMSprite(PaletteName, defAsmName);            
+            var (mSpriteDef, pCol, cgxs) = await BaseRenderMSprite(PaletteName, defAsmName);
             //Try to render the sprite
             if (mSpriteDef.TryGetSpriteByName(MSpriteName, out MSprite? Sprite) && Sprite != null)
-                using (var bmp = SFGFXInterface.RenderMSprite(Sprite, pCol, cgxs.ToArray()))
-                {
-                    var image = bmp.Convert();
-                    MSpriteNameMap.TryAdd(MSpriteName, Sprite);
-                    RenderCache.TryAdd(Sprite, image);
-                    return (image, Sprite);
-                }
+            {
+                var bmp = SFGFXInterface.RenderMSprite(Sprite, pCol, cgxs.ToArray());
+                var image = bmp;
+                MSpriteNameMap.TryAdd(MSpriteName, Sprite);
+                RenderCache.TryAdd(Sprite, image.Convert());
+                return (image, Sprite);
+            }
             throw new FileNotFoundException($"{MSpriteName} was not found in {defAsmName}.");
         }
         /// <summary>
