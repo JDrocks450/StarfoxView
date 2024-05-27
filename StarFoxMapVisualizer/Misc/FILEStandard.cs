@@ -200,7 +200,7 @@ namespace StarFoxMapVisualizer.Misc
                 Owner = Application.Current.MainWindow
             };
             view.SetupControl(col);
-            view.ShowDialog();            
+            view.Show();            
         }       
         /// <summary>
         /// If the file is in <see cref="AppResources.OpenFiles"/>, the file will be closed
@@ -332,6 +332,28 @@ namespace StarFoxMapVisualizer.Misc
                 AppResources.OpenFiles.Add(File.FullName, asmfile);
             return asmfile;
         }
+
+        /// <summary>
+        /// Ensures that a <see cref="MSpritesDefinitionFile"/> is in <see cref="AppResources.OpenFiles"/>
+        /// </summary>
+        /// <param name="DefinitionASMName"></param>
+        /// <returns></returns>
+        /// <exception cref="FileNotFoundException"></exception>
+        public static async Task<MSpritesDefinitionFile> EnsureMSpritesDefinitionOpen(string DefinitionASMName = "DEFSPR.ASM")
+        {
+            var mSpriteDef = AppResources.OpenFiles.Values.OfType<MSpritesDefinitionFile>().FirstOrDefault();
+            if (mSpriteDef == null)
+            { // there isn't one, try adding it now
+                var hit = AppResources.ImportedProject.SearchFile(DefinitionASMName).FirstOrDefault();
+                if (hit != default) // Can't find DEFSPR.ASM
+                    mSpriteDef = await FILEStandard.OpenDEFSPRFile // found it, trying to add it
+                        (new FileInfo(hit.FilePath));
+            }
+            if (mSpriteDef == null) // could't add it
+                throw new FileNotFoundException($"{DefinitionASMName} could not be found or is otherwise unreadable.");
+            return mSpriteDef;
+        }
+
         /// <summary>
         /// Opens a <see cref="MSpritesDefinitionFile"/> and returns a reference to it
         /// <para/>This function will NOT add the file to <see cref="AppResources.OpenFiles"/> --
@@ -339,15 +361,27 @@ namespace StarFoxMapVisualizer.Misc
         /// </summary>
         /// <param name="file"></param>
         /// <returns></returns>
-        private static async Task<MSpritesDefinitionFile?> OpenDEFSPRFile(FileInfo file)
+        public static async Task<MSpritesDefinitionFile?> OpenDEFSPRFile(FileInfo file, bool IgnoreSFOptimMissing = false)
         {
+            if (AppResources.OpenFiles.TryGetValue(file.FullName, out var DefSpr)) return DefSpr as MSpritesDefinitionFile;
             //DEFSPR IMPORT LOGIC   
+            if (!IgnoreSFOptimMissing)
+            {
+                if (AppResources.ImportedProject?.GetOptimizerByTypeOrDefault(SFOptimizerTypeSpecifiers.MSprites) == null)
+                {
+                    MessageBox.Show("You have chosen to open an MSprites definition file, yet you haven't created the MSpritesMap.\n\n" +
+                        "Please do that first and then try this function again.");
+                    return default;
+                }
+            }
             if (!await HandleImportMessages(file, DEFSPRImport)) return default;
             var rObj = await DEFSPRImport.ImportAsync(file.FullName);
             var errors = DEFSPRImport.ErrorOut.ToString();
             if (!string.IsNullOrWhiteSpace(errors))
                 MessageBox.Show(errors + "\nThe file was still imported -- use caution when viewing for inaccuracies.",
                     "Errors Occured when Importing this File");
+            if (!AppResources.OpenFiles.ContainsKey(file.FullName))
+                AppResources.OpenFiles.Add(file.FullName, rObj);
             return rObj;
         }
 
@@ -365,7 +399,7 @@ namespace StarFoxMapVisualizer.Misc
         /// <param name="InitialDirectory"></param>
         /// <param name="Multiselect"></param>
         /// <returns></returns>
-        internal static string? ShowGenericFileBrowser(string Title, bool FolderBrowser = false, string? InitialDirectory = null, bool Multiselect = false)
+        internal static IEnumerable<string>? ShowGenericFileBrowser(string Title, bool FolderBrowser = false, string? InitialDirectory = null, bool Multiselect = false)
         {
             if (InitialDirectory == default) InitialDirectory = AppResources.ImportedProject.WorkspaceDirectory.FullName;
             CommonOpenFileDialog d = new CommonOpenFileDialog()
@@ -376,9 +410,7 @@ namespace StarFoxMapVisualizer.Misc
                 InitialDirectory = InitialDirectory
             }; // CREATE THE FOLDER PICKER
             if (d.ShowDialog() is not CommonFileDialogResult.Ok) return default; // OOPSIES x2
-            var directory = d.FileName; // Selected DIR
-            if (!Directory.Exists(directory)) return default; // Random error?
-            return directory;
+            return d.FileNames;
         }
         /// <summary>
         /// Attempts to load the given <see cref="SFOptimizerNode"/> for the given type

@@ -5,14 +5,15 @@
     <TargetFramework>net6.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
-    <FileVersion>0.5.6.2</FileVersion>
+    <FileVersion>0.5.7</FileVersion>
     <ApplicationIcon>Resources\SFViewLogoSmall.ico</ApplicationIcon>
-    <AssemblyVersion>0.5.6.2</AssemblyVersion>
+    <AssemblyVersion>0.5.7</AssemblyVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <None Remove="Resources\AtlantisInternational-jen0.ttf" />
     <None Remove="Resources\Background.png" />
+    <None Remove="Resources\Image\1423.png" />
     <None Remove="Resources\Image\album.png" />
     <None Remove="Resources\Image\canvas.png" />
     <None Remove="Resources\Image\colTable.png" />
@@ -69,6 +70,7 @@
   <ItemGroup>
     <Resource Include="Resources\AtlantisInternational-jen0.ttf" />
     <Resource Include="Resources\Background.png" />
+    <Resource Include="Resources\Image\1423.png" />
     <Resource Include="Resources\Image\album.png" />
     <Resource Include="Resources\Image\canvas.png" />
     <Resource Include="Resources\Image\colTable.png" />

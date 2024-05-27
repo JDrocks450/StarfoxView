@@ -28,6 +28,7 @@ namespace StarFoxMapVisualizer.Misc
     /// </summary>
     internal static class SHAPEStandard
     {
+        internal const string DefaultMSpritePalette = "NIGHT.COL";
         static Dictionary<string, SFPalette> SFPaletteCache { get; } = new();
         /// <summary>
         /// Gets the Color Table defined in this project
@@ -46,6 +47,7 @@ namespace StarFoxMapVisualizer.Misc
         /// <returns></returns>
         internal static bool CreateSFPalette(string ColGroupName, out SFPalette Palette, out COLGroup Group, string ColorPaletteName = "BLUE")
         {
+            ColorPaletteName = ColorPaletteName.ToUpper().Replace(".COL", "");
             COL? palette = AppResources.ImportedProject.Palettes.FirstOrDefault
                 (x => System.IO.Path.GetFileNameWithoutExtension(x.Key).ToUpper() == ColorPaletteName).Value;
             var group = default(COLGroup);
@@ -55,15 +57,20 @@ namespace StarFoxMapVisualizer.Misc
                 throw new Exception($"There was a problem loading the palette: {ColorPaletteName} and/or color table group: {ColGroupName}.");
             Group = group;
             if (SFPaletteCache.TryGetValue(ColGroupName, out Palette)) { return true; }            
-            SFPalette sfPalette = new SFPalette(in palette, in group);
+            SFPalette sfPalette = new SFPalette(ColorPaletteName, in palette, in group);
             sfPalette.GetPalette();
             Palette = sfPalette;            
             SFPaletteCache.Add(ColGroupName, Palette);
             return true;
         }
+        /// <summary>
+        /// Clears palettes cached for fast access using the <see cref="CreateSFPalette(string, out SFPalette, out COLGroup, string)"/>
+        /// function
+        /// </summary>
         internal static void ClearSFPaletteCache() => SFPaletteCache.Clear();
 
         private static List<FXCGXFile> CGXCache = new List<FXCGXFile>();
+        private static string? RenderCachePalette;
         private static Dictionary<MSprite, ImageSource> RenderCache = new();
         private static Dictionary<string, MSprite> MSpriteNameMap = new();
 
@@ -80,39 +87,43 @@ namespace StarFoxMapVisualizer.Misc
         {
             string defAsmName = SpriteDefFileName;
             //Try to load the MSpriteDefinition added to the project
-            var mSpriteDef = AppResources.OpenFiles.Values.OfType<MSpritesDefinitionFile>().FirstOrDefault();
-            if (mSpriteDef == null)
-            { // there isn't one, try adding it now
-                var hit = AppResources.ImportedProject.SearchFile(defAsmName).FirstOrDefault();
-                if (hit != default) // Can't find DEFSPR.ASM
-                    mSpriteDef = await FILEStandard.IncludeFile<MSpritesDefinitionFile> // found it, trying to add it
-                        (new FileInfo(hit.FilePath), StarFox.Interop.SFFileType.ASMFileTypes.DEFSPR);
-            }
-            if (mSpriteDef == null) // could't add it
-                throw new FileNotFoundException($"{defAsmName} could not be found or is otherwise unreadable.");
+            var mSpriteDef = await FILEStandard.EnsureMSpritesDefinitionOpen(SpriteDefFileName);
 
-            //all banks of MSPRITES in a default installation CHANGE LATER
-            string[] banks =
-            {
-                "TEX_01_low.cgx",
-                "TEX_01_high.cgx",
-                "TEX_23_low.cgx",
-                "TEX_23_high.cgx",
-                "TEX_23_A_low.cgx",
-                "TEX_23_A_high.cgx",
-            };
-            if (CGXCache.Count < banks.Length)
-            {
+            var optimizer = AppResources.ImportedProject?.GetOptimizerByTypeOrDefault(SFOptimizerTypeSpecifiers.MSprites);
+            if (optimizer == null) // try to find the MSPrite optimizer
+                throw new SFCodeOptimizerNotFoundException(SFOptimizerTypeSpecifiers.MSprites);
+
+            string bankDirectory = optimizer.BaseDirectory;
+
+            //make a list of all banks added to the optimizer separated into its HIGH and LOW counterpart
+            string[] banks = optimizer.OptimizerData.ObjectMap.SelectMany(x =>
+                new string[] { System.IO.Path.GetFileNameWithoutExtension(x.Key) + "_low.cgx",
+                System.IO.Path.GetFileNameWithoutExtension(x.Key) + "_high.cgx" }).ToArray();
+
+            if (CGXCache.Count < banks.Length) // have we loaded every bank?
+            { // no, reload them all -- we need all of them loaded for accuracy
                 CGXCache.Clear();
                 foreach (var bankName in banks)
                 { // load all required banks into CGX files
-                    var hit = AppResources.ImportedProject.SearchFile(bankName).FirstOrDefault();
-                    if (hit == default)
-                        throw new FileNotFoundException($"Could not find {bankName}");
-                    CGXCache.Add(SFGFXInterface.OpenCGX(hit.FilePath));
+                    string filePath = System.IO.Path.Combine(bankDirectory, bankName);
+                    if (!File.Exists(filePath))
+                    { // this high/low bank was not found -- try extracting it
+                        string BINFileName = filePath // get the original BIN file name
+                            .Replace("_low.cgx", ".BIN").Replace("_high.cgx", ".BIN");
+                        if (File.Exists(BINFileName)) // check to make sure this BIN file exists
+                            await SFGFXInterface.TranslateDATFile(BINFileName); // extract to HIGH and LOW banks
+                        else throw new FileNotFoundException("File does not exist. File: " + BINFileName);
+                    }
+                    if (!File.Exists(filePath)) // after trying extraction, the file still doesn't exist!
+                        throw new FileNotFoundException("CGX File does not exist yet was referenced: " + filePath);
+                    var bankData = SFGFXInterface.OpenCGX(filePath);
+                    if (bankData == null)
+                        throw new InvalidDataException("Could not load the HIGH/LOW bank: " + bankName);
+                    CGXCache.Add(bankData);
                 }
             }
             // attempt to find the palette provided to us (should be P_COL)
+            if (!PaletteName.Contains(".COL")) PaletteName = PaletteName + ".COL";
             var colHit = AppResources.ImportedProject.SearchFile(PaletteName).FirstOrDefault();
             if (colHit == default)
                 throw new FileNotFoundException($"Could not find {PaletteName}");
@@ -120,6 +131,7 @@ namespace StarFoxMapVisualizer.Misc
             var pCol = await FILEStandard.GetPalette(new FileInfo(colHit.FilePath));
             if (pCol == default)
                 throw new InvalidDataException($"Palette: {PaletteName} was not found.");
+            pCol = COL.TransmutateByRow(pCol, 7, 0);
             return (mSpriteDef, pCol, CGXCache);
         }
 
@@ -130,22 +142,39 @@ namespace StarFoxMapVisualizer.Misc
         /// <returns></returns>
         /// <exception cref="FileNotFoundException"></exception>
         /// <exception cref="InvalidDataException"></exception>
-        internal static async Task<(ImageSource Image, MSprite Sprite)> RenderMSprite(string MSpriteName, string PaletteName = "P_COL.COL")
+        internal static async Task<(ImageSource Image, MSprite Sprite)> RenderMSprite(string MSpriteName, string PaletteName = DefaultMSpritePalette)
         {
-            if (MSpriteName.EndsWith("_spr")) MSpriteName = MSpriteName.Replace("_spr", "");
             if (MSpriteNameMap.TryGetValue(MSpriteName, out var cachedSprite))
                 if (RenderCache.TryGetValue(cachedSprite, out var render)) return (render, cachedSprite);
+            var result = await RenderMSpriteBitmap(MSpriteName, PaletteName);
+            var newTuple = (result.Image.Convert(), result.Sprite);
+            result.Image.Dispose();
+            return newTuple;
+        }
+        /// <summary>
+        /// Returns the given MSpriteName as a Bitmap and also the <see cref="MSprite"/> itself, if loaded.
+        /// </summary>
+        /// <param name="MSpriteName"></param>
+        /// <returns></returns>
+        /// <exception cref="FileNotFoundException"></exception>
+        /// <exception cref="InvalidDataException"></exception>
+        internal static async Task<(System.Drawing.Bitmap Image, MSprite Sprite)> RenderMSpriteBitmap(string MSpriteName, string PaletteName = DefaultMSpritePalette)
+        {
+            if (MSpriteName.EndsWith("_spr")) MSpriteName = MSpriteName.Replace("_spr", "");
+            if (RenderCachePalette == null || PaletteName != RenderCachePalette)
+                RenderCache.Clear();
+            RenderCachePalette = PaletteName;            
             string defAsmName = "DEFSPR.ASM";
-            var (mSpriteDef, pCol, cgxs) = await BaseRenderMSprite(PaletteName, defAsmName);            
+            var (mSpriteDef, pCol, cgxs) = await BaseRenderMSprite(PaletteName, defAsmName);
             //Try to render the sprite
             if (mSpriteDef.TryGetSpriteByName(MSpriteName, out MSprite? Sprite) && Sprite != null)
-                using (var bmp = SFGFXInterface.RenderMSprite(Sprite, pCol, cgxs.ToArray()))
-                {
-                    var image = bmp.Convert();
-                    MSpriteNameMap.TryAdd(MSpriteName, Sprite);
-                    RenderCache.TryAdd(Sprite, image);
-                    return (image, Sprite);
-                }
+            {
+                var bmp = SFGFXInterface.RenderMSprite(Sprite, pCol, cgxs.ToArray());
+                var image = bmp;
+                MSpriteNameMap.TryAdd(MSpriteName, Sprite);
+                RenderCache.TryAdd(Sprite, image.Convert());
+                return (image, Sprite);
+            }
             throw new FileNotFoundException($"{MSpriteName} was not found in {defAsmName}.");
         }
         /// <summary>
@@ -155,10 +184,14 @@ namespace StarFoxMapVisualizer.Misc
         /// <returns></returns>
         /// <exception cref="FileNotFoundException"></exception>
         /// <exception cref="InvalidDataException"></exception>
-        internal static async Task<ImageSource> RenderMSprite(MSprite Sprite, string PaletteName = "P_COL.COL")
+        internal static async Task<ImageSource> RenderMSprite(MSprite Sprite, string PaletteName = DefaultMSpritePalette)
         {
+            if (RenderCachePalette == null || PaletteName != RenderCachePalette)
+                RenderCache.Clear();
+            RenderCachePalette = PaletteName;
             if (RenderCache.TryGetValue(Sprite, out var render)) return render;
             string defAsmName = "DEFSPR.ASM";
+            if (PaletteName == null) PaletteName = DefaultMSpritePalette;
             var (mSpriteDef, pCol, cgxs) = await BaseRenderMSprite(PaletteName, defAsmName);
             //Try to render the sprite
             using (var bmp = SFGFXInterface.RenderMSprite(Sprite, pCol, cgxs.ToArray()))
@@ -233,11 +266,12 @@ namespace StarFoxMapVisualizer.Misc
         }
         public static bool PushLine(ref MeshGeometry3D geometry, Point3D Point1, Point3D Point2)
         {
+            double thickness = .5;
             int index = geometry.Positions.Count(); // used to push indices
             geometry.Positions.Add(new(Point1.X, Point1.Y, Point1.Z)); // i
-            geometry.Positions.Add(new(Point1.X - 1, Point1.Y, Point1.Z + 1)); // i + 1            
+            geometry.Positions.Add(new(Point1.X - thickness, Point1.Y, Point1.Z + thickness)); // i + 1            
             geometry.Positions.Add(new(Point2.X, Point2.Y, Point2.Z)); // i + 2
-            geometry.Positions.Add(new(Point2.X + 1, Point2.Y, Point2.Z - 1)); // i + 3
+            geometry.Positions.Add(new(Point2.X + thickness, Point2.Y, Point2.Z - thickness)); // i + 3
             geometry.TriangleIndices.Add(index);
             geometry.TriangleIndices.Add(index + 1);
             geometry.TriangleIndices.Add(index + 2);
@@ -270,11 +304,73 @@ namespace StarFoxMapVisualizer.Misc
         /// <param name="Frame">The frame of animation to use as the rendered frame</param>
         /// <returns></returns>
         public static List<GeometryModel3D> MakeBSPShapeMeshGeometry(
-            BSPShape Shape, int Frame = -1, int MaterialAnimationFrame = -1)
+            BSPShape Shape, int Frame = -1, int MaterialAnimationFrame = -1, bool HandleColGroupErrors = true)
         {
-            CreateSFPalette(Shape.Header.ColorPalettePtr, out var palette, out var group);
-            return MakeBSPShapeMeshGeometry(Shape, in group, in palette, Frame, MaterialAnimationFrame);
+            bool TexturesActivated = AppResources.ImportedProject?.
+                GetOptimizerByTypeOrDefault(SFOptimizerTypeSpecifiers.MSprites) != default;
+            try
+            {
+                CreateSFPalette(Shape.Header.ColorPalettePtr, out var palette, out var group);
+                return MakeBSPShapeMeshGeometry(Shape, in group, in palette, Frame, MaterialAnimationFrame, TexturesActivated);
+            }
+            catch (Exception ex)
+            {
+                if (HandleColGroupErrors)
+                {
+                    CreateSFPalette("id_0_c", out var palette, out var group);
+                    return MakeBSPShapeMeshGeometry(Shape, in group, in palette, Frame, MaterialAnimationFrame, TexturesActivated);
+                }
+                else throw ex;
+            }            
         }
+
+        public static GeometryModel3D Make3DTexturedPlaneGeometry(ImageSource image)
+        {
+            var material = GetNearestNeighborTextureMaterial(image);
+            Geometry3D geom = new MeshGeometry3D()
+            {
+                Positions = new Point3DCollection
+                {
+                    new Point3D(0, 0, 0),                    
+                    new Point3D(1, 0, 0),
+                    new Point3D(0, 1, 0),
+                    new Point3D(1, 1, 0),
+                },
+                TriangleIndices = new Int32Collection { 0, 1, 3, 0, 2, 3 },
+                TextureCoordinates = new PointCollection
+                {
+                    new Point(1, 0),
+                    new Point(0, 0),
+                    new Point(1, 1),                     
+                    new Point(0, 1),
+                    new Point(0, 0),
+                    new Point(1, 1)
+                }
+            };
+            //Make the model that uses this geom we made
+            GeometryModel3D model = new()
+            {
+                Material = material, // front-face color
+                BackMaterial = material, // back-face color (CullMode None)                    
+                Geometry = geom,
+                Transform = new ScaleTransform3D(10,10,10)
+            };
+            return model;
+        }
+
+        public static async Task<GeometryModel3D?> Make3DMSpriteGeometry(string MSpriteName, string? PaletteName = default)
+        {
+            var mSprite = await RenderMSprite(MSpriteName, PaletteName);
+            if (mSprite == default) return default;
+            return Make3DTexturedPlaneGeometry(mSprite.Image);
+        }
+        public static async Task<GeometryModel3D?> Make3DMSpriteGeometry(MSprite MSprite, string? PaletteName = default)
+        {
+            var mSprite = await RenderMSprite(MSprite, PaletteName);
+            if (mSprite == default) return default;
+            return Make3DTexturedPlaneGeometry(mSprite);
+        }
+
         /// <summary>
         /// Turns a <see cref="BSPShape"/> into a GeometryModel3D collection which makes up the supplied model
         /// </summary>
@@ -286,7 +382,7 @@ namespace StarFoxMapVisualizer.Misc
         /// <returns></returns>
         public static List<GeometryModel3D> MakeBSPShapeMeshGeometry(
             BSPShape Shape, in COLGroup Group, in SFPalette Palette, int Frame, int MaterialAnimationFrame,
-            BSPFace? HighlightFace = default, Brush? HighlightColor = default)            
+            bool TexturesActivated = false, BSPFace? HighlightFace = default, Brush? HighlightColor = default)            
         {
             //SET VARS
             var models = new List<GeometryModel3D>();
@@ -364,23 +460,17 @@ namespace StarFoxMapVisualizer.Misc
                             break;
                         case COLDefinition.CallTypes.Texture:
                             {
+                                if (!TexturesActivated) break; // textures disabled
                                 var textDef = definition as COLTexture;
                                 try
                                 {
-                                    var (bmp, sprite) = RenderMSprite(textDef.Reference).Result;
+                                    var (bmp, sprite) = RenderMSprite(textDef.Reference, Palette.Name).Result;
                                     /*var imgBrush = new ImageBrush(bmp)
                                     {
                                         Stretch = Stretch.Fill,
                                         TileMode = TileMode.None
-                                    };*/
-
-                                    var image = new Image() { Source = bmp };
-                                    RenderOptions.SetCachingHint(image, CachingHint.Cache);
-                                    RenderOptions.SetBitmapScalingMode(image, BitmapScalingMode.NearestNeighbor);
-                                    material = new DiffuseMaterial()
-                                    {
-                                        Brush = new VisualBrush(image)
-                                    };
+                                    };*/                                   
+                                    material = GetNearestNeighborTextureMaterial(bmp);
                                     shape.UsingTextures.Add(textDef.Reference);
                                     hasTextureProperties = true;
                                 }
@@ -449,14 +539,20 @@ namespace StarFoxMapVisualizer.Misc
                     geom.TextureCoordinates.Add(new Point(1, 1)); 
                     geom.TextureCoordinates.Add(new Point(0, 1));
                     geom.TextureCoordinates.Add(new Point(1, 0));                     
-                    /*
-                    geom.TextureCoordinates.Add(new Point(0, 1)); 
-                    geom.TextureCoordinates.Add(new Point(1, 1)); 
-                    geom.TextureCoordinates.Add(new Point(0, 0));                      
-                     */
-                                }
+                }
             }
             return models;
+        }
+
+        private static Material GetNearestNeighborTextureMaterial(ImageSource bmp)
+        {
+            var image = new Image() { Source = bmp };
+            RenderOptions.SetCachingHint(image, CachingHint.Cache);
+            RenderOptions.SetBitmapScalingMode(image, BitmapScalingMode.NearestNeighbor);
+            return new DiffuseMaterial()
+            {
+                Brush = new VisualBrush(image)
+            };
         }
     }
 }

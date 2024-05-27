@@ -4,10 +4,14 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:StarFoxMapVisualizer.Controls2" xmlns:subcontrols="clr-namespace:StarFoxMapVisualizer.Controls.Subcontrols"
-        mc:Ignorable="d" Style="{StaticResource SFDialogModalStyle}"
-        Title="MSPRITES VIEWER" Foreground="White" Height="400" Width="350" Background="{StaticResource WindowBackgroundColor}">
-    <DockPanel Margin="10">
-        <ComboBox Name="SelectionCombo" Margin="10" DockPanel.Dock="Top" SelectionChanged="SelectionCombo_SelectionChanged"/>
+        mc:Ignorable="d" Style="{StaticResource SFDialogModalStyle}" ResizeMode="NoResize" MouseLeftButtonDown="Window_MouseLeftButtonDown"
+        Title="MSPRITES VIEWER" Foreground="White" SizeToContent="WidthAndHeight" Background="{StaticResource WindowBackgroundColor}">
+    <DockPanel Margin="0">
+        <ComboBox Name="SelectionCombo" DockPanel.Dock="Top" SelectionChanged="SelectionCombo_SelectionChanged" Margin="0,0,0,10"/>
+        <Grid DockPanel.Dock="Bottom" Margin="0,5,0,0" >
+            <Button IsCancel="True" Name="ButtonOK"  HorizontalAlignment="Right" Width="75" Click="ButtonOK_Click">OK</Button>
+            <Button Background="{Binding Background, ElementName=ButtonOK}" HorizontalAlignment="Left" Style="{StaticResource SFChangePaletteButton}" Name="PaletteWindowButton" Click="PaletteWindowButton_Click" Width="168" Height="33">Change Color Palette</Button>
+        </Grid>
         <GroupBox Style="{StaticResource SFContentBorder}" Grid.Column="1" Width="256" Height="256" Background="Black">
             <subcontrols:CopyableImage x:Name="RenderImage" />
         </GroupBox>

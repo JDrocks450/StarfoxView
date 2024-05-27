@@ -15,6 +15,7 @@ using StarFoxMapVisualizer.Controls.Subcontrols;
 using StarFoxMapVisualizer.Controls2;
 using StarFoxMapVisualizer.Dialogs;
 using StarFoxMapVisualizer.Misc;
+using StarFoxMapVisualizer.Renderers;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -83,11 +84,12 @@ namespace StarFoxMapVisualizer.Screens
             var currentProject = AppResources.ImportedProject;
             if (currentProject == null)
                 throw new InvalidDataException("No project loaded.");
-            if (Flush)
-                await currentProject.EnumerateAsync();
 
             //Show welcome wagon if not shown once to the user yet this session
-            await EDITORStandard.WelcomeWagon();
+            bool changesMade = await EDITORStandard.WelcomeWagon();            
+
+            if (Flush || changesMade)
+                await currentProject.EnumerateAsync();            
 
             var expandedHeaders = new List<string>();
             void CheckNode(in TreeViewItem Node)
@@ -550,14 +552,14 @@ namespace StarFoxMapVisualizer.Screens
                 await HandleViewModes();
             }
             else if (isMSG)
-            {
+            { // COMMUNICATIONS VIEWER
                 CurrentMode = ViewMode.MSG;
                 await HandleViewModes();
             }
             else if (isDEFSPR)
             { // 3D MSPRITES VIEWER
                 MSpritesViewer viewer = new MSpritesViewer(asmfile as MSpritesDefinitionFile);
-                viewer.ShowDialog();
+                viewer.Show();
             }
             else
             {
@@ -788,8 +790,8 @@ namespace StarFoxMapVisualizer.Screens
         private async void OpenItem_Click(object sender, RoutedEventArgs e)
         {
             var file = FILEStandard.ShowGenericFileBrowser("Select a File to View");
-            if (file == default) return;
-            await FileSelected(new FileInfo(file));
+            if (file == default || !file.Any()) return;
+            await FileSelected(new FileInfo(file.First()));
         }
 
         private void CloseProjectMenuItem_Click(object sender, RoutedEventArgs e)
@@ -849,6 +851,17 @@ namespace StarFoxMapVisualizer.Screens
                 GoItem.Items.Add(item);
             }
             GoItem.SubmenuOpened -= GoItem_Load;
+        }
+
+        /// <summary>
+        /// Fired when the Level Select Menu item is selected
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void LevelSelectItem_Click(object sender, RoutedEventArgs e)
+        {
+            LevelSelectWindow wnd = new();
+            wnd.Show();
         }
     }
 }

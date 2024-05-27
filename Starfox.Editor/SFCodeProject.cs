@@ -31,16 +31,6 @@ namespace Starfox.Editor
         /// <param name="Type">The type of settings</param>
         /// <returns></returns>
         public T GetSettings<T>(SFCodeProjectSettingsTypes Type) where T:SFEditorSettings => BaseState.GetSettings<T>(Type);
-        
-        /// <summary>
-        /// Gets whether or not this project has a Shapes Directory set yet
-        /// </summary>
-        public bool ShapesDirectoryPathSet => BaseState.ShapesDirectoryPathSet;
-        /// <summary>
-        /// The path to the SHAPES directory -- if this project has one set.
-        /// <para>See: <see cref="ShapesDirectoryPathSet"/> to check for this scenario</para>
-        /// </summary>
-        public string? ShapesDirectoryPath { get => BaseState.ShapesDirectoryPath; set => BaseState.ShapesDirectoryPath = value; }
         /// <summary>
         /// Palettes that have been included in this project
         /// <para>FilePath, COL</para>

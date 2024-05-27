@@ -1,0 +1,27 @@
+﻿<Window x:Class="StarFoxMapVisualizer.Dialogs.LevelSelectWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:StarFoxMapVisualizer.Dialogs" xmlns:controls2="clr-namespace:StarFoxMapVisualizer.Controls2"
+        mc:Ignorable="d" KeyDown="Window_KeyDown"
+        Title="Map Screen Viewer Window" Height="512" Width="512">
+    <DockPanel>
+        <Menu x:Name="MenuStrip" DockPanel.Dock="Top" Height="25" Background="{StaticResource WindowBackgroundColor}" Foreground="White">
+            <MenuItem Header="Window Size" Foreground="White">
+                <MenuItem Header="64x64" Click="ResoItemSelected"/>
+                <MenuItem Header="128x128" Click="ResoItemSelected"/>
+                <MenuItem Header="256x256" Click="ResoItemSelected"/>
+                <MenuItem Header="512x512" Click="ResoItemSelected"/>
+                <MenuItem Header="1024x1024" Click="ResoItemSelected"/>
+                <MenuItem Header="2048x2048" Click="ResoItemSelected"/>
+            </MenuItem>
+            <MenuItem Header="Appearance" Foreground="White">
+                <MenuItem Header="Change Planet Palette..." Name="PlanetPaletteItem" Click="PlanetPaletteItem_Click"/>
+                <MenuItem Header="Change Background Palette..." Name="BGPaletteItem" Click="BGPaletteItem_Click"/>
+                <MenuItem Header="Change both Palettes..." Name="PaletteItem" Click="PaletteItem_Click"/>
+            </MenuItem>
+        </Menu>
+        <controls2:LevelSelectViewer x:Name="MapViewer"/>
+    </DockPanel>
+</Window>

@@ -10,6 +10,7 @@ using System.IO;
 using System.Drawing;
 using StarFox.Interop.MISC;
 using System.Runtime.Intrinsics.X86;
+using static StarFox.Interop.GFX.CAD;
 
 // ********************************
 // THANK YOU LUIGIBLOOD!
@@ -45,6 +46,24 @@ namespace StarFox.Interop.GFX
             }
         }
 
+        /// <summary>
+        /// Has variables that can be tweaked to make the library handle more specialized 
+        /// functionality than general usage
+        /// </summary>
+        public class CGXContext
+        {
+            /// <summary>
+            /// When true, all calls to RenderTile will set the 0 index color in the palette to be 
+            /// <see cref="Color.Transparent"/>
+            /// </summary>
+            public bool HandlePaletteIndex0AsTransparent { get; set; } = false;
+        }
+
+        /// <summary>
+        /// Observe that <see cref="CGX.GlobalContext"/> can be used to change this default behavior
+        /// <para/> See luigiblood's project on hcgcad
+        /// <para/><see href="https://github.com/LuigiBlood/hcgcad"/>
+        /// </summary>
         public class CGX
         {
             protected byte[] chr;     //Graphics Data
@@ -53,6 +72,15 @@ namespace StarFox.Interop.GFX
             protected byte col_half;  //Color (high, low)
             protected byte col_cell;  //Color Cell
             protected byte[] attr;    //Attribute Data
+
+            /// <summary>
+            /// The context that this library is being used in to facilitate the individualized needs of the project
+            /// </summary>
+            public static CGXContext GlobalContext { get; set; } = new();
+            /// <summary>
+            /// <see cref="CGXContext.HandlePaletteIndex0AsTransparent"/> on <see cref="GlobalContext"/>
+            /// </summary>
+            private bool pal0Transparent => GlobalContext.HandlePaletteIndex0AsTransparent;
 
             public CGX(byte[] dat)
             {
@@ -166,7 +194,8 @@ namespace StarFox.Interop.GFX
                             p = palForce * 128;
                     }
 
-                    Bitmap tile = RenderTile(i, 8, pal.GetPalette(fmt, p));
+                    var palette = pal.GetPalette(fmt, p);
+                    Bitmap tile = RenderTile(i, 8, palette);
 
                     using (Graphics g = Graphics.FromImage(output))
                     {
@@ -175,15 +204,16 @@ namespace StarFox.Interop.GFX
                         g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
                         g.DrawImage(tile, x, y, s, s);
                     }
-                }
-
+                }                
                 return output;
             }
 
             public Bitmap RenderTile(int tile, int size, Color[] pal, bool xflip = false, bool yflip = false)
             {
                 Bitmap output = new Bitmap(size, size);
-                
+                if (pal0Transparent)
+                    pal[0] = Color.Transparent; // GlobalContext.PAL0TRANS
+
                 for (int y = 0; y < (size / 8); y++)
                 {
                     for (int x = 0; x < (size / 8); x++)
@@ -210,7 +240,6 @@ namespace StarFox.Interop.GFX
                         }
                     }
                 }
-
                 return output;
             }
 
@@ -299,6 +328,18 @@ namespace StarFox.Interop.GFX
                 unk = Utility.Subarray(dat2, 0x100, 0x100);
                 swap = false;
             }
+            /// <summary>
+            /// Copies a COL from one to another but overwrites to colors to be what you provide
+            /// </summary>
+            /// <param name="Original"></param>
+            /// <param name="OverwrittenColors"></param>
+            private COL(COL Original, Color[] OverwrittenColors)
+            {
+                col = OverwrittenColors;
+                ext = Original.ext;
+                unk = Original.unk;
+                swap = false;
+            }
 
             public void SetPaletteSwap(bool v)
             {
@@ -318,6 +359,34 @@ namespace StarFox.Interop.GFX
                     return Utility.Subarray(col, base_id + (swap ? 128 : 0), 16);
                 else    //if (fmt == 2)     //8BPP
                     return Utility.Subarray(col, base_id + (swap ? 128 : 0), 256);
+            }
+            /// <summary>
+            /// Copies an entire row to another row and returns a new palette
+            /// </summary>
+            /// <param name="SourcePalette"></param>
+            /// <param name="SourceRow"></param>
+            /// <param name="DestinationRow"></param>
+            /// <returns></returns>
+            public static COL TransmutateByRow(COL SourcePalette, int SourceRow, int DestinationRow)
+            {
+                const int ROW_LEN = 16;
+                Color[] paletteSwap = SourcePalette.GetPalette();
+                Color[] rowData = paletteSwap[(SourceRow * 16)..((SourceRow + 1) * 16)];
+                rowData.CopyTo(paletteSwap, (DestinationRow * ROW_LEN));
+                return new COL(SourcePalette, paletteSwap);
+            }
+            /// <summary>
+            /// Copies an entire row to another row
+            /// </summary>
+            /// <param name="SourceRow"></param>
+            /// <param name="DestinationRow"></param>
+            public void TransmutateByRow(int SourceRow, int DestinationRow)
+            {
+                const int ROW_LEN = 16;
+                Color[] paletteSwap = GetPalette();
+                Color[] rowData = paletteSwap[(SourceRow * 16)..((SourceRow + 1) * 16)];
+                rowData.CopyTo(paletteSwap, (DestinationRow * ROW_LEN));
+                col = rowData;
             }
 #if RENDER
             public Bitmap RenderPalette()
@@ -484,7 +553,7 @@ namespace StarFox.Interop.GFX
                         RenderScreen(s);
                     }
                 }
-                else RenderScreen(Screen);
+                else RenderScreen(Screen);               
                 return output;
             }
 #endif

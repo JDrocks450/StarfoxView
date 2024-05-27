@@ -62,8 +62,9 @@ namespace StarFox.Interop.ASM
         /// <param name="Value"></param>
         /// <param name="IncludedConstants">All constants to check through</param>
         /// <returns></returns>
-        public static int TryParseOrDefault(in string Value, in IEnumerable<ASMConstant> IncludedConstants)
+        public static int TryParseOrDefault(in string? Value, in IEnumerable<ASMConstant>? IncludedConstants)
         {
+            if (string.IsNullOrWhiteSpace(Value)) return 0;
             string fValue = Value;
             bool reloadAgain;
             do
@@ -90,7 +91,7 @@ namespace StarFox.Interop.ASM
                         signFlip = true;
                     }
                     //---
-                    var results = IncludedConstants.Where(x => x.Name.ToLower() == usablePortion.ToLower());
+                    var results = IncludedConstants?.Where(x => x.Name.ToLower() == usablePortion.ToLower()) ?? new ASMConstant[] { };
                     if (!results.Any()) // not a constant reference
                     {
                         builder.Append(chunk); // just put the text back
@@ -111,8 +112,9 @@ namespace StarFox.Interop.ASM
             while (reloadAgain);
             return 0; // unreachable
         }
-        private static int base_TryParseOrDefault(string Value)
+        private static int base_TryParseOrDefault(string? Value)
         {
+            if (string.IsNullOrWhiteSpace(Value)) return 0;
             bool getOperands(string content, char op, out int left, out int right)
             {
                 var operands = content.Replace(" ", "").Split(op);
@@ -161,8 +163,9 @@ namespace StarFox.Interop.ASM
         /// <para>If the content contains a $, it is assumed to be hex.</para>
         /// </summary>
         /// <returns></returns>
-        public static int TryParseOrDefault(in string Value)
+        public static int TryParseOrDefault(in string? Value)
         {
+            if (string.IsNullOrWhiteSpace(Value)) return 0;
             if (ConstantsRegion)
                 return TryParseOrDefault(in Value, IncludedConstants);
             return base_TryParseOrDefault(Value);

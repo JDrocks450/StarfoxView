@@ -8,10 +8,12 @@
         public MSGEntry(string speaker, string english, string secondaryLanguage, string sound)
         {
             Speaker = speaker;
-            English = english;
-            SecondaryLanguage = secondaryLanguage;
+            English = Sanitize(english);
+            SecondaryLanguage = Sanitize(secondaryLanguage);
             Sound = sound;
         }
+
+        string Sanitize(string Input) => Input.Replace("#", ".").Replace("!","!!");
 
         /// <summary>
         /// The person talking

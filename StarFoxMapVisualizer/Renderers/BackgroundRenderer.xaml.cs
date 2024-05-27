@@ -1,54 +1,53 @@
-﻿using StarFox.Interop.MAP.CONTEXT;
-using StarFoxMapVisualizer.Misc;
+﻿using StarFox.Interop;
+using StarFox.Interop.EFFECTS;
+using StarFox.Interop.MAP.CONTEXT;
 using System;
-using System.Collections.Generic;
 using System.Drawing;
-using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
-namespace StarFoxMapVisualizer.Controls.Subcontrols
+namespace StarFoxMapVisualizer.Renderers
 {
     /// <summary>
     /// Interaction logic for BackgroundRenderer.xaml
     /// </summary>
-    public partial class BackgroundRenderer : UserControl
-    {
-        public MAPContextDefinition LevelContext { get; private set; }
-
+    public partial class BackgroundRenderer : SCRRendererControlBase, IDisposable
+    {       
         public BackgroundRenderer()
         {
             InitializeComponent();
         }
 
+        public override void BG2Invalidate(ImageSource NewImage) => BG2Render.ImageSource = NewImage;
+        public override void BG3Invalidate(ImageSource NewImage) => BG3Render.ImageSource = NewImage;
+
+        /// <summary>
+        /// Sets the viewport of this Image to be passed argument
+        /// </summary>
+        /// <param name="Viewport"></param>
         public void ResetViewports(Rect Viewport)
         {
             ResetViewports(Viewport, Viewport);
         }
+        /// <summary>
+        /// Sets individually the BG2 and BG3 viewports by themselves
+        /// </summary>
+        /// <param name="BG2Viewport"></param>
+        /// <param name="BG3Viewport"></param>
         public void ResetViewports(Rect BG2Viewport, Rect BG3Viewport)
         {
             BG2Render.Viewport = BG2Viewport;
             BG3Render.Viewport = BG3Viewport;
         }
         /// <summary>
-        /// This function should be called before rendering to the screen but after <see cref="Attach(MAPContextDefinition?, bool, bool)"/>
+        /// This function should be called before rendering to the screen but after <see cref="SetContext(MAPContextDefinition?, bool, bool)"/>
         /// it cannot be used without a valid <see cref="LevelContext"/> property.
         /// <para>This function will take a ScreenSize, and optionally some screen scroll registers,
         /// and setup the view to match the given parameters and also match the mode in the <see cref="LevelContext"/></para>
         /// <para>Remember that <see cref="MAPContextDefinition.AppearancePreset"/> determines how the Background is displayed. This 
         /// function will handle that for you.</para>
         /// </summary>
-        /// <param name="ScreenSize"></param>
         /// <param name="ScreenBG2XScroll">Measured as the original game does, in viewport units as if the background was 512 wide and tall.</param>
         /// <param name="ScreenBG2YScroll">Measured as the original game does, in viewport units as if the background was 512 wide and tall.</param>
         /// <param name="ScreenBG3XScroll">Measured as the original game does, in viewport units as if the background was 512 wide and tall.</param>
@@ -94,6 +93,15 @@ namespace StarFoxMapVisualizer.Controls.Subcontrols
                 default:
                     //Base calculations on the Height of the control
                     ConvertAll();
+                    int renderW = StarfoxEqu.RENDER_W;
+                    int renderH = StarfoxEqu.RENDER_W;
+                    int centerW = (StarfoxEqu.SCR_W / 2) - (renderW / 2);
+                    int centerH = (StarfoxEqu.SCR_W / 2) - (renderW / 2);
+                    /*
+                     * ResetViewports(
+                        new Rect(centerW - ScreenBG2XScroll, centerH - ScreenBG2YScroll - LevelContext.ViewCY, renderW, renderH),
+                        new Rect(centerW - ScreenBG3XScroll, centerH - ScreenBG3YScroll, renderW, renderH));
+                    */
                     ResetViewports(
                         new Rect(-ScreenBG2XScroll, -ScreenBG2YScroll, awidth, awidth),
                         new Rect(-ScreenBG3XScroll, -ScreenBG3YScroll, awidth, awidth));
@@ -109,78 +117,59 @@ namespace StarFoxMapVisualizer.Controls.Subcontrols
             var BG2X = LevelContext.BG2.HorizontalOffset;
             var BG2Y = LevelContext.BG2.VerticalOffset;
             SetViewportsToUniformSize(Width, Height, BG2X, BG2Y, BG3X, BG3Y);
-        }
-
-        public async Task Attach(MAPContextDefinition? SelectedContext, bool ExtractCCR = false, bool ExtractPCR = false) { 
+        }                             
+        
+        public override async Task SetContext(MAPContextDefinition? SelectedContext,
+            WavyBackgroundRenderer.WavyEffectStrategies Animation = WavyBackgroundRenderer.WavyEffectStrategies.None,
+            bool ExtractCCR = false, bool ExtractPCR = false)
+        {
             LevelContext = SelectedContext;
-            await SetBGS(ExtractCCR, ExtractPCR);
-        }
+            AnimationMode = Animation;
 
-        //FILE PATH -> FILE TYPE
-        public Dictionary<string, string> ReferencedFiles { get; } = new();
-        private async Task<Bitmap> RenderSCR(string ColorPaletteName, string SCRName, string CHRName, bool ExtractCCR = false, bool ExtractPCR = false)
-        {
-            var palette = GFXStandard.MAPContext_GetPaletteByName(ColorPaletteName, out var palettePath);
-            if (palette == default) throw new FileNotFoundException($"{ColorPaletteName} was not found as" +
-                $" an included Palette in this project."); // NOPE IT WASN'T
-            ReferencedFiles.Add(palettePath, "Palette");
-            //SET THE CHRName TO BE THE SCR NAME IF DEFAULT
-            if (CHRName == null) CHRName = SCRName;
-            //MAKE SURE BOTH OF THESE FILES ARE EXTRACTED AND EXIST
-            //SEARCH AND EXTRACT CGX FIRST
-            var CGXFileInfo = await GFXStandard.FindProjectCGXByName(CHRName, ExtractCCR);
-            ReferencedFiles.Add(CGXFileInfo.FullName, "CGX");
-            //THEN SCR
-            var SCRFileInfo = await GFXStandard.FindProjectSCRByName(SCRName, ExtractPCR);
-            ReferencedFiles.Add(SCRFileInfo.FullName, "SCR");
-            return await GFXStandard.RenderSCR(palette, CGXFileInfo, SCRFileInfo);
-        }
-        private async Task SetBGS(bool ExtractCCR = false, bool ExtractPCR = false)
-        {
+            //**dispose previous session
+            if (bgRenderer != null)
+            {
+                bgRenderer.Dispose();
+                bgRenderer = null;
+            }
             ReferencedFiles.Clear();
             BG2Render.ImageSource = null;
             BG3Render.ImageSource = null;
+            //**
+
             if (LevelContext == default) return;
-            //RENDER BG2
-            if (LevelContext?.BG2ChrFile != null && LevelContext?.BG2ScrFile != null)
-            {
-                try
-                {
-                    using (var source = await RenderSCR(
-                        LevelContext.BackgroundPalette,
-                        LevelContext.BG2ScrFile,
-                        LevelContext.BG2ChrFile,
-                        ExtractCCR, ExtractPCR))
-                        await Dispatcher.InvokeAsync(delegate
-                        {
-                            BG2Render.ImageSource = source.Convert(true);
-                        });
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.ToString());
-                }
-            }
-            //RENDER BG3
-            if (LevelContext?.BG3ChrFile != null && LevelContext?.BG3ScrFile != null)
-            {
-                try
-                {
-                    using (var source = await GFXStandard.RenderSCR(
-                        LevelContext.BackgroundPalette,
-                        LevelContext.BG3ScrFile,
-                        LevelContext.BG3ChrFile,
-                        ExtractCCR, ExtractPCR))
-                        await Dispatcher.InvokeAsync(delegate
-                        {
-                            BG3Render.ImageSource = source.Convert();
-                        });
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.ToString());
-                }
-            }
+            //Set the backgrounds for this control to update the visual
+            //this also creates a bgRenderer -- which handles dynamic backgrounds
+            await InvalidateBGS(ExtractCCR, ExtractPCR);
+            //if animating, start the animation clock
+            if (AnimationMode != WavyBackgroundRenderer.WavyEffectStrategies.None &&
+                bgRenderer != null)
+                StartAnimatedBackground(AnimatorEffect<object>.GetFPSTimeSpan(60));                
+        }
+
+        public override void DebugInfoUpdated(AnimatorEffect<Bitmap>.DiagnosticInfo DiagnosticInformation)
+        {
+            base.DebugInfoUpdated(DiagnosticInformation);
+
+            TgtLatencyDebugBlock.Text = DiagnosticInformation.TimerInterval.TotalMilliseconds.ToString();
+            ActLatencyDebugBlock.Text = DiagnosticInformation.RenderTime.TotalMilliseconds.ToString();
+            BuffersBlock.Text = DiagnosticInformation.OpenBuffers.ToString();
+            MemoryBlock.Text = DiagnosticInformation.MemoryUsage.ToString();
+        }
+
+        private void UserControl_Unloaded(object sender, RoutedEventArgs e)
+        {
+           //maybe dispose here? causes too many issues though   
+        }
+
+        /// <summary>
+        /// Disposes of any unreleased resources
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        public void Dispose()
+        {
+            bgRenderer?.Dispose();
         }
     }
 }

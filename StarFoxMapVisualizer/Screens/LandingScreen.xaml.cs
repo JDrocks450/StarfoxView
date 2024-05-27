@@ -1,8 +1,10 @@
 ﻿using Microsoft.Win32;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using StarFox.Interop.ASM;
+using StarFoxMapVisualizer.Controls;
 using StarFoxMapVisualizer.Controls2;
 using StarFoxMapVisualizer.Misc;
+using StarFoxMapVisualizer.Renderers;
 using System;
 using System.Collections.Generic;
 using System.IO;

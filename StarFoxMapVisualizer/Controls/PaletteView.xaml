@@ -3,11 +3,11 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:StarFoxMapVisualizer.Controls"
+        xmlns:local="clr-namespace:StarFoxMapVisualizer.Controls" xmlns:subcontrols="clr-namespace:StarFoxMapVisualizer.Controls.Subcontrols"
         mc:Ignorable="d" Name="HOST" Foreground="White"
-        Title="VIEWING PALETTE" WindowStartupLocation="CenterOwner" MinHeight="400" MaxHeight="450" 
-        MinWidth="300" MaxWidth="600" Style="{StaticResource SFDialogModalStyle}" Background="Coral"
-        Icon="/Resources/Image/palette.png" SizeToContent="Width">
+        Title="VIEWING PALETTE" WindowStartupLocation="CenterOwner" MinHeight="100" MaxHeight="450" 
+        Width="410" Style="{StaticResource SFDialogModalStyle}" Background="Coral"
+        Icon="/Resources/Image/palette.png" SizeToContent="Height">
     <Window.Resources>
         <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
             <Setter Property="Foreground" Value="{Binding Foreground, ElementName=HOST}"/>
@@ -24,15 +24,13 @@
             <Button Name="CopyButton" Click="CopyButton_Click" Width="Auto" Padding="10,0" Margin="10,0">Copy to Clipboard</Button>
             <Button Name="OK" Click="OK_Click" IsDefault="True">OK</Button>
         </StackPanel>
-        <Border Margin="10,10,10,0">
-            <Grid>
-                <Border Background="White">
-                    <Border.Effect>
-                        <DropShadowEffect Opacity="0.5" BlurRadius="10" />
-                    </Border.Effect>
-                </Border>
-                <Image Name="PaletteViewImage" RenderOptions.BitmapScalingMode="NearestNeighbor" Stretch="Uniform" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-            </Grid>
-        </Border>
+        <Grid VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10,10,10,0">
+            <Border Background="White">
+                <Border.Effect>
+                    <DropShadowEffect Opacity="0.5" BlurRadius="10" />
+                </Border.Effect>
+            </Border>
+            <subcontrols:CopyableImage x:Name="PaletteViewImage" RenderOptions.BitmapScalingMode="NearestNeighbor" Stretch="Uniform"/>
+        </Grid>
     </DockPanel>
 </Window>

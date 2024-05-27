@@ -27,7 +27,7 @@
                         </Border>
                     </Grid>
                 </Viewbox>
-                <Viewbox RenderOptions.BitmapScalingMode="NearestNeighbor" Grid.Column="1" VerticalAlignment="Bottom">
+                <Viewbox RenderOptions.BitmapScalingMode="NearestNeighbor" Grid.Column="1" VerticalAlignment="Top">
                     <ContentControl x:Name="FontHost" FontFamily="{Binding GameFont, ElementName=HOST}">
                         <Grid>
                             <TextBlock Margin="5,0,0,0" Width="126" TextWrapping="Wrap" Foreground="{TemplateBinding BorderBrush}" Text="{TemplateBinding Content}"/>

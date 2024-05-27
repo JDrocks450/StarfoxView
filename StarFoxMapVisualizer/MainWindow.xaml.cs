@@ -26,6 +26,10 @@ namespace StarFoxMapVisualizer
         {
             InitializeComponent();
 
+            //**CAD SET CONTEXT
+            StarFox.Interop.GFX.CAD.CGX.GlobalContext.HandlePaletteIndex0AsTransparent = true;
+            //**
+
             Loaded += OnLoad;
         }
 

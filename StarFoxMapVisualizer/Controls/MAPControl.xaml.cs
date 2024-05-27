@@ -54,7 +54,7 @@ namespace StarFoxMapVisualizer.Controls
             }
         }
         private MAPScript? selectedScript => ((TabItem)MAPTabViewer.SelectedItem).Tag as MAPScript;
-        
+        private MAPContextDefinition? selectedContext;
 
         //3D VIEWER VARS
         private MAP3DControl? MapWindow;
@@ -104,6 +104,8 @@ namespace StarFoxMapVisualizer.Controls
                 View3DButton.Visibility= Visibility.Visible;
             };
             map3D.Show();
+            //update the 3D editor view
+            await SwitchEditorBackground();
             View3DButton.Visibility = Visibility.Collapsed;
         }        
 
@@ -184,9 +186,9 @@ namespace StarFoxMapVisualizer.Controls
                     Owner = Application.Current.MainWindow
                 };
             }
-            viewer.EditorPreviewSelectionChanged += delegate
+            viewer.EditorPreviewSelectionChanged += async (object? sender, MAPContextDefinition definition) =>
             {
-
+                await SwitchEditorBackground(definition);
             };
             viewer.Show();
         }
@@ -294,9 +296,9 @@ namespace StarFoxMapVisualizer.Controls
                                         MessageBoxButton.YesNo) == MessageBoxResult.No)
                                 break; // User gives up
                             var file = FILEStandard.ShowGenericFileBrowser("Select the MAP file that contains this section");
-                            if (file == default) break;
+                            if (file == default || !file.Any()) break;
 
-                            sub_map = FILEStandard.OpenMAPFile(new FileInfo(file)).Result;
+                            sub_map = FILEStandard.OpenMAPFile(new FileInfo(file.First())).Result;
                             if (sub_map == default ||
                                 !sub_map.Scripts.TryGetValue(mapjsr.SubroutineName, out sub_script)) // FAILED! Still isn't the right file.
                             { // prompt the user for a new file
@@ -304,7 +306,6 @@ namespace StarFoxMapVisualizer.Controls
                             }
                         }
                     }
-                    else MessageBox.Show("SFOptim worked perfectly!");
                     if (sub_script == default) continue; // Could not load the file at all, move on
                                                          
                     CurrentState.StateObject.Subsections.Add(sub_script);
@@ -436,12 +437,27 @@ namespace StarFoxMapVisualizer.Controls
         {
             //await SetupEditor(selectedFile, EventCanvas, true);
         }
-
+        /// <summary>
+        /// Changes the editor's background and also the backgrounds of any attached views that this applies
+        /// to (like a <see cref="MAP3DControl"/>)
+        /// </summary>
+        /// <param name="Definition"></param>
+        /// <returns></returns>
         private async Task SwitchEditorBackground(MAPContextDefinition? Definition)
         {
-            await BackgroundRender.Attach(Definition);
+            selectedContext = Definition;
+            //Update the context of the background viewer
+            await BackgroundRender.SetContext(Definition);
             BackgroundRender.ResizeViewports((int)ActualWidth, (int)ActualHeight);
+            //Set 3D scene viewer background to match the one selected, if opened
+            if (MapWindowOpened && Definition != null)
+                await MapWindow.SetContext(Definition);
         }
+        /// <summary>
+        /// Calls <see cref="SwitchEditorBackground(MAPContextDefinition?)"/> with the <see cref="selectedContext"/>
+        /// </summary>
+        /// <returns></returns>
+        private Task SwitchEditorBackground() => SwitchEditorBackground(selectedContext);
         /// <summary>
         /// This function is used when the user selects a MapNode in the MAPControl.
         /// <para/>Map Nodes can represent many types of information, using the <paramref name="ComponentSelected"/>

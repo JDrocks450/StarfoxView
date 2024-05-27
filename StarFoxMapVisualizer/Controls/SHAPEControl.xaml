@@ -137,12 +137,7 @@
                 <TabItem x:Name="PaletteTab" Header="Palette">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <DockPanel>
-                            <Button Background="DarkTurquoise" DockPanel.Dock="Top" Name="PaletteWindowButton" Click="PaletteWindowButton_Click">
-                                <StackPanel Orientation="Horizontal">
-                                    <Image Source="/Resources/Image/palette.png"/>
-                                    <TextBlock Foreground="White" FontFamily="Segoe UI" FontSize="12" VerticalAlignment="Center" Margin="5,0,0,0">Change Color Palette</TextBlock>
-                                </StackPanel>
-                            </Button>
+                            <Button Style="{StaticResource SFChangePaletteButton}" DockPanel.Dock="Top" Name="PaletteWindowButton" Click="PaletteWindowButton_Click">Change Color Palette</Button>
                             <StackPanel x:Name="PalettesViewer" CanVerticallyScroll="True" Margin="5,0">
                                 <TextBlock>TEST</TextBlock>
                                 <Separator/>

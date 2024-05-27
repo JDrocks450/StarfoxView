@@ -81,36 +81,36 @@
         public MAPBGDefinition BG3 { get; set; } = new();
         /// <summary>
         /// The name of the bg2chr property of the map context. 
-        /// <para>Maps to the macro: <code>bg2chr</code></para>
+        /// <para>Maps to the macro: <c>bg2chr</c></para>
         /// </summary>
         public string? BG2ChrFile => BG2?.BGChrFile;
         /// <summary>
         /// The name of the bg2scr property of the map context. 
         /// <para>This is the *.SCR reference for this level as background 2.</para>
-        /// <para>Maps to the macro: <code>bg2scr</code></para>
+        /// <para>Maps to the macro: <c>bg2scr</c></para>
         /// </summary>
         public string? BG2ScrFile => BG2?.BGScrFile;
         /// <summary>
         /// The name of the bg3chr property of the map context. 
-        /// <para>Maps to the macro: <code>bg3chr</code></para>
+        /// <para>Maps to the macro: <c>bg3chr</c></para>
         /// </summary>
         public string? BG3ChrFile => BG3?.BGChrFile;
         /// <summary>
         /// The name of the bg3scr property of the map context. 
         /// <para>This is the *.SCR reference for this level as background 3.</para>
-        /// <para>Maps to the macro: <code>bg3scr</code></para>
+        /// <para>Maps to the macro: <c>bg3scr</c></para>
         /// </summary>
         public string? BG3ScrFile => BG3?.BGScrFile;
         /// <summary>
         /// The name of the palette property of the map context. 
         /// <para>This is the *.COL reference for the *.SCR file this level uses as a background.</para>
-        /// <para>Maps to the macro: <code>palette</code></para>
+        /// <para>Maps to the macro: <c>palette</c></para>
         /// </summary>
         public string? BackgroundPalette { get; set; }
         /// <summary>
         /// The name of the gamepal property of the map context. 
         /// <para>This is the *.COL reference for the *.CGX file this level uses as sprites.</para>
-        /// <para>Maps to the macro: <code>gamepal</code></para>
+        /// <para>Maps to the macro: <c>gamepal</c></para>
         /// </summary>
         public string? GamePalette { get; set; }
         /// <summary>
@@ -153,7 +153,7 @@
         ///     </item>
         ///     <item>
         ///         <term>Nucleus</term>
-        ///         <description>A simulated 360degree space.</description>
+        ///         <description>A simulated circular space.</description>
         ///     </item>
         ///     <item>
         ///         <term>Final</term>
@@ -166,6 +166,43 @@
         /// </list>
         /// </summary>
         public string? AppearancePreset { get; set; }
+
+        /// <summary>
+        /// Generally, the offset of the camera from the player's position <para/>
+        /// <c>planet_viewCY</c> in STRATEQU.INC
+        /// </summary>
+        public int ViewCY { get; internal set; }
+        /// <summary>
+        /// The low-bound of the Player's X coordinate range<para/>
+        /// <c>planet_minX</c> in STRATEQU.INC
+        /// </summary>
+        public int MinX { get; internal set; }
+        /// <summary>
+        /// The high-bound of the Player's X coordinate range<para/>
+        /// <c>planet_maxX</c> in STRATEQU.INC
+        /// </summary>
+        public int MaxX { get; internal set; }
+        /// <summary>
+        /// Not sure.
+        /// <c>planet_MminX</c> in STRATEQU.INC
+        /// </summary>
+        public int M_MinX { get; internal set; }
+        /// <summary>
+        /// Not sure.
+        /// <c>planet_MmaxX</c> in STRATEQU.INC
+        /// </summary>
+        public int M_MaxX { get; internal set; }
+        /// <summary>
+        /// The low-bound of the Player's Y coordinate range<para/>
+        /// <c>planet_minY</c> in STRATEQU.INC
+        /// </summary>
+        public int MinY { get; internal set; }
+        /// <summary>
+        /// The high-bound of the Player's Y coordinate range<para/>
+        /// <c>planet_maxY</c> in STRATEQU.INC
+        /// </summary>
+        public int MaxY { get; internal set; }
+        public int M_MaxY { get; internal set; }
 
         public void SetBackground(int BGNum, MAPBGDefinition Definition)
         {

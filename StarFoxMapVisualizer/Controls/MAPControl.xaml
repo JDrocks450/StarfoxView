@@ -3,12 +3,12 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:StarFoxMapVisualizer.Controls" xmlns:customcontrols="clr-namespace:WpfPanAndZoom.CustomControls;assembly=WpfPanAndZoom" xmlns:subcontrols="clr-namespace:StarFoxMapVisualizer.Controls.Subcontrols"
+             xmlns:local="clr-namespace:StarFoxMapVisualizer.Controls" xmlns:customcontrols="clr-namespace:WpfPanAndZoom.CustomControls;assembly=WpfPanAndZoom" xmlns:renderers="clr-namespace:StarFoxMapVisualizer.Renderers"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800" Background="Black" SizeChanged="UserControl_SizeChanged">
     <Grid ClipToBounds="True">
         <Grid Name="BackgroundHost" Background="#333333" Margin="0,30,0,0">
-            <subcontrols:BackgroundRenderer x:Name="BackgroundRender" Opacity=".75"/>
+            <renderers:BackgroundRenderer x:Name="BackgroundRender" Opacity=".75"/>
             <ContentControl x:Name="CurrentEditorControl" ClipToBounds="True">
                 <customcontrols:PanAndZoomCanvas Background="{x:Null}">
                     <local:MapEventNodeControl Canvas.Left="100" Canvas.Top="50"/>

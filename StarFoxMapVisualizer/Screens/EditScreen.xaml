@@ -147,6 +147,7 @@
                 </MenuItem>
                 <MenuItem Header="View" Style="{StaticResource Base}">
                     <MenuItem Header="Level Backgrounds (Context Viewer)" Click="BGSASMViewerButton_Click"/>
+                    <MenuItem Header="Level Select Screen" Click="LevelSelectItem_Click"/>
                     <Separator/>
                     <MenuItem Header="Refresh Workspace"/>
                 </MenuItem>

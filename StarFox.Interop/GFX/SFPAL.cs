@@ -21,6 +21,8 @@ namespace StarFox.Interop.GFX
     /// </summary>
     public class SFPalette
     {
+        public string Name { get; }
+
         private readonly COL palette;
         private readonly COLGroup group;
 
@@ -63,8 +65,9 @@ namespace StarFox.Interop.GFX
         /// </summary>
         /// <param name="Palette">The colors to use</param>
         /// <param name="Group">The color table found in a <see cref="COLTABFile"/></param>
-        public SFPalette(in COL Palette, in COLGroup Group)
+        public SFPalette(string Name, in COL Palette, in COLGroup Group)
         {
+            this.Name = Name;
             palette = Palette;
             group = Group;
 
