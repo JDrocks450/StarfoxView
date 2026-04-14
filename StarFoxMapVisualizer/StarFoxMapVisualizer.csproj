@@ -2,13 +2,20 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net6.0-windows</TargetFramework>
+    <TargetFramework>net9.0-windows7.0</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
     <FileVersion>0.5.7</FileVersion>
     <ApplicationIcon>Resources\SFViewLogoSmall.ico</ApplicationIcon>
     <AssemblyVersion>0.5.7</AssemblyVersion>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Resources\Model\**" />
+    <EmbeddedResource Remove="Resources\Model\**" />
+    <None Remove="Resources\Model\**" />
+    <Page Remove="Resources\Model\**" />
+  </ItemGroup>
 
   <ItemGroup>
     <None Remove="Resources\AtlantisInternational-jen0.ttf" />
@@ -38,7 +45,6 @@
     <None Remove="Resources\Image\threedtransparent.png" />
     <None Remove="Resources\Image\transparent.png" />
     <None Remove="Resources\Image\view3d.png" />
-    <None Remove="Resources\Model\Arwing.fbx" />
     <None Remove="Resources\SFviewLogo.png" />
     <None Remove="Resources\SFViewLogoSmall.ico" />
     <None Remove="Resources\Star-Fox-Starwing.ttf" />
@@ -50,15 +56,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\PanCanvas\WpfPanAndZoom.csproj" />
     <ProjectReference Include="..\Starfox.Editor\Starfox.Editor.csproj" />
     <ProjectReference Include="..\StarFox.Interop.Audio\StarFox.Interop.Audio.csproj" />
     <ProjectReference Include="..\StarFox.Interop\StarFox.Interop.csproj" />
     <ProjectReference Include="..\WPF.UI.Extensions\WPF.UI.Extensions.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Resources\Model\" />
   </ItemGroup>
 
   <ItemGroup>
@@ -84,8 +85,6 @@
     <Resource Include="Resources\Image\pause.png" />
     <Resource Include="Resources\Image\play.png" />
     <Resource Include="Resources\Image\screenIcon.png" />
-    <Resource Include="Resources\Image\SectorY.png" />
-    <Resource Include="Resources\Image\sflogo.png" />
     <Resource Include="Resources\Image\SFViewLogoLarge.png" />
     <Resource Include="Resources\Image\SFViewLogoSmall.png" />
     <Resource Include="Resources\Image\sf_frame.png" />

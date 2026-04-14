@@ -8,12 +8,12 @@
     <Grid Name="ImageContent">
         <Rectangle RenderOptions.BitmapScalingMode="NearestNeighbor"> 
             <Rectangle.Fill>
-                <ImageBrush x:Name="BG3Render" ImageSource="/Resources/Image/SectorY.png" TileMode="Tile" Viewport="0,0,512,512" ViewportUnits="Absolute" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+                <ImageBrush x:Name="BG3Render" ImageSource="/Resources/Background.png" TileMode="Tile" Viewport="0,0,512,512" ViewportUnits="Absolute" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
             </Rectangle.Fill>
         </Rectangle>
         <Rectangle RenderOptions.BitmapScalingMode="NearestNeighbor">
             <Rectangle.Fill>
-                <ImageBrush x:Name="BG2Render" ImageSource="/Resources/Image/SectorY.png" TileMode="Tile" Viewport="0,0,512,512" ViewportUnits="Absolute" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+                <ImageBrush x:Name="BG2Render" ImageSource="/Resources/Background.png" TileMode="Tile" Viewport="0,0,512,512" ViewportUnits="Absolute" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
             </Rectangle.Fill>
         </Rectangle>
         <TextBlock Foreground="LawnGreen" VerticalAlignment="Top" HorizontalAlignment="Right" TextAlignment="Right" FontWeight="Bold">
