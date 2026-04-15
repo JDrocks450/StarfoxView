@@ -1,3 +1,7 @@
+<p align="center"> 
+  <img src="/StarFoxMapVisualizer/Resources/SFviewLogo.png" width="300"> 
+</center>
+
 # StarFox (SNES) Source Code IDE
 SFView is an all-in-one interactive development environment for viewing original code, assets, graphics, and levels. 
 While more supported file types are planned, for now only certain file types are compatible and implemented.  
