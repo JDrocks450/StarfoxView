@@ -1,0 +1,34 @@
+﻿<ContentControl x:Class="StarFoxMapVisualizer.Controls.Subcontrols.Notification"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:StarFoxMapVisualizer.Controls.Subcontrols"
+             mc:Ignorable="d" 
+             d:DesignWidth="800">
+    <ContentControl.Style>
+        <Style TargetType="ContentControl">
+            <Setter Property="Background" Value="#FFC7FFC7"/>
+            <Setter Property="Foreground" Value="ForestGreen"/>
+            <Setter Property="BorderBrush" Value="ForestGreen"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ContentControl">
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
+                            <DockPanel>
+                                <ProgressBar Loaded="ProgressBar_Loaded" x:Name="ProgressBar" Style="{x:Null}" Background="{x:Null}" BorderThickness="0" Foreground="{TemplateBinding Foreground}" Height="2" Value="1" Maximum="1" Minimum="0" DockPanel.Dock="Bottom"/>
+                                <DockPanel MouseLeftButtonUp="DockPanel_MouseLeftButtonUp">
+                                    <Button Padding="10" DockPanel.Dock="Right" Foreground="{TemplateBinding Foreground}" FontFamily="Segoe Fluent Icons" Content="&#xE8BB;" Background="{x:Null}" BorderBrush="{x:Null}" Click="Button_Click"/>
+                                    <ContentPresenter Margin="10" Content="{TemplateBinding Content}" DockPanel.Dock="Left"/>
+                                </DockPanel>
+                            </DockPanel>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </ContentControl.Style>
+    HELLO WORLD!
+</ContentControl>

@@ -823,7 +823,7 @@ namespace StarFoxMapVisualizer.Screens
                 {
                     Header = Enum.GetName(map.OptimizerData.TypeSpecifier),
                 };                
-                foreach(var mapItem in map.OptimizerData.ObjectMap)
+                foreach(var mapItem in map.OptimizerData.ObjectMap.OrderBy(x => x.Key))
                 {
                     var subItem = new MenuItem()
                     {
@@ -862,6 +862,11 @@ namespace StarFoxMapVisualizer.Screens
         {
             LevelSelectWindow wnd = new();
             wnd.Show();
+        }
+
+        private void AboutMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            new AboutBox() { Owner = Application.Current.MainWindow }.ShowDialog();
         }
     }
 }

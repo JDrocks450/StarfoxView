@@ -17,6 +17,11 @@ namespace StarFoxMapVisualizer.Renderers
         public BackgroundRenderer()
         {
             InitializeComponent();
+#if DEBUG
+            DebugViewBlockl.Visibility = Visibility.Visible;
+#else
+            DebugViewBlockl.Visibility = Visibility.Collapsed;
+#endif
         }
 
         public override void BG2Invalidate(ImageSource NewImage) => BG2Render.ImageSource = NewImage;

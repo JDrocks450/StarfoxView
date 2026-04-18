@@ -163,6 +163,7 @@
                     <MenuItem Header="Map..."/>
                     <MenuItem Header="Shape..."/>
                 </MenuItem>
+                <MenuItem Header="About..." Style="{StaticResource Base}" Name="AboutMenuItem" Click="AboutMenuItem_Click"/>
             </Menu>
         </Border>
         <Grid DockPanel.Dock="Top" Grid.Column="1" Grid.ColumnSpan="2">
@@ -178,7 +179,7 @@
             <DockPanel>
                 <TextBlock DockPanel.Dock="Top" Margin="10,10,0,0" Style="{StaticResource TitleText}" Foreground="White" Text="MY WORKSPACE:"/>
                 <ContentControl DockPanel.Dock="Top" Style="{StaticResource SFContentBorder}" Margin="10,10,10,10" Background="Black">
-                    <TreeView FontSize="22" x:Name="SolutionExplorerView" BorderThickness="0" Background="{x:Null}" FontFamily="{StaticResource Atlantis}">
+                    <TreeView FontSize="22" x:Name="SolutionExplorerView" BorderThickness="0" Background="{x:Null}" FontFamily="{StaticResource Atlantis}" TextOptions.TextRenderingMode="Grayscale">
                         <TreeView.Resources>
                             <Style TargetType="TreeViewItem" BasedOn="{StaticResource ProjectTreeStyle}"/>
                         </TreeView.Resources>
@@ -254,7 +255,7 @@
                         ASSEMBLY
                     </ToggleButton>
                 </StackPanel>
-                <ContentControl x:Name="MainViewerBorder" Visibility="Collapsed" DockPanel.Dock="Top" Style="{StaticResource SFContentBorder}" Margin="10,0,10,10" Background="Black">
+                <ContentControl x:Name="MainViewerBorder" Visibility="Collapsed" DockPanel.Dock="Top" Style="{StaticResource SFContentBorder}" Margin="0,0,10,10" Background="Black">
                     <TabControl x:Name="ViewModeHost" Style="{DynamicResource NakedTabControl}">
                         <TabItem Name="ASMTab">
                             <controls:ASMControl x:Name="ASMViewer"/>

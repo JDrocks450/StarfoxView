@@ -9,6 +9,7 @@ using StarFoxMapVisualizer.Controls.Subcontrols;
 using StarFoxMapVisualizer.Misc;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
@@ -172,7 +173,7 @@ namespace StarFoxMapVisualizer.Controls
             transformGroup.Children.Add(new ScaleTransform3D()
             {
                 ScaleX = 1,
-                ScaleY = -1,
+                ScaleY = 1,
                 ScaleZ = 1
             });
             var animation = new DoubleAnimation(0, 360, TimeSpan.FromSeconds(30));                      
@@ -412,7 +413,7 @@ namespace StarFoxMapVisualizer.Controls
             canShowShape = false;
             //Stop animating, please
             EndAnimatingFrames();
-            //can we use persistant data?
+            //can we use persistent data?
             Clear3DScreen();
 
             var group = currentGroup;
@@ -796,6 +797,15 @@ namespace StarFoxMapVisualizer.Controls
                 ShowShape(true);
             };
             window.Show();
+        }
+
+        private async void ExportMeshButton_Click(object sender, RoutedEventArgs e)
+        {
+            var result = SHAPEStandard.ExportShapeTo3DMeshFormat(currentShape, currentGroup, currentSFPalette, out string FilePath, SelectedFrame);
+            await EDITORStandard.ShowNotification($" {(!result.Successful ? "MODEL WAS NOT EXPORTED! " : "MODEL EXPORTED SUCCESSFULLY! ") + result.Message}",  
+                delegate {
+                    using var proc = Process.Start("explorer", FilePath);
+                }, TimeSpan.FromSeconds(5));
         }
     }
 }

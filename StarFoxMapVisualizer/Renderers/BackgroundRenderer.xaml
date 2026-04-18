@@ -16,7 +16,7 @@
                 <ImageBrush x:Name="BG2Render" ImageSource="/Resources/Background.png" TileMode="Tile" Viewport="0,0,512,512" ViewportUnits="Absolute" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
             </Rectangle.Fill>
         </Rectangle>
-        <TextBlock Foreground="LawnGreen" VerticalAlignment="Top" HorizontalAlignment="Right" TextAlignment="Right" FontWeight="Bold">
+        <TextBlock x:Name="DebugViewBlockl" Foreground="LawnGreen" VerticalAlignment="Top" HorizontalAlignment="Right" TextAlignment="Right" FontWeight="Bold">
             <Run>***Animator Debug***</Run> <LineBreak/>
             <Run>Target Latency: </Run> <Run x:Name="TgtLatencyDebugBlock">0</Run> <Run>ms</Run> <LineBreak/>
             <Run>Render Time: </Run> <Run x:Name="ActLatencyDebugBlock">0</Run> <Run>ms</Run> <LineBreak/>

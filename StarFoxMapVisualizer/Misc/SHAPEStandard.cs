@@ -20,6 +20,9 @@ using Starfox.Editor;
 using StarFox.Interop.GFX.DAT;
 using StarFox.Interop.GFX.DAT.MSPRITES;
 using System.Windows.Media.Imaging;
+using Microsoft.Win32;
+using StarFox.Interop.BSP;
+using StarFoxMapVisualizer.Dialogs;
 
 namespace StarFoxMapVisualizer.Misc
 {
@@ -39,17 +42,22 @@ namespace StarFoxMapVisualizer.Misc
         /// <para>Is Export/Shapes by <see langword="default"/></para>
         /// </summary>
         internal static string DefaultShapeExtractionDirectory { get; set; } = System.IO.Path.Combine(Environment.CurrentDirectory, "export/shapes");
-                            
+
+        internal static COL? GetPaltByFileName(string FileName)
+        {
+            FileName = FileName.ToUpper().Replace(".COL", "");
+            return AppResources.ImportedProject.Palettes.FirstOrDefault
+                (x => System.IO.Path.GetFileNameWithoutExtension(x.Key).ToUpper() == FileName).Value;
+        }
+
         /// <summary>
         /// Tries to create a new palette using the COLTABFile added to the project and a ColorPalettePtr
         /// </summary>
         /// <param name="ColGroupName"></param>
         /// <returns></returns>
         internal static bool CreateSFPalette(string ColGroupName, out SFPalette Palette, out COLGroup Group, string ColorPaletteName = "BLUE")
-        {
-            ColorPaletteName = ColorPaletteName.ToUpper().Replace(".COL", "");
-            COL? palette = AppResources.ImportedProject.Palettes.FirstOrDefault
-                (x => System.IO.Path.GetFileNameWithoutExtension(x.Key).ToUpper() == ColorPaletteName).Value;
+        {            
+            COL? palette = GetPaltByFileName(ColorPaletteName);
             var group = default(COLGroup);
             if (ProjectColorTable != null)
                 ProjectColorTable.TryGetGroup(ColGroupName, out group);
@@ -464,12 +472,7 @@ namespace StarFoxMapVisualizer.Misc
                                 var textDef = definition as COLTexture;
                                 try
                                 {
-                                    var (bmp, sprite) = RenderMSprite(textDef.Reference, Palette.Name).Result;
-                                    /*var imgBrush = new ImageBrush(bmp)
-                                    {
-                                        Stretch = Stretch.Fill,
-                                        TileMode = TileMode.None
-                                    };*/                                   
+                                    var (bmp, sprite) = RenderMSprite(textDef.Reference, Palette.Name).Result;                                
                                     material = GetNearestNeighborTextureMaterial(bmp);
                                     shape.UsingTextures.Add(textDef.Reference);
                                     hasTextureProperties = true;
@@ -553,6 +556,33 @@ namespace StarFoxMapVisualizer.Misc
             {
                 Brush = new VisualBrush(image)
             };
+        }
+
+        internal static BSPExporter.BSPIOWriteResult ExportShapeTo3DMeshFormat(BSPShape? currentShape, COLGroup Group, SFPalette Palette, out string? FilePath, int Frame = 0)
+        {
+            SaveFileDialog saveDialog = new()
+            {
+                Title = "Save 3D Object File",
+                AddExtension = true,
+                Filter = BSPExporter.FILE_EXTENSION.ToUpper() + " Files|*" + BSPExporter.FILE_EXTENSION,
+                CheckPathExists = true,
+                FileName = currentShape.Header.Name,
+                InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory)
+            };
+            FilePath = null;
+            if (!saveDialog.ShowDialog() ?? true)
+                return BSPExporter.BSPIOWriteResult.Cancelled;
+            FilePath = saveDialog.FileName;
+            BSPExporter.BSPExportOptions options = BSPExporter.BSPExportOptions.Default;
+            try
+            { // try invoking the BSP exporter
+                return BSPExporter.ExportShape(saveDialog.FileName, currentShape, Group, Palette, Frame, 
+                    ProjectColorTable, GetPaltByFileName("BLUE.COL"), options);
+            }
+            catch (Exception ex)
+            { // an error has occurred
+                return BSPExporter.BSPIOWriteResult.Faulted(ex);
+            }
         }
     }
 }

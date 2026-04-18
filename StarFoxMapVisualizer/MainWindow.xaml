@@ -3,8 +3,18 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:StarFoxMapVisualizer" xmlns:screens="clr-namespace:StarFoxMapVisualizer.Screens"
+        xmlns:local="clr-namespace:StarFoxMapVisualizer" xmlns:screens="clr-namespace:StarFoxMapVisualizer.Screens" xmlns:subcontrols="clr-namespace:StarFoxMapVisualizer.Controls.Subcontrols"
         mc:Ignorable="d"
         Title="Loading..." Height="768" Width="1024">
+    <Window.Template>
+        <ControlTemplate TargetType="Window">
+            <Grid Background="{TemplateBinding Background}">
+                <Frame Content="{TemplateBinding Content}" NavigationUIVisibility="Hidden"/>
+                <ContentControl x:Name="UI_PARENT_NOTIFICATION" VerticalAlignment="Top">
+                    
+                </ContentControl>
+            </Grid>
+        </ControlTemplate>
+    </Window.Template>
     <screens:LandingScreen/>
 </Window>

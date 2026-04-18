@@ -98,7 +98,7 @@
                 <TabItem Header="Shape Header">
                     <DockPanel Margin="5">
                         <TextBlock DockPanel.Dock="Top" Style="{DynamicResource TitleText}" FontSize="14" HorizontalAlignment="Center">Shape Definition</TextBlock>
-                        <DataGrid HorizontalScrollBarVisibility="Visible" FontSize="18" Name="HeaderInformationGrid" Margin="0,10,0,0" Foreground="White" Background="#FF373737" BorderThickness="0" BorderBrush="#FF272727">
+                        <DataGrid IsReadOnly="True" HorizontalScrollBarVisibility="Visible" FontSize="18" Name="HeaderInformationGrid" Margin="0,10,0,0" Foreground="Black" Background="#FF373737" BorderThickness="0" BorderBrush="#FF272727">
                             <DataGrid.LayoutTransform>
                                 <TransformGroup>
                                     <RotateTransform Angle="90"/>
@@ -184,6 +184,7 @@
             <Button x:Name="ResetCam" Click="ResetCam_Click">Reset Camera</Button>
             <Button x:Name="RotButton" Margin="0,5" Click="RotButton_Click">Rotation: ON</Button>
             <Button x:Name="ExportSFShapeButton" Click="ExportSFShapeButton_Click" Background="#FFC30000" Foreground="White" Height="37">Export to .sfshape</Button>
+            <Button x:Name="ExportMeshButton" Click="ExportMeshButton_Click" Background="#FFD9AC00" Foreground="White" Content="Export to OBJ"/>
             <Button x:Name="CopyImageButton" Click="CopyImageButton_Click" Margin="0,5,0,0">Copy as Image</Button>
         </StackPanel>
         <GridSplitter Grid.Row="1" Grid.RowSpan="2" HorizontalAlignment="Right" Width="2" Background="Gray"/>

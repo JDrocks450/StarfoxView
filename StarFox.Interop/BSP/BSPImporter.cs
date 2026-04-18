@@ -151,7 +151,7 @@ namespace StarFox.Interop.BSP
         /// <param name="divisor">Divide components by this divisor</param>
         public BSPPoint MakePoint(int x, int y, int z, float divisor = 1)
         {
-            var point = new BSPPoint(pointIndex, (int)(x / divisor), (int)(y / divisor), (int)(z / divisor)); // make point
+            var point = new BSPPoint(pointIndex, -(int)(x / divisor), -(int)(y / divisor), (int)(z / divisor)); // make point
             //pointIndex += PointsDataWidth;
             pointIndex++;
             return point;
@@ -483,8 +483,8 @@ namespace StarFox.Interop.BSP
                                     goto case "pb";
                                 case "pb": // point definition
                                     var x = macroInvoke.TryGetParameter(0)?.TryParseOrDefault() ?? 0; //x
-                                    var y = macroInvoke.TryGetParameter(1)?.TryParseOrDefault() ?? 0;//y
-                                    var z = macroInvoke.TryGetParameter(2)?.TryParseOrDefault() ?? 0;//z
+                                    var y = macroInvoke.TryGetParameter(1)?.TryParseOrDefault() ?? 0; //y
+                                    var z = macroInvoke.TryGetParameter(2)?.TryParseOrDefault() ?? 0; //z
                                     asmContext.PushPoint(mode, x, (int)(y*yFactor), z, pbDivisor);
                                     break;
                             }

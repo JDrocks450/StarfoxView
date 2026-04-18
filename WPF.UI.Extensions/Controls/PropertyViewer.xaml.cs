@@ -408,17 +408,18 @@ namespace WPF.UI.Extensions.Controls
         public object ReflectiveType { get; private set; }
 
         private void Init()
-        {            
+        {
             Children.Clear();
             foreach (var prop in ReflectiveType.GetType().GetProperties())
             {
                 Children.Add(new PropertyViewerItem(prop, ReflectiveType));
                 Children.Add(new Separator()
                 {
-                    Margin = new Thickness(0,10,0,10)
+                    Margin = new Thickness(0, 10, 0, 10)
                 });
             }
-            Children.RemoveAt(Children.Count - 1);
+            if (Children.Count != 0)
+                Children.RemoveAt(Children.Count - 1);
         }
 
         public bool ApplyValues()

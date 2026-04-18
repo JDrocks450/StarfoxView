@@ -3,6 +3,7 @@ using StarFox.Interop.ASM;
 using StarFox.Interop.GFX.DAT.MSPRITES;
 using StarFox.Interop.MAP.EVT;
 using StarFoxMapVisualizer.Controls;
+using StarFoxMapVisualizer.Controls.Subcontrols;
 using StarFoxMapVisualizer.Dialogs;
 using StarFoxMapVisualizer.Screens;
 using System;
@@ -341,6 +342,19 @@ namespace StarFoxMapVisualizer.Misc
             }
             WelcomeWagonShownOnce = true;
             return true;
+        }
+
+        /// <summary>
+        /// Shows a new <see cref="Notification"/> on the <see cref="MainWindow"/> and waits for the old one to expire
+        /// </summary>
+        /// <param name="Text"></param>
+        /// <param name="Callback"></param>
+        /// <param name="Lifespan"></param>
+        /// <returns></returns>
+        internal static async Task ShowNotification(string Text, Action Callback, TimeSpan? Lifespan = default)
+        {
+            var notif = await Notification.CreateAsync(Text, Lifespan ?? TimeSpan.FromSeconds(2.5), Callback);
+            (Application.Current.MainWindow as MainWindow).PushNotification(notif);
         }
     }
 }

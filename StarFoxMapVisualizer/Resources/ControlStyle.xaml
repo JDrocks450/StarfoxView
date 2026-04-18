@@ -14,11 +14,13 @@
     <Style TargetType="RadioButton" BasedOn="{StaticResource SFRadioButton}"/>
     <Style x:Key="TitleText" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource SFFont}"/>
+        <Setter Property="TextOptions.TextRenderingMode" Value="Grayscale"/>
         <Setter Property="RenderOptions.EdgeMode" Value="Aliased"/>
     </Style>
     <Style x:Key="BodyText" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource Atlantis}"/>
         <Setter Property="FontSize" Value="22"/>
+        <Setter Property="TextOptions.TextRenderingMode" Value="Grayscale"/>
         <Setter Property="RenderOptions.EdgeMode" Value="Aliased"/>
     </Style>
     <Style x:Key="SFButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">

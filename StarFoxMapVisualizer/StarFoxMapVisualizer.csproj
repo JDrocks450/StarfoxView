@@ -5,9 +5,9 @@
     <TargetFramework>net9.0-windows7.0</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
-    <FileVersion>0.5.7</FileVersion>
+    <FileVersion>0.6.1</FileVersion>
     <ApplicationIcon>Resources\SFViewLogoSmall.ico</ApplicationIcon>
-    <AssemblyVersion>0.5.7</AssemblyVersion>
+    <AssemblyVersion>0.6.1</AssemblyVersion>
   </PropertyGroup>
 
   <ItemGroup>

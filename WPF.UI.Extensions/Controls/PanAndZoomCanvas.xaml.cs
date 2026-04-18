@@ -13,7 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace WpfPanAndZoom.CustomControls
+namespace WPF.UI.Extensions.Controls
 {
     public interface IDraggable
     {
@@ -165,14 +165,14 @@ namespace WpfPanAndZoom.CustomControls
 
             if (e.ChangedButton == MouseButton.Right)
             {
-                if (this.Children.Contains((UIElement)e.Source))
+                if (Children.Contains((UIElement)e.Source))
                 {                    
                     _selectedElement = (UIElement)e.Source;
                     if (_selectedElement is IDraggable draggable && draggable.Draggable)
                     {
                         Point mousePosition = Mouse.GetPosition(this);
-                        double x = Canvas.GetLeft(_selectedElement);
-                        double y = Canvas.GetTop(_selectedElement);
+                        double x = GetLeft(_selectedElement);
+                        double y = GetTop(_selectedElement);
                         Point elementPosition = new Point(x, y);
                         _draggingDelta = elementPosition - mousePosition;
                     }
@@ -195,7 +195,7 @@ namespace WpfPanAndZoom.CustomControls
             _transform.Matrix = translate.Value * _transform.Matrix;
             Location -= Offset;
 
-            foreach (UIElement child in this.Children)
+            foreach (UIElement child in Children)
             {
                 child.RenderTransform = _transform;
             }
@@ -229,8 +229,8 @@ namespace WpfPanAndZoom.CustomControls
 
                 if (_selectedElement != null)
                 {
-                    Canvas.SetLeft(_selectedElement, x + _draggingDelta.X);
-                    Canvas.SetTop(_selectedElement,  y + _draggingDelta.Y);
+                    SetLeft(_selectedElement, x + _draggingDelta.X);
+                    SetTop(_selectedElement,  y + _draggingDelta.Y);
                 }
             }
         }
@@ -245,16 +245,16 @@ namespace WpfPanAndZoom.CustomControls
             scaleMatrix.ScaleAt(scaleFactor, scaleFactor, mousePostion.X, mousePostion.Y);
             _transform.Matrix = scaleMatrix;
 
-            foreach (UIElement child in this.Children)
+            foreach (UIElement child in Children)
             {
-                double x = Canvas.GetLeft(child);
-                double y = Canvas.GetTop(child);
+                double x = GetLeft(child);
+                double y = GetTop(child);
 
                 double sx = x * scaleFactor;
                 double sy = y * scaleFactor;
 
-                Canvas.SetLeft(child, sx);
-                Canvas.SetTop(child, sy);
+                SetLeft(child, sx);
+                SetTop(child, sy);
 
                 child.RenderTransform = _transform;
             }
@@ -274,7 +274,7 @@ namespace WpfPanAndZoom.CustomControls
 
         public void Reset()
         {
-            foreach (UIElement child in this.Children)
+            foreach (UIElement child in Children)
             {
                 child.RenderTransform = null;
             }
