@@ -164,7 +164,7 @@ namespace StarFoxMapVisualizer.Renderers
                 BG2Invalidate(Image.Convert());
                 Image.Dispose(); // AutoDispose is off for this reason
 
-                if (bgRenderer.DiagnosticsEnabled) // checks to make sure diag info is available
+                if (bgRenderer != null && bgRenderer.DiagnosticsEnabled) // checks to make sure diag info is available
                     DebugInfoUpdated(bgRenderer.DiagnosticInformation);
             }), false, TargetFrameRate);
         }

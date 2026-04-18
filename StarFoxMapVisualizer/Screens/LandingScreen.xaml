@@ -8,7 +8,7 @@
       d:DesignHeight="768" d:DesignWidth="1024"
       Title="Landing Screen" RenderOptions.BitmapScalingMode="NearestNeighbor">
     <Page.Background>
-        <ImageBrush ImageSource="/Resources/Image/SectorY.png" Stretch="UniformToFill" />
+        <ImageBrush ImageSource="/Resources/Background.png" Stretch="UniformToFill" />
     </Page.Background>
 
     <Grid>
