@@ -1,25 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="geometry4Sharp" Version="1.0.0" />
     <PackageReference Include="Microsoft.Solver.Foundation" Version="3.1.0" />
     <PackageReference Include="System.Drawing.Common" Version="7.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\EarClipperLib\EarClipperLib.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="geometry4Sharp">
-      <HintPath>..\..\..\geometry4Sharp\bin\Debug\netstandard2.0\geometry4Sharp.dll</HintPath>
-    </Reference>
   </ItemGroup>
 
 </Project>

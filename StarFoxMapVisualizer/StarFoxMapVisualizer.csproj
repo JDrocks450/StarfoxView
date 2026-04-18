@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net6.0-windows</TargetFramework>
+    <TargetFramework>net9.0-windows7.0</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
     <FileVersion>0.6.1</FileVersion>
@@ -50,7 +50,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\PanCanvas\WpfPanAndZoom.csproj" />
     <ProjectReference Include="..\Starfox.Editor\Starfox.Editor.csproj" />
     <ProjectReference Include="..\StarFox.Interop.Audio\StarFox.Interop.Audio.csproj" />
     <ProjectReference Include="..\StarFox.Interop\StarFox.Interop.csproj" />
